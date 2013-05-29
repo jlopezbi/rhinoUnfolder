@@ -44,7 +44,7 @@ def unwrapper():
 
 	mesh_id,mesh = generateMesh(rawNodes,faces)
 	faces,edge_weights,thetaMax = getDual(mesh)
-	displayDual(faces,edge_weights,thetaMax,mesh)
+	#displayDual(faces,edge_weights,thetaMax,mesh)
 
 	foldList = getSpanningKruskal(faces,edge_weights,mesh)
 	displayCutEdges(foldList,mesh)
@@ -57,27 +57,31 @@ def unwrapper():
 	# 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
 	# 	u,v,w,p = getOrthoBasis(i,edgeIdx,tVertIdx,mesh)
 	# 	displayOrthoBasis(u,v,w,p)
-	i = 3
-	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(i).GetValue(0)
-	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
-	u,v,w,p = getOrthoBasis(i,edgeIdx,tVertIdx,mesh)
-	displayOrthoBasis(u,v,w,p)
+	flatEdgeCoords = [None]*mesh.TopologyEdges.Count
 	origin = rs.WorldXYPlane()
-	print "worldOrigin:"
-	print origin[0]
-	xForm = createTransformMatrix(origin[1],origin[2],origin[3],origin[0],u,v,w,p)
-	getrc,p0,p1,p2,p3 = mesh.Faces.GetFaceVertices(i)
-	pnts = [p0,p1,p2]
-	for i, pnt in enumerate(pnts):
-		#print type(pnt)
-		pnt.Transform(xForm)
-		rs.AddPoint(pnt)
-	rs.AddPolyline(pnts)
+	faceIdx = 3
+	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
+	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
+	fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
+	layoutFace(faceIdx,foldList,mesh,fromBasis,origin,flatEdgeCoords)
+	displayOrthoBasis(fromBasis)
+	
+
+	# xForm = createTransformMatrix(origin,fromBasis)
+	# getrc,p0,p1,p2,p3 = mesh.Faces.GetFaceVertices(faceIdx)
+	# pnts = [p0,p1,p2]
+	# for i, pnt in enumerate(pnts):
+	# 	#print type(pnt)
+	# 	pnt.Transform(xForm)
+	# 	rs.AddPoint(pnt)
+	# rs.AddPolyline(pnts)
 	
 
 
 	print('Version:')
 	print(sys.version )
+
+"""MISCELLANEOUS"""
 
 def displayNormals(mesh):
 	normLines = []
@@ -103,8 +107,6 @@ def displayDual(faces,edge_weights,thetaMax,mesh):
 		dualRods.append(rs.AddCylinder(faceCenter0,faceCenter1,r))
 	createGroup("dualRods",dualRods)
 		
-
-
 def createGroup(groupName,objects):
 	name = rs.AddGroup(groupName)
 	if not rs.AddObjectsToGroup(objects,groupName):
@@ -138,12 +140,14 @@ def getMedian(edgeLens):
 	else:
 		return edgeLens[int(nEdges/2)]
 
+"""FLATTEN/LAYOUT"""
+
 def assignFlatCoordsToEdges(foldList,mesh):
-	flattenedEdgeCoords = [None]*mesh.TopologyEdges.Count 
+	flatEdgeCoords = [None]*mesh.TopologyEdges.Count 
 	#each rowIdx coressponds to a edge in TopologyEdges
-	randFaceIdx = random.randint(0,mesh.Faces.Count-1)
-	rs.AddTextDot("FirstFace",mesh.Faces.GetFaceCenter(randFaceIdx))
-	topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
+	# randFaceIdx = random.randint(0,mesh.Faces.Count-1)
+	# rs.AddTextDot("FirstFace",mesh.Faces.GetFaceCenter(randFaceIdx))
+	# topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
 	for i, topoEdge in enumerate(topoEdges):
 		if i==0:
 			v1 = Rhino.Geometry.Vector2f(0.0,0.0)
@@ -152,6 +156,34 @@ def assignFlatCoordsToEdges(foldList,mesh):
 			flattenedEdgeCoords.insert(i,[v1,v2])
 		elif i==1:
 			pass
+
+def layoutFace(faceIdx,foldList,mesh,fromBasis,toBasis,flatEdgeCoords):
+	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
+	faceEdges = convertArray(arrFaceEdges)
+	xForm = createTransformMatrix(toBasis,fromBasis)
+	print faceEdges
+	for edgeIdx in faceEdges:
+		if edgeIdx in foldList:
+			attrCol = setAttrColor(0,49,224,61)
+		else:
+			attrCol = setAttrColor(0,237,43,120)
+		newCoords = assignNewPntsToEdge(xForm,edgeIdx,mesh)
+		flatEdgeCoords.insert(edgeIdx,newCoords)
+		line = Rhino.Geometry.Line(newCoords[0],newCoords[1])
+		scriptcontext.doc.Objects.AddLine(line,attrCol)
+
+
+def assignNewPntsToEdge(xForm,edgeIdx,mesh):
+	indexPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
+	idxI = indexPair.I
+	idxJ = indexPair.J
+	pI = mesh.TopologyVertices.Item[idxI]
+	pJ = mesh.TopologyVertices.Item[idxJ]
+	pI.Transform(xForm)
+	pJ.Transform(xForm)
+
+	return [pI,pJ]
+
 
 def createTransformMatrix(i,j,k,o,u,v,w,p):
 	# i = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
@@ -165,8 +197,24 @@ def createTransformMatrix(i,j,k,o,u,v,w,p):
 	#matrix = Rhino.Geometry.Matrix(fullXform)
 	return fullXform
 
+def createTransformMatrix(toBasis,fromBasis):
+	o = toBasis[0]
+	i = toBasis[1]
+	j = toBasis[2]
+	k = toBasis[3]
 
-
+	p = fromBasis[0]
+	u = fromBasis[1]
+	v = fromBasis[2]
+	w = fromBasis[3]
+	
+	o = Rhino.Geometry.Vector3d(o)
+	p = Rhino.Geometry.Vector3d(p)
+	rotatXform = Rhino.Geometry.Transform.Rotation(u,v,w,i,j,k)
+	transXform = Rhino.Geometry.Transform.Translation(o-p)
+	fullXform = Rhino.Geometry.Transform.Multiply(rotatXform,transXform)
+	#matrix = Rhino.Geometry.Matrix(fullXform)
+	return fullXform
 
 def getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh):
 	faceTopoVerts = convertArray(mesh.Faces.GetTopologicalVertices(faceIdx))
@@ -201,30 +249,44 @@ def getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh):
 	"""P"""
 	p = mesh.TopologyVertices.Item[tVertIdx]
 
-	return u,v,w,p
+	return [p,u,v,w]
 
-def displayOrthoBasis(u,v,w,p):
+def displayOrthoBasis(basis):
+	p = basis[0]
+	u = basis[1]
+	v = basis[2]
+	w = basis[3]
+	
 	assert(u.Length-1<.00000001), "u.Length!~=1"
 	assert(v.Length-1<.00000001), "v.Length!~=1"
 	assert(w.Length-1<.00000001), "w.Length!~=1"
-	basis = []
+	basisGeom = []
 	"""U: BLUE"""
 	attrU = setAttrColor(0,10,103,163)
 	attrU.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
 	uLine = Rhino.Geometry.Line(p,u)
-	basis.append(scriptcontext.doc.Objects.AddLine(uLine,attrU))
+	textPnt = Rhino.Geometry.Point3d.Add(p,u)
+	uText = Rhino.Geometry.TextDot("u",textPnt)
+	basisGeom.append(scriptcontext.doc.Objects.AddTextDot(uText,attrU))
+	basisGeom.append(scriptcontext.doc.Objects.AddLine(uLine,attrU))
 	"""V: YELLOW"""
 	attrV = setAttrColor(0,255,188,0)
 	attrV.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
 	vLine = Rhino.Geometry.Line(p,v)
-	basis.append(scriptcontext.doc.Objects.AddLine(vLine,attrV))
+	textPnt = Rhino.Geometry.Point3d.Add(p,v)
+	vText = Rhino.Geometry.TextDot("v",textPnt)
+	basisGeom.append(scriptcontext.doc.Objects.AddTextDot(vText,attrV))
+	basisGeom.append(scriptcontext.doc.Objects.AddLine(vLine,attrV))
 	"""W: PAPAYA"""
 	attrW = setAttrColor(0,255,65,0)
 	attrW.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
 	wLine = Rhino.Geometry.Line(p,w)
-	basis.append(scriptcontext.doc.Objects.AddLine(wLine,attrW))
+	textPnt = Rhino.Geometry.Point3d.Add(p,w)
+	wText = Rhino.Geometry.TextDot("w",textPnt)
+	basisGeom.append(scriptcontext.doc.Objects.AddTextDot(wText,attrW))
+	basisGeom.append(scriptcontext.doc.Objects.AddLine(wLine,attrW))
 	
-	createGroup("basis",basis)
+	createGroup("basisGeom",basisGeom)
 
 def setAttrColor(a,r,g,b):
 	attr = Rhino.DocObjects.ObjectAttributes()
@@ -294,29 +356,31 @@ def getSpanningKruskal(faces,edge_weights,mesh):
 
 def displayFoldEdges(foldList,mesh):
 	foldLines = []
-	for edgeIdx in foldList:
-		foldLines.append(addLineForTEdge(edgeIdx,mesh))
+	attr = setAttrColor(0,25,145,33)
+	for i in range(mesh.TopologyEdges.Count):
+		if i in foldLines:
+			line = lineForTEdge(i,mesh)
+			foldLines.append(scriptcontext.doc.Objects.AddLine(line,attr))
 	createGroup("foldLines",foldLines)
 
 def displayCutEdges(foldLines,mesh):
 	cutLines = []
+	attr= setAttrColor(0,237,17,53)
 	for i in range(mesh.TopologyEdges.Count):
 		if i not in foldLines:
-			cutLines.append(addLineForTEdge(i,mesh))
+			line = lineForTEdge(i,mesh)
+			cutLines.append(scriptcontext.doc.Objects.AddLine(line,attr))
 	createGroup("cutLines",cutLines)
 
-def getKeyForMaxVal(edge_weights,medge_set):
-	pass
-
-def addLineForTEdge(edgeIdx,mesh):
+def lineForTEdge(edgeIdx,mesh):
 	tVerts = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
 	p1 = mesh.TopologyVertices.Item[tVerts.I]
 	p2 = mesh.TopologyVertices.Item[tVerts.J]
-	return rs.AddLine(p1,p2)
+	return Rhino.Geometry.Line(p1,p2)
 
 
-
-def getDual(mesh): #unnecesary, implicit in methods available for topoEdges
+"""unnecesary, implicit in methods available for topoEdges"""
+def getDual(mesh): 
 	#input: 
 	#	mesh
 	#ouput:
