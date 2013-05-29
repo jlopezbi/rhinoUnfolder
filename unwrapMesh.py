@@ -5,6 +5,7 @@ import scriptcontext
 import sys
 import itertools
 import System.Guid
+import System.Drawing
 
 
 def unwrapper():
@@ -19,9 +20,6 @@ def unwrapper():
 		pnt = [float(item) for item in tokens]
 		#rs.AddPoint( pnt)
 		rawNodes.append(pnt)
-
-	# print('rawNodes:\n')
-	# print rawNodes
 
 	edgeCsvFile = open('trussEdges.csv','rb')
 	edgeLines = edgeCsvFile.readlines()
@@ -40,8 +38,8 @@ def unwrapper():
 		rawEdges.append([idx1,idx2])
 
 	nodes = createGraph(rawNodes,rawEdges)
-	print"lenNodes: %d" %len(nodes)
-	print"lenRawNodes: %d" %len(rawNodes)
+	#print"lenNodes: %d" %len(nodes)
+	#print"lenRawNodes: %d" %len(rawNodes)
 	polylineCoords,faces = getTriangleCoords(nodes)
 
 	mesh_id,mesh = generateMesh(rawNodes,faces)
@@ -52,6 +50,29 @@ def unwrapper():
 	displayCutEdges(foldList,mesh)
 	#displayNormals(mesh)
 
+
+	# for i in range(mesh.Faces.Count):
+	# 	#face = mesh.Faces.Item[i]
+	# 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(i).GetValue(0)
+	# 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
+	# 	u,v,w,p = getOrthoBasis(i,edgeIdx,tVertIdx,mesh)
+	# 	displayOrthoBasis(u,v,w,p)
+	i = 3
+	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(i).GetValue(0)
+	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
+	u,v,w,p = getOrthoBasis(i,edgeIdx,tVertIdx,mesh)
+	displayOrthoBasis(u,v,w,p)
+	origin = rs.WorldXYPlane()
+	print "worldOrigin:"
+	print origin[0]
+	xForm = createTransformMatrix(origin[1],origin[2],origin[3],origin[0],u,v,w,p)
+	getrc,p0,p1,p2,p3 = mesh.Faces.GetFaceVertices(i)
+	pnts = [p0,p1,p2]
+	for i, pnt in enumerate(pnts):
+		#print type(pnt)
+		pnt.Transform(xForm)
+		rs.AddPoint(pnt)
+	rs.AddPolyline(pnts)
 	
 
 
@@ -65,27 +86,6 @@ def displayNormals(mesh):
 		p2 = p1 + mesh.FaceNormals.Item[i]
 		normLines.append(rs.AddLine(p1,p2))
 	createGroup("normLines",normLines)
-"""
-def displayDual(faces,connFaces,thetaMax,mesh):
-	#dualLines = []
-	dualRods = []
-	medianEdgeLen = getMedianEdgeLen(mesh)
-	aspectRatio = 1/10
-	scaleFactor = medianEdgeLen*aspectRatio
-	for connFacePair in connFaces:
-		faceIdx0 = connFacePair[0]
-		faceIdx1 = connFacePair[1]
-		weight = connFacePair[2]
-		r = (weight/thetaMax)*scaleFactor
-
-		faceCenter0 = mesh.Faces.GetFaceCenter(faceIdx0)
-		faceCenter1 = mesh.Faces.GetFaceCenter(faceIdx1)
-		
-		#dualLines.append(rs.AddLine(faceCenter0,faceCenter1))
-		dualRods.append(rs.AddCylinder(faceCenter0,faceCenter1,r))
-	#createGroup("dualLines",dualLines)
-	createGroup("dualRods",dualRods)
-"""
 
 def displayDual(faces,edge_weights,thetaMax,mesh):
 	medianEdgeLen = getMedianEdgeLen(mesh)
@@ -105,7 +105,6 @@ def displayDual(faces,edge_weights,thetaMax,mesh):
 		
 
 
-
 def createGroup(groupName,objects):
 	name = rs.AddGroup(groupName)
 	if not rs.AddObjectsToGroup(objects,groupName):
@@ -123,6 +122,10 @@ def getEdgeLengths(mesh):
 		edgeLens.append(edgeLen)
 	return edgeLens
 
+def getEdgeLen(edgIdx,mesh):
+	edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
+	return edgeLine.Length
+
 def getMedian(edgeLens):
 	eLensSorted = sorted(edgeLens)
 	nEdges = len(edgeLens)
@@ -135,42 +138,105 @@ def getMedian(edgeLens):
 	else:
 		return edgeLens[int(nEdges/2)]
 
-"""THIS SHIT DOES NOT MAKE SENSE FOR THIS!!
-def getSpanningPrimAlgo(faces,edge_weights,mesh):
-	nFaces = len(faces)
-	minSpanningTree = []
-	viewEdges = []
-	count = 0
-	while count<nFaces:
-		edgeIdx = None
-		if count ==0:
-			faceIdx = random.randint(0,nFaces-1)
-		print "faceIdx:%d"%faceIdx
-		#medges = mesh-edges
-		conn_medges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
-		medge_set = []
-		for i in range(conn_medges.Length):
-			medge_set.append(conn_medges.GetValue(i))
-		#print medge_set
-		medge_idxs = sorted(medge_set,key=lambda x:edge_weights[x])
-		for possibleIdx in medge_idxs:
-			if(possibleIdx not in minSpanningTree):
-				edgeIdx = possibleIdx
-				break
-		minSpanningTree.append(edgeIdx)
-		viewEdges.append(addLineForTEdge(edgeIdx,mesh))
-		connFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIdx)
+def assignFlatCoordsToEdges(foldList,mesh):
+	flattenedEdgeCoords = [None]*mesh.TopologyEdges.Count 
+	#each rowIdx coressponds to a edge in TopologyEdges
+	randFaceIdx = random.randint(0,mesh.Faces.Count-1)
+	rs.AddTextDot("FirstFace",mesh.Faces.GetFaceCenter(randFaceIdx))
+	topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
+	for i, topoEdge in enumerate(topoEdges):
+		if i==0:
+			v1 = Rhino.Geometry.Vector2f(0.0,0.0)
+			edgeLen = getEdgeLen(edgeIdx,mesh)
+			v2 = Rhino.Geometry.Vector2f(0.0,edgeLen)
+			flattenedEdgeCoords.insert(i,[v1,v2])
+		elif i==1:
+			pass
 
-		if(connFaces.GetValue(0)==faceIdx):
-			faceIdx = connFaces.GetValue(1)
+def createTransformMatrix(i,j,k,o,u,v,w,p):
+	# i = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
+	# j = Rhino.Geometry.Vector3d(0.0,1.0,0.0)
+	# k = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
+	o = Rhino.Geometry.Vector3d(o)
+	p = Rhino.Geometry.Vector3d(p)
+	rotatXform = Rhino.Geometry.Transform.Rotation(u,v,w,i,j,k)
+	transXform = Rhino.Geometry.Transform.Translation(o-p)
+	fullXform = Rhino.Geometry.Transform.Multiply(rotatXform,transXform)
+	#matrix = Rhino.Geometry.Matrix(fullXform)
+	return fullXform
+
+
+
+
+def getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh):
+	faceTopoVerts = convertArray(mesh.Faces.GetTopologicalVertices(faceIdx))
+	assert(tVertIdx in faceTopoVerts),"prblm in getOrthoBasis():tVert not in faceTopoVerts "
+	edgeTopoVerts = [mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I,mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J]
+	assert(tVertIdx in edgeTopoVerts),"prblm in getOrthoBasis():tVert not part of given edge"
+	def getOther(tVertIdx,edgeTopoVerts):
+		if(edgeTopoVerts[0]==tVertIdx):
+			return edgeTopoVerts[1]
+		elif(edgeTopoVerts[1]==tVertIdx):
+			return edgeTopoVerts[0]
 		else:
-			faceIdx = connFaces.GetValue(0)
+			print "ERROR: edgeTopoVerts does not contain tVertIdx"
+			return None
 
-		count +=1
-	print str(len(viewEdges))
-	createGroup("cutEdges",viewEdges)
-"""
+	"""U"""
+	p1 = mesh.TopologyVertices.Item[tVertIdx]
+	p2 = mesh.TopologyVertices.Item[getOther(tVertIdx,edgeTopoVerts)]
+	
+	pU = p2-p1
+	u = Rhino.Geometry.Vector3d(pU)
+	u.Unitize()
 
+	"""W"""
+	w = Rhino.Geometry.Vector3d(mesh.FaceNormals.Item[faceIdx])
+	w.Unitize()
+
+	"""V"""
+	v = Rhino.Geometry.Vector3d.CrossProduct(w,u)
+	v.Unitize()
+
+	"""P"""
+	p = mesh.TopologyVertices.Item[tVertIdx]
+
+	return u,v,w,p
+
+def displayOrthoBasis(u,v,w,p):
+	assert(u.Length-1<.00000001), "u.Length!~=1"
+	assert(v.Length-1<.00000001), "v.Length!~=1"
+	assert(w.Length-1<.00000001), "w.Length!~=1"
+	basis = []
+	"""U: BLUE"""
+	attrU = setAttrColor(0,10,103,163)
+	attrU.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
+	uLine = Rhino.Geometry.Line(p,u)
+	basis.append(scriptcontext.doc.Objects.AddLine(uLine,attrU))
+	"""V: YELLOW"""
+	attrV = setAttrColor(0,255,188,0)
+	attrV.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
+	vLine = Rhino.Geometry.Line(p,v)
+	basis.append(scriptcontext.doc.Objects.AddLine(vLine,attrV))
+	"""W: PAPAYA"""
+	attrW = setAttrColor(0,255,65,0)
+	attrW.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
+	wLine = Rhino.Geometry.Line(p,w)
+	basis.append(scriptcontext.doc.Objects.AddLine(wLine,attrW))
+	
+	createGroup("basis",basis)
+
+def setAttrColor(a,r,g,b):
+	attr = Rhino.DocObjects.ObjectAttributes()
+	attr.ObjectColor = System.Drawing.Color.FromArgb(a,r,g,b)
+	attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
+	return attr
+
+def convertArray(array):
+	pyList = []
+	for i in range(array.Length):
+		pyList.append(array.GetValue(i))
+	return pyList
 
 
 def getSpanningKruskal(faces,edge_weights,mesh):
@@ -250,7 +316,7 @@ def addLineForTEdge(edgeIdx,mesh):
 
 
 
-def getDual(mesh):
+def getDual(mesh): #unnecesary, implicit in methods available for topoEdges
 	#input: 
 	#	mesh
 	#ouput:
