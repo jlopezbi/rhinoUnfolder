@@ -5,7 +5,8 @@ import scriptcontext
 import sys
 import itertools
 import System.Guid
-import System.Drawing
+import rhino_helpers
+reload(rhino_helpers)
 from rhino_helpers import *
 
 def unwrapper():
@@ -56,7 +57,7 @@ def unwrapper():
 	# 	#face = mesh.Faces.Item[i]
 	# 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(i).GetValue(0)
 	# 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
-	# 	u,v,w,p = getOrthoBasis(i,edgeIdx,tVertIdx,mesh)
+	# 	u,v,w,p = getBasisOnMesh(i,edgeIdx,tVertIdx,mesh)
 	# 	displayOrthoBasis(u,v,w,p)
 
 	flatEdgeCoords = [None]*mesh.TopologyEdges.Count
@@ -65,7 +66,7 @@ def unwrapper():
 	faceIdx = 0
 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
-	#fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
+	#fromBasis = getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
 	toBasis = origin
 	#displayOrthoBasis(fromBasis,faceIdx)
 	#displayOrthoBasis(toBasis,faceIdx)
@@ -92,37 +93,10 @@ def unwrapper():
 
 
 """FLATTEN/LAYOUT"""
-'''
-def assignFlatCoordsToEdges(foldList,mesh):
-	flatEdgeCoords = [None]*mesh.TopologyEdges.Count 
-	#each rowIdx coressponds to a edge in TopologyEdges
-	# randFaceIdx = random.randint(0,mesh.Faces.Count-1)
-	# rs.AddTextDot("FirstFace",mesh.Faces.GetFaceCenter(randFaceIdx))
-	# topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
-	for i, topoEdge in enumerate(topoEdges):
-		if i==0:
-			v1 = Rhino.Geometry.Vector2f(0.0,0.0)
-			edgeLen = getEdgeLen(edgeIdx,mesh)
-			v2 = Rhino.Geometry.Vector2f(0.0,edgeLen)
-			flattenedEdgeCoords.insert(i,[v1,v2])
-		elif i==1:
-			pass
-
-def assignFlatCoordsToEdges(foldList,mesh):
-	flatEdgeCoords = [None]*mesh.TopologyEdges.Count 
-	#each rowIdx coressponds to a edge in TopologyEdges
-	#initFaceIdx = random.randint(0,mesh.Faces.Count-1)
-	initFaceIdx = 0
-	initEdgeIdx = mesh.TopologyEdges.GetEdgesForFace(initFaceIdx).GetValue(0)
-	initTVertIdx = mesh.TopologyEdges.GetTopologyVertices(initEdgeIdx).I
-
-	rs.AddTextDot("FirstFace",mesh.Faces.GetFaceCenter(initFaceIdx))
-	# topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
-'''
 
 def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords):
 	
-	fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
+	fromBasis = getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
 	faceEdges = getFaceEdges(faceIdx,mesh)
 	xForm = createTransformMatrix(fromBasis,toBasis)
 
@@ -147,7 +121,7 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 			scriptcontext.doc.Objects.AddLine(line,attrCol)
 			scriptcontext.doc.Views.Redraw()
 			if addEdgeLegal:
-				displayEdgeIdx(line,edgeIdx)
+				displayFlatEdgeIdx(line,edgeIdx)
 				flatEdgeCoords.insert(edgeIdx,newCoords)
 
 				if edgeIdx == 47:
@@ -157,8 +131,8 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 				assert(newFaceIdx!=faceIdx), "newFaceIdx==faceIdx!"
 				newEdgeIdx = edgeIdx
 				newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I #convention: useI
-				newToBasis = getOrthoBasisFlat(newCoords)
-				newFromBasis = getOrthoBasis(newFaceIdx,newEdgeIdx,newTVertIdx,mesh)
+				newToBasis = getBasisFlat(newCoords)
+				newFromBasis = getBasisOnMesh(newFaceIdx,newEdgeIdx,newTVertIdx,mesh)
 				#displayOrthoBasis(newToBasis,newFaceIdx)
 				#displayOrthoBasis(newFromBasis,newFaceIdx)
 
@@ -167,25 +141,13 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 		elif edgeIdx not in foldList:
 			attrCol = setAttrColor(0,237,43,120)
 			scriptcontext.doc.Objects.AddLine(line,attrCol)
-			displayEdgeIdx(line,edgeIdx)
+			displayFlatEdgeIdx(line,edgeIdx)
 			flatEdgeCoords.insert(edgeIdx,newCoords)
 	
 	return flatEdgeCoords
 
 
 
-def getFaceEdges(faceIdx,mesh):
-	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
-	return convertArray(arrFaceEdges)
-
-
-
-def displayEdgeIdx(line,edgeIdx):
-	cenX = (line.FromX+line.ToX)/2
-	cenY = (line.FromY+line.ToY)/2
-	cenZ = 0
-	eIdx = str(edgeIdx)
-	rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
 
 def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
 	#WTF!!!!!!!!!
@@ -207,7 +169,7 @@ def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
 		return None
 		
 
-def getOrthoBasisFlat(newCoords):
+def getBasisFlat(newCoords):
 	#Convention: always use .I element from the tVerts associated with a given edge
 	o = newCoords[0]
 	#assert(o.Z==0), "newCoord has Z compenent!"
@@ -241,7 +203,6 @@ def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
 		print "problem in getOtherFaceIdx: edgeIdx not in faceIdx,assert should have caught error"
 		return None
 
-
 def assignNewPntsToEdge(xForm,edgeIdx,mesh):
 	#output: list of new coords, Point3f
 	indexPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
@@ -254,7 +215,6 @@ def assignNewPntsToEdge(xForm,edgeIdx,mesh):
 	#assert(pI.Z == 0), "pI.Z!=0"
 	#assert(pJ.Z == 0), "pJ.Z!=0"
 	return [pI,pJ]
-
 
 def createTransformMatrix(fromBasis,toBasis):
 	p = fromBasis[0]
@@ -283,12 +243,11 @@ def createTransformMatrix(fromBasis,toBasis):
 
 	return xForm2
 
-
-def getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh):
+def getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh):
 	faceTopoVerts = convertArray(mesh.Faces.GetTopologicalVertices(faceIdx))
-	assert(tVertIdx in faceTopoVerts),"prblm in getOrthoBasis():tVert not in faceTopoVerts "
+	assert(tVertIdx in faceTopoVerts),"prblm in getBasisOnMesh():tVert not in faceTopoVerts "
 	edgeTopoVerts = [mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I,mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J]
-	assert(tVertIdx in edgeTopoVerts),"prblm in getOrthoBasis():tVert not part of given edge"
+	assert(tVertIdx in edgeTopoVerts),"prblm in getBasisOnMesh():tVert not part of given edge"
 	def getOther(tVertIdx,edgeTopoVerts):
 		if(edgeTopoVerts[0]==tVertIdx):
 			return edgeTopoVerts[1]
@@ -358,26 +317,17 @@ def displayOrthoBasis(basis,faceIdx):
 
 	createGroup(grpStr,basisGeom)
 
-def setAttrColor(a,r,g,b):
-	attr = Rhino.DocObjects.ObjectAttributes()
-	attr.ObjectColor = System.Drawing.Color.FromArgb(a,r,g,b)
-	attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
-	return attr
-
-def convertArray(array):
-	pyList = []
-	for i in range(array.Length):
-		pyList.append(array.GetValue(i))
-	return pyList
-
 
 def getSpanningKruskal(faces,edge_weights,mesh):
-	#note: have not considered open mesh, or non-manifold edges
-	#input:
-	#	faces = list of faces in mesh. necessary?
-	#	edge_weights = list of tuples elem0 = edgeIdx, elem1 = weight
-	#output:
-	#	foldList = list of edgeIdx's that are to be cut
+	
+	'''
+	note: have not considered open mesh, or non-manifold edges
+	input:
+		faces = list of faces in mesh. necessary?
+		edge_weights = list of tuples elem0 = edgeIdx, elem1 = weight
+	output:
+		foldList = list of edgeIdx's that are to be cut
+	'''
 	treeSets = []
 	foldList = []
 	for tupEdge in edge_weights:
@@ -398,9 +348,6 @@ def getSpanningKruskal(faces,edge_weights,mesh):
 			elif not setConnFaces.isdisjoint(treeSet):
 					#print"overlapped"
 					parentSets.append(i)
-			else:
-				pass
-				#print"not subset, isdisjoint"
 
 		if isLegal==True:
 			foldList.append(edgeIdx)

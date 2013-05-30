@@ -1,5 +1,6 @@
 import Rhino
 import rhinoscriptsyntax as rs
+import System.Drawing
 
 def displayNormals(mesh):
 	normLines = []
@@ -13,6 +14,13 @@ def displayFaceIdxs(mesh):
 	for i in xrange(mesh.Faces.Count):
 		centerPnt = mesh.Faces.GetFaceCenter(i)
 		rs.AddTextDot(str(i),centerPnt)
+
+def displayFlatEdgeIdx(line,edgeIdx):
+	cenX = (line.FromX+line.ToX)/2
+	cenY = (line.FromY+line.ToY)/2
+	cenZ = 0
+	eIdx = str(edgeIdx)
+	rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
 
 def displayDual(faces,edge_weights,thetaMax,mesh):
 	medianEdgeLen = getMedianEdgeLen(mesh)
@@ -34,6 +42,22 @@ def createGroup(groupName,objects):
 	name = rs.AddGroup(groupName)
 	if not rs.AddObjectsToGroup(objects,groupName):
 		print "failed to group"
+
+def convertArray(array):
+	pyList = []
+	for i in range(array.Length):
+		pyList.append(array.GetValue(i))
+	return pyList
+
+def setAttrColor(a,r,g,b):
+	attr = Rhino.DocObjects.ObjectAttributes()
+	attr.ObjectColor = System.Drawing.Color.FromArgb(a,r,g,b)
+	attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
+	return attr
+
+def getFaceEdges(faceIdx,mesh):
+	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
+	return convertArray(arrFaceEdges)
 
 def getMedianEdgeLen(mesh):
 	edgeLens = getEdgeLengths(mesh)
