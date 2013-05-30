@@ -6,7 +6,7 @@ import sys
 import itertools
 import System.Guid
 import System.Drawing
-
+from rhino_helpers import *
 
 def unwrapper():
 	nodeCsvFile = open('trussNodes.csv','rb')
@@ -44,7 +44,7 @@ def unwrapper():
 
 	mesh_id,mesh = generateMesh(rawNodes,faces)
 	faces,edge_weights,thetaMax = getDual(mesh)
-	#displayDual(faces,edge_weights,thetaMax,mesh)
+	displayDual(faces,edge_weights,thetaMax,mesh)
 	#displayFaceIdxs(mesh)
 
 	foldList = getSpanningKruskal(faces,edge_weights,mesh)
@@ -90,69 +90,6 @@ def unwrapper():
 	print('Version:')
 	print(sys.version )
 
-"""MISCELLANEOUS"""
-
-def displayNormals(mesh):
-	normLines = []
-	for i in range(mesh.FaceNormals.Count):
-		p1 = mesh.Faces.GetFaceCenter(i)
-		p2 = p1 + mesh.FaceNormals.Item[i]
-		normLines.append(rs.AddLine(p1,p2))
-	createGroup("normLines",normLines)
-
-def displayFaceIdxs(mesh):
-	for i in xrange(mesh.Faces.Count):
-		centerPnt = mesh.Faces.GetFaceCenter(i)
-		rs.AddTextDot(str(i),centerPnt)
-
-def displayDual(faces,edge_weights,thetaMax,mesh):
-	medianEdgeLen = getMedianEdgeLen(mesh)
-	aspectRatio = 1/10.0
-	scaleFactor = medianEdgeLen*aspectRatio
-	dualRods = []
-	for tupEdge in edge_weights:
-		edgeIdx = tupEdge[0]
-		weight = tupEdge[1]
-		r = (weight/thetaMax)*scaleFactor
-		connFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIdx)
-		faceCenter0 = mesh.Faces.GetFaceCenter(connFaces.GetValue(0))
-		faceCenter1 = mesh.Faces.GetFaceCenter(connFaces.GetValue(1))
-
-		dualRods.append(rs.AddCylinder(faceCenter0,faceCenter1,r))
-	createGroup("dualRods",dualRods)
-		
-def createGroup(groupName,objects):
-	name = rs.AddGroup(groupName)
-	if not rs.AddObjectsToGroup(objects,groupName):
-		print "failed to group"
-
-def getMedianEdgeLen(mesh):
-	edgeLens = getEdgeLengths(mesh)
-	return getMedian(edgeLens)
-
-def getEdgeLengths(mesh):
-	edgeLens = []
-	for i in range(mesh.TopologyEdges.Count):
-		edgeLine = mesh.TopologyEdges.EdgeLine(i)
-		edgeLen = edgeLine.Length
-		edgeLens.append(edgeLen)
-	return edgeLens
-
-def getEdgeLen(edgIdx,mesh):
-	edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
-	return edgeLine.Length
-
-def getMedian(edgeLens):
-	eLensSorted = sorted(edgeLens)
-	nEdges = len(edgeLens)
-	assert(nEdges>0), "nEdges is !>0, error in getMedianEdgeLen()"
-	if nEdges%2 ==0:
-		idxUpper = nEdges/2
-		idxLower = idxUpper-1
-		avg = (edgeLens[idxUpper]+edgeLens[idxLower])/2.0
-		return avg
-	else:
-		return edgeLens[int(nEdges/2)]
 
 """FLATTEN/LAYOUT"""
 '''
@@ -212,7 +149,7 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 			if addEdgeLegal:
 				displayEdgeIdx(line,edgeIdx)
 				flatEdgeCoords.insert(edgeIdx,newCoords)
-				
+
 				if edgeIdx == 47:
 					print "added at 47"
 
@@ -234,6 +171,7 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 			flatEdgeCoords.insert(edgeIdx,newCoords)
 	
 	return flatEdgeCoords
+
 
 
 def getFaceEdges(faceIdx,mesh):
@@ -317,18 +255,6 @@ def assignNewPntsToEdge(xForm,edgeIdx,mesh):
 	#assert(pJ.Z == 0), "pJ.Z!=0"
 	return [pI,pJ]
 
-
-# def createTransformMatrix(i,j,k,o,u,v,w,p):
-# 	# i = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
-# 	# j = Rhino.Geometry.Vector3d(0.0,1.0,0.0)
-# 	# k = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
-# 	o = Rhino.Geometry.Vector3d(o)
-# 	p = Rhino.Geometry.Vector3d(p)
-# 	rotatXform = Rhino.Geometry.Transform.Rotation(u,v,w,i,j,k)
-# 	transXform = Rhino.Geometry.Transform.Translation(o-p)
-# 	fullXform = Rhino.Geometry.Transform.Multiply(rotatXform,transXform)
-# 	#matrix = Rhino.Geometry.Matrix(fullXform)
-# 	return fullXform
 
 def createTransformMatrix(fromBasis,toBasis):
 	p = fromBasis[0]
