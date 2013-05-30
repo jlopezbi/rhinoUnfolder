@@ -45,6 +45,7 @@ def unwrapper():
 	mesh_id,mesh = generateMesh(rawNodes,faces)
 	faces,edge_weights,thetaMax = getDual(mesh)
 	#displayDual(faces,edge_weights,thetaMax,mesh)
+	#displayFaceIdxs(mesh)
 
 	foldList = getSpanningKruskal(faces,edge_weights,mesh)
 	displayCutEdges(foldList,mesh)
@@ -59,12 +60,17 @@ def unwrapper():
 	# 	displayOrthoBasis(u,v,w,p)
 	flatEdgeCoords = [None]*mesh.TopologyEdges.Count
 	origin = rs.WorldXYPlane()
-	faceIdx = 3
+	newO = Rhino.Geometry.Point3f(4,4,0)
+	faceIdx = 0
 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
-	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
-	fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
-	layoutFace(faceIdx,foldList,mesh,fromBasis,origin,flatEdgeCoords)
-	displayOrthoBasis(fromBasis)
+	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
+	#fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
+	toBasis = [newO,origin[1],origin[2],origin[3]]
+	#displayOrthoBasis(fromBasis,faceIdx)
+	#displayOrthoBasis(toBasis,faceIdx)
+
+	layoutFace(faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
+	
 	
 
 	# xForm = createTransformMatrix(origin,fromBasis)
@@ -90,6 +96,11 @@ def displayNormals(mesh):
 		p2 = p1 + mesh.FaceNormals.Item[i]
 		normLines.append(rs.AddLine(p1,p2))
 	createGroup("normLines",normLines)
+
+def displayFaceIdxs(mesh):
+	for i in xrange(mesh.Faces.Count):
+		centerPnt = mesh.Faces.GetFaceCenter(i)
+		rs.AddTextDot(str(i),centerPnt)
 
 def displayDual(faces,edge_weights,thetaMax,mesh):
 	medianEdgeLen = getMedianEdgeLen(mesh)
@@ -157,23 +168,88 @@ def assignFlatCoordsToEdges(foldList,mesh):
 		elif i==1:
 			pass
 
-def layoutFace(faceIdx,foldList,mesh,fromBasis,toBasis,flatEdgeCoords):
+def assignFlatCoordsToEdges(foldList,mesh):
+	flatEdgeCoords = [None]*mesh.TopologyEdges.Count 
+	#each rowIdx coressponds to a edge in TopologyEdges
+	#initFaceIdx = random.randint(0,mesh.Faces.Count-1)
+	initFaceIdx = 0
+	initEdgeIdx = mesh.TopologyEdges.GetEdgesForFace(initFaceIdx).GetValue(0)
+	initTVertIdx = mesh.TopologyEdges.GetTopologyVertices(initEdgeIdx).I
+
+	rs.AddTextDot("FirstFace",mesh.Faces.GetFaceCenter(initFaceIdx))
+	# topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
+
+
+def layoutFace(faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords):
+	fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
+	#displayOrthoBasis(fromBasis,faceIdx)
+	#displayOrthoBasis(toBasis,faceIdx)
 	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
 	faceEdges = convertArray(arrFaceEdges)
-	xForm = createTransformMatrix(toBasis,fromBasis)
+	xForm = createTransformMatrix(fromBasis,toBasis)
 	print faceEdges
 	for edgeIdx in faceEdges:
-		if edgeIdx in foldList:
-			attrCol = setAttrColor(0,49,224,61)
-		else:
-			attrCol = setAttrColor(0,237,43,120)
 		newCoords = assignNewPntsToEdge(xForm,edgeIdx,mesh)
-		flatEdgeCoords.insert(edgeIdx,newCoords)
 		line = Rhino.Geometry.Line(newCoords[0],newCoords[1])
-		scriptcontext.doc.Objects.AddLine(line,attrCol)
+		
+		if edgeIdx in foldList and flatEdgeCoords[edgeIdx]==None:
+			attrCol = setAttrColor(0,49,224,61)
+			scriptcontext.doc.Objects.AddLine(line,attrCol)
+			flatEdgeCoords.insert(edgeIdx,newCoords)
+
+
+			newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
+			assert(newFaceIdx!=faceIdx), "newFaceIdx==faceIdx!"
+			newEdgeIdx = edgeIdx
+			newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I #convention: useI
+			newToBasis = getOrthoBasisFlat(newCoords)
+			newFromBasis = getOrthoBasis(newFaceIdx,newEdgeIdx,newTVertIdx,mesh)
+			#displayOrthoBasis(newToBasis,newFaceIdx)
+			#displayOrthoBasis(newFromBasis,newFaceIdx)
+			layoutFace(newFaceIdx,newEdgeIdx,newTVertIdx,foldList,mesh,newToBasis,flatEdgeCoords)
+			
+		elif flatEdgeCoords[edgeIdx]==None:
+			attrCol = setAttrColor(0,237,43,120)
+			scriptcontext.doc.Objects.AddLine(line,attrCol)
+			flatEdgeCoords.insert(edgeIdx,newCoords)
+
+def getOrthoBasisFlat(newCoords):
+	#Convention: always use .I element from the tVerts associated with a given edge
+	o = newCoords[0]
+	#assert(o.Z==0), "newCoord has Z compenent!"
+	print "o.z:%1.2f"%o.Z
+	x = Rhino.Geometry.Vector3d(newCoords[1]-newCoords[0])
+	x.Unitize()
+	z = rs.WorldXYPlane()[3]
+	#z = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
+	z.Unitize()
+	y = Rhino.Geometry.Vector3d.CrossProduct(z,x)
+	y.Unitize()
+
+	assert(x.Length-1<.00000001), "x.Length!~=1"
+	assert(y.Length-1<.00000001), "y.Length!~=1"
+	assert(z.Length-1<.00000001), "z.Length!~=1"
+
+	return [o,x,y,z]
+
+
+ 
+def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
+	connectedFaces = convertArray(mesh.TopologyEdges.GetConnectedFaces(edgeIdx))
+	assert(len(connectedFaces)==2),"prblm:getOtherFaceIdx: more than two faces connecting an edge"
+	assert(faceIdx in connectedFaces),"prblm:getOtherFaceIdx: faceIdx not in faces associated edge"
+	#eventually probably need to relax this condition for more complex trusses
+	if (connectedFaces[0]==faceIdx):
+		return connectedFaces[1]
+	elif (connectedFaces[1]==faceIdx):
+		return connectedFaces[0]
+	else:
+		print "problem in getOtherFaceIdx: edgeIdx not in faceIdx,assert should have caught error"
+		return None
 
 
 def assignNewPntsToEdge(xForm,edgeIdx,mesh):
+	#output: list of new coords, Point3f
 	indexPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
 	idxI = indexPair.I
 	idxJ = indexPair.J
@@ -181,40 +257,51 @@ def assignNewPntsToEdge(xForm,edgeIdx,mesh):
 	pJ = mesh.TopologyVertices.Item[idxJ]
 	pI.Transform(xForm)
 	pJ.Transform(xForm)
-
+	#assert(pI.Z == 0), "pI.Z!=0"
+	#assert(pJ.Z == 0), "pJ.Z!=0"
 	return [pI,pJ]
 
 
-def createTransformMatrix(i,j,k,o,u,v,w,p):
-	# i = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
-	# j = Rhino.Geometry.Vector3d(0.0,1.0,0.0)
-	# k = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
-	o = Rhino.Geometry.Vector3d(o)
-	p = Rhino.Geometry.Vector3d(p)
-	rotatXform = Rhino.Geometry.Transform.Rotation(u,v,w,i,j,k)
-	transXform = Rhino.Geometry.Transform.Translation(o-p)
-	fullXform = Rhino.Geometry.Transform.Multiply(rotatXform,transXform)
-	#matrix = Rhino.Geometry.Matrix(fullXform)
-	return fullXform
+# def createTransformMatrix(i,j,k,o,u,v,w,p):
+# 	# i = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
+# 	# j = Rhino.Geometry.Vector3d(0.0,1.0,0.0)
+# 	# k = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
+# 	o = Rhino.Geometry.Vector3d(o)
+# 	p = Rhino.Geometry.Vector3d(p)
+# 	rotatXform = Rhino.Geometry.Transform.Rotation(u,v,w,i,j,k)
+# 	transXform = Rhino.Geometry.Transform.Translation(o-p)
+# 	fullXform = Rhino.Geometry.Transform.Multiply(rotatXform,transXform)
+# 	#matrix = Rhino.Geometry.Matrix(fullXform)
+# 	return fullXform
 
-def createTransformMatrix(toBasis,fromBasis):
-	o = toBasis[0]
-	i = toBasis[1]
-	j = toBasis[2]
-	k = toBasis[3]
-
+def createTransformMatrix(fromBasis,toBasis):
 	p = fromBasis[0]
 	u = fromBasis[1]
 	v = fromBasis[2]
 	w = fromBasis[3]
+
+	o = toBasis[0]
+	i = toBasis[1]
+	j = toBasis[2]
+	k = toBasis[3]
 	
 	o = Rhino.Geometry.Vector3d(o)
 	p = Rhino.Geometry.Vector3d(p)
+	
+	changeBasisXform = Rhino.Geometry.Transform.ChangeBasis(u,v,w,i,j,k)
+
+	transFormToOrigin = Rhino.Geometry.Transform.Translation(-p)
 	rotatXform = Rhino.Geometry.Transform.Rotation(u,v,w,i,j,k)
+	transFormToPnt = Rhino.Geometry.Transform.Translation(o)
+	xForm1 = Rhino.Geometry.Transform.Multiply(rotatXform,transFormToOrigin)
+	xForm2 = Rhino.Geometry.Transform.Multiply(transFormToPnt,xForm1)
+
 	transXform = Rhino.Geometry.Transform.Translation(o-p)
 	fullXform = Rhino.Geometry.Transform.Multiply(rotatXform,transXform)
-	#matrix = Rhino.Geometry.Matrix(fullXform)
-	return fullXform
+
+	return xForm2
+
+
 
 def getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh):
 	faceTopoVerts = convertArray(mesh.Faces.GetTopologicalVertices(faceIdx))
@@ -251,7 +338,7 @@ def getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh):
 
 	return [p,u,v,w]
 
-def displayOrthoBasis(basis):
+def displayOrthoBasis(basis,faceIdx):
 	p = basis[0]
 	u = basis[1]
 	v = basis[2]
@@ -286,7 +373,9 @@ def displayOrthoBasis(basis):
 	basisGeom.append(scriptcontext.doc.Objects.AddTextDot(wText,attrW))
 	basisGeom.append(scriptcontext.doc.Objects.AddLine(wLine,attrW))
 	
-	createGroup("basisGeom",basisGeom)
+	grpStr = "face" + str(faceIdx)
+
+	createGroup(grpStr,basisGeom)
 
 def setAttrColor(a,r,g,b):
 	attr = Rhino.DocObjects.ObjectAttributes()
@@ -405,7 +494,7 @@ def getDual(mesh):
 	#how to reverse order of sorting??
 
 	
-	pretty2DListPrint(edge_weights)
+	#pretty2DListPrint(edge_weights)
 
 	return faces,edge_weights,thetaMax
 
