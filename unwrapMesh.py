@@ -155,7 +155,7 @@ def getMedian(edgeLens):
 		return edgeLens[int(nEdges/2)]
 
 """FLATTEN/LAYOUT"""
-
+'''
 def assignFlatCoordsToEdges(foldList,mesh):
 	flatEdgeCoords = [None]*mesh.TopologyEdges.Count 
 	#each rowIdx coressponds to a edge in TopologyEdges
@@ -181,21 +181,19 @@ def assignFlatCoordsToEdges(foldList,mesh):
 
 	rs.AddTextDot("FirstFace",mesh.Faces.GetFaceCenter(initFaceIdx))
 	# topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
-
+'''
 
 def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords):
 	
 	fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
-	#displayOrthoBasis(fromBasis,faceIdx)
-	#displayOrthoBasis(toBasis,faceIdx)
-	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
-	if len(arrFaceEdges)>3:
-		print "%dfaceEdges, face%d" %len(arrFaceEdges)%faceIdx
-	faceEdges = convertArray(arrFaceEdges)
+	faceEdges = getFaceEdges(faceIdx,mesh)
 	xForm = createTransformMatrix(fromBasis,toBasis)
+
 	spaces = " | "*rc
 	listStr = "[%02d,%02d,%02d]"%(faceEdges[0],faceEdges[1],faceEdges[2])
 	print spaces + listStr
+
+
 	for edgeIdx in faceEdges:
 		newCoords = assignNewPntsToEdge(xForm,edgeIdx,mesh)
 		line = Rhino.Geometry.Line(newCoords[0],newCoords[1])
@@ -208,17 +206,15 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 			print str(flatEdgeCoords[47])
 
 		if edgeIdx in foldList:
-			time.sleep(0.1)
 			attrCol = setAttrColor(0,49,224,61)
 			scriptcontext.doc.Objects.AddLine(line,attrCol)
 			scriptcontext.doc.Views.Redraw()
-			Rhino.RhinoApp.Wait()
 			if addEdgeLegal:
 				displayEdgeIdx(line,edgeIdx)
 				flatEdgeCoords.insert(edgeIdx,newCoords)
+				
 				if edgeIdx == 47:
 					print "added at 47"
-
 
 				newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
 				assert(newFaceIdx!=faceIdx), "newFaceIdx==faceIdx!"
@@ -239,6 +235,13 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 	
 	return flatEdgeCoords
 
+
+def getFaceEdges(faceIdx,mesh):
+	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
+	return convertArray(arrFaceEdges)
+
+
+
 def displayEdgeIdx(line,edgeIdx):
 	cenX = (line.FromX+line.ToX)/2
 	cenY = (line.FromY+line.ToY)/2
@@ -247,6 +250,7 @@ def displayEdgeIdx(line,edgeIdx):
 	rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
 
 def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
+	#WTF!!!!!!!!!
 	if flatEdgeCoords[edgeIdx] == None:
 			return True
 	elif edgeIdx in foldList:
@@ -352,7 +356,6 @@ def createTransformMatrix(fromBasis,toBasis):
 	fullXform = Rhino.Geometry.Transform.Multiply(rotatXform,transXform)
 
 	return xForm2
-
 
 
 def getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh):
