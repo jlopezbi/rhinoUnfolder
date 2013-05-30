@@ -58,18 +58,21 @@ def unwrapper():
 	# 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
 	# 	u,v,w,p = getOrthoBasis(i,edgeIdx,tVertIdx,mesh)
 	# 	displayOrthoBasis(u,v,w,p)
+
 	flatEdgeCoords = [None]*mesh.TopologyEdges.Count
+
 	origin = rs.WorldXYPlane()
-	newO = Rhino.Geometry.Point3f(4,4,0)
 	faceIdx = 0
 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
 	#fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
-	toBasis = [newO,origin[1],origin[2],origin[3]]
+	toBasis = origin
 	#displayOrthoBasis(fromBasis,faceIdx)
 	#displayOrthoBasis(toBasis,faceIdx)
 
-	layoutFace(faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
+	flatEdgeCoords = layoutFace(0,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
+	print "flatEdgeCoords:"
+	print flatEdgeCoords[47]
 	
 	
 
@@ -180,44 +183,93 @@ def assignFlatCoordsToEdges(foldList,mesh):
 	# topoEdges = mesh.TopologyEdges.GetEdgesForFace(randFaceIdx)
 
 
-def layoutFace(faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords):
+def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords):
+	
 	fromBasis = getOrthoBasis(faceIdx,edgeIdx,tVertIdx,mesh)
 	#displayOrthoBasis(fromBasis,faceIdx)
 	#displayOrthoBasis(toBasis,faceIdx)
 	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
+	if len(arrFaceEdges)>3:
+		print "%dfaceEdges, face%d" %len(arrFaceEdges)%faceIdx
 	faceEdges = convertArray(arrFaceEdges)
 	xForm = createTransformMatrix(fromBasis,toBasis)
-	print faceEdges
+	spaces = " | "*rc
+	listStr = "[%02d,%02d,%02d]"%(faceEdges[0],faceEdges[1],faceEdges[2])
+	print spaces + listStr
 	for edgeIdx in faceEdges:
 		newCoords = assignNewPntsToEdge(xForm,edgeIdx,mesh)
 		line = Rhino.Geometry.Line(newCoords[0],newCoords[1])
-		
-		if edgeIdx in foldList and flatEdgeCoords[edgeIdx]==None:
+
+		addEdgeLegal = isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh)
+		if edgeIdx == 47:
+			print "47!!"
+			print str(edgeIdx in foldList)
+			print str(flatEdgeCoords[edgeIdx])
+			print str(flatEdgeCoords[47])
+
+		if edgeIdx in foldList:
+			time.sleep(0.1)
 			attrCol = setAttrColor(0,49,224,61)
 			scriptcontext.doc.Objects.AddLine(line,attrCol)
-			flatEdgeCoords.insert(edgeIdx,newCoords)
+			scriptcontext.doc.Views.Redraw()
+			Rhino.RhinoApp.Wait()
+			if addEdgeLegal:
+				displayEdgeIdx(line,edgeIdx)
+				flatEdgeCoords.insert(edgeIdx,newCoords)
+				if edgeIdx == 47:
+					print "added at 47"
 
 
-			newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
-			assert(newFaceIdx!=faceIdx), "newFaceIdx==faceIdx!"
-			newEdgeIdx = edgeIdx
-			newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I #convention: useI
-			newToBasis = getOrthoBasisFlat(newCoords)
-			newFromBasis = getOrthoBasis(newFaceIdx,newEdgeIdx,newTVertIdx,mesh)
-			#displayOrthoBasis(newToBasis,newFaceIdx)
-			#displayOrthoBasis(newFromBasis,newFaceIdx)
-			layoutFace(newFaceIdx,newEdgeIdx,newTVertIdx,foldList,mesh,newToBasis,flatEdgeCoords)
+				newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
+				assert(newFaceIdx!=faceIdx), "newFaceIdx==faceIdx!"
+				newEdgeIdx = edgeIdx
+				newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I #convention: useI
+				newToBasis = getOrthoBasisFlat(newCoords)
+				newFromBasis = getOrthoBasis(newFaceIdx,newEdgeIdx,newTVertIdx,mesh)
+				#displayOrthoBasis(newToBasis,newFaceIdx)
+				#displayOrthoBasis(newFromBasis,newFaceIdx)
+
+				flatEdgeCoords = layoutFace(rc+1,newFaceIdx,newEdgeIdx,newTVertIdx,foldList,mesh,newToBasis,flatEdgeCoords)
 			
-		elif flatEdgeCoords[edgeIdx]==None:
+		elif edgeIdx not in foldList:
 			attrCol = setAttrColor(0,237,43,120)
 			scriptcontext.doc.Objects.AddLine(line,attrCol)
+			displayEdgeIdx(line,edgeIdx)
 			flatEdgeCoords.insert(edgeIdx,newCoords)
+	
+	return flatEdgeCoords
+
+def displayEdgeIdx(line,edgeIdx):
+	cenX = (line.FromX+line.ToX)/2
+	cenY = (line.FromY+line.ToY)/2
+	cenZ = 0
+	eIdx = str(edgeIdx)
+	rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
+
+def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
+	if flatEdgeCoords[edgeIdx] == None:
+			return True
+	elif edgeIdx in foldList:
+		assert(len(flatEdgeCoords[edgeIdx])==2)
+		if(flatEdgeCoords[edgeIdx]==newCoords):
+			return False
+		elif(flatEdgeCoords[edgeIdx]==newCoords.reverse()):
+			return False
+	elif edgeIdx not in foldList:
+		if len(flatEdgeCoords[edgeIdx])==4:
+			return False
+		else:
+			return True
+	else:
+		print "error: %d coords assigned to edge %d"%len(flatEdgeCoords[edgeIdx])%edgeIdx
+		return None
+		
 
 def getOrthoBasisFlat(newCoords):
 	#Convention: always use .I element from the tVerts associated with a given edge
 	o = newCoords[0]
 	#assert(o.Z==0), "newCoord has Z compenent!"
-	print "o.z:%1.2f"%o.Z
+	#print "o.z:%1.2f"%o.Z
 	x = Rhino.Geometry.Vector3d(newCoords[1]-newCoords[0])
 	x.Unitize()
 	z = rs.WorldXYPlane()[3]
