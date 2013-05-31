@@ -4,16 +4,16 @@ import scriptcontext
 import System
 
 
-def importTrussData(nodesFileName='trussNodes.csv',edgesFileName='trussEdges.csv'):
+def importTrussData(nodesFileName=None,edgesFileName=None):
 	rawNodes = getRawNodes(nodesFileName)
 	rawEdges = getRawEdges(edgesFileName)
 	return rawNodes,rawEdges
-	
+
 
 def constructMesh(rawNodes,rawEdges):
 	nodes = createGraph(rawNodes,rawEdges)
 
-	faces,polylineCoords = getTriangleCoords(nodes) 
+	faces,polylineCoords = getTriangleCoords(nodes)
 	#polyline coords is not being used, but could be useful later
 
 	mesh, mesh_id = generateMesh(rawNodes,faces)
@@ -21,7 +21,7 @@ def constructMesh(rawNodes,rawEdges):
 
 	return mesh, mesh_id
 
-def getRawNodes(fileName='trussNodes.csv'):
+def getRawNodes(fileName='data/trussNodes.csv'):
 	nodeLines = importCsvFile(fileName)
 	rawNodes = []
 
@@ -32,7 +32,7 @@ def getRawNodes(fileName='trussNodes.csv'):
 		rawNodes.append(pnt)
 	return rawNodes
 
-def getRawEdges(fileName='trussEdges.csv'):
+def getRawEdges(fileName='data/trussEdges.csv'):
 	edgeLines = importCsvFile(fileName)
 	rawEdges = []
 
@@ -94,18 +94,18 @@ def getTriangleCoords(nodes):
 				for nnIdx in node2.neighbors:
 					node3 = nodes[nnIdx]
 
-					if(not node3.hasBeenCenter and nnIdx not in touchedNeighbors):				
+					if(not node3.hasBeenCenter and nnIdx not in touchedNeighbors):
 						if nnIdx in node.neighbors and nnIdx!=i:
 							polylineCoords.append([node.coord,node2.coord,node3.coord,node.coord])
 							faces.append([i,neighIdx,nnIdx])
-	
+
 
 	return faces,polylineCoords
 
 def createGraph( rawNodes, rawEdges):
 	nodes = []
 	for i, coord in enumerate(rawNodes):
-		#print i 
+		#print i
 		neighbors,edges = findNeighbors(i,rawEdges)
 		#if neighbors:
 		node = Node(coord,neighbors,edges)
