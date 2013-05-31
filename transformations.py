@@ -2,15 +2,8 @@ import Rhino
 from rhino_helpers import *
 
 def createTransformMatrix(fromBasis,toBasis):
-  p = fromBasis[0]
-  u = fromBasis[1]
-  v = fromBasis[2]
-  w = fromBasis[3]
-
-  o = toBasis[0]
-  i = toBasis[1]
-  j = toBasis[2]
-  k = toBasis[3]
+  p, u, v, w = fromBasis
+  o, i, j, k = toBasis
 
   o = Rhino.Geometry.Vector3d(o)
   p = Rhino.Geometry.Vector3d(p)
@@ -72,12 +65,9 @@ def getTransform(basisInfo,toBasis,mesh):
 def getBasisFlat(newCoords):
   #Convention: always use .I element from the tVerts associated with a given edge
   o = newCoords[0]
-  #assert(o.Z==0), "newCoord has Z compenent!"
-  #print "o.z:%1.2f"%o.Z
   x = Rhino.Geometry.Vector3d(newCoords[1]-newCoords[0])
   x.Unitize()
   z = rs.WorldXYPlane()[3]
-  #z = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
   z.Unitize()
   y = Rhino.Geometry.Vector3d.CrossProduct(z,x)
   y.Unitize()
