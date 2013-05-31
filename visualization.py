@@ -41,23 +41,25 @@ def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
   if displayIdx:
     displayEdgeIdx(line,edgeIdx)
 
-def drawNet(flatEdgePairs):
-  flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
-  for flatEdge in flatEdges:
-    if flatEdge.type == "fold":
-      drawFoldEdge(flatEdge)
-    elif flatEdge.type == "cut":
-      drawCutEdge(flatEdge)
-    else:
-      assert(False), "incorrect type for edge, must be 'fold' or 'cut' "
+
+
+''' Dispatch Table for drawing different types of FlatEdges '''
+EDGE_DRAW_FUNCTIONS = {}
 
 def drawFoldEdge(flatEdge):
   p1,p2 = flatEdge.coordinates
   line = Rhino.Geometry.Line(p1,p2)
   drawLine(line,flatEdge.edgeIdx,isFoldEdge=True,displayIdx=False)
+EDGE_DRAW_FUNCTIONS['fold'] = drawFoldEdge
 
 def drawCutEdge(flatEdge):
   p1,p2 = flatEdge.coordinates
   line = Rhino.Geometry.Line(p1,p2)
   drawLine(line,flatEdge.edgeIdx,isFoldEdge=False,displayIdx=False)
+EDGE_DRAW_FUNCTIONS['cut'] = drawCutEdge
 
+
+def drawNet(flatEdgePairs):
+  flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
+  for flatEdge in flatEdges:
+    EDGE_DRAW_FUNCTIONS[flatEdge.type]()
