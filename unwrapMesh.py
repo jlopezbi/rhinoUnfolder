@@ -18,20 +18,8 @@ def unwrapper():
 	rawNodes,rawEdges = importTrussData()
 	mesh,mesh_id = constructMesh(rawNodes,rawEdges)
 
-	'''
-	rawNodes = getRawNodes()
-	rawEdges = getRawEdges()
-
-	nodes = createGraph(rawNodes,rawEdges)
-	#print"lenNodes: %d" %len(nodes)
-	#print"lenRawNodes: %d" %len(rawNodes)
-	polylineCoords,faces = getTriangleCoords(nodes)
-
-	mesh_id,mesh = generateMesh(rawNodes,faces)
-
-	'''
 	faces,edge_weights,thetaMax = getDual(mesh)
-	displayDual(faces,edge_weights,thetaMax,mesh)
+	#displayDual(faces,edge_weights,thetaMax,mesh)
 	#displayFaceIdxs(mesh)
 	#displayNormals(mesh)
 	foldList = getSpanningKruskal(faces,edge_weights,mesh)
@@ -45,6 +33,7 @@ def unwrapper():
 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
 	#fromBasis = getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
 	toBasis = origin
+
 	#displayOrthoBasis(fromBasis,faceIdx)
 	#displayOrthoBasis(toBasis,faceIdx)
 
@@ -65,36 +54,6 @@ def something():
 	# 	displayOrthoBasis(u,v,w,p)
 	pass
 
-
-
-def getRawNodes(fileName='trussNodes.csv'):
-	nodeLines = importCsvFile(fileName)
-	rawNodes = []
-
-	for line in nodeLines:
-		tokens = line.split(',')
-		pnt = [float(item) for item in tokens]
-		#rs.AddPoint( pnt)
-		rawNodes.append(pnt)
-	return rawNodes
-
-def getRawEdges(fileName='trussEdges.csv'):
-	edgeLines = importCsvFile(fileName)
-	rawEdges = []
-
-	for line in edgeLines:
-		tokens = line.split(',')
-		edge = [int(item) for item in tokens]
-		idx1 = edge[0]-1 #matlab is 1-indexed!
-		idx2 = edge[1]-1
-		rawEdges.append([idx1,idx2])
-	return rawEdges
-
-def importCsvFile(fileName):
-	csvFile = open(fileName,'rb')
-	lines = csvFile.readlines()
-	csvFile.close()
-	return lines
 
 
 """FLATTEN/LAYOUT"""
@@ -401,7 +360,7 @@ def lineForTEdge(edgeIdx,mesh):
 	return Rhino.Geometry.Line(p1,p2)
 
 
-"""unnecesary, implicit in methods available for topoEdges"""
+"""chang name to assign edgeWeights, implicit in methods available for topoEdges"""
 def getDual(mesh): 
 	#input: 
 	#	mesh
@@ -443,99 +402,6 @@ def calculateAngle(arrConnFaces,mesh):
 	faceNorm1 = mesh.FaceNormals.Item[faceIdx1]
 
 	return rs.VectorAngle(faceNorm0,faceNorm1) #returns None on error
-
-
-
-def generateMesh(rawNodes,faces):
-	mesh = Rhino.Geometry.Mesh()
-	for node in rawNodes:
-		mesh.Vertices.Add(node[0],node[1],node[2])
-	for face in faces:
-		mesh.Faces.AddFace(face[0],face[1],face[2])
-
-	mesh.UnifyNormals()
-	mesh.Normals.ComputeNormals()
-	mesh.Compact()
-	mesh_id = scriptcontext.doc.Objects.AddMesh(mesh)
-	if mesh_id !=System.Guid.Empty:
-		scriptcontext.doc.Views.Redraw()
-		return mesh_id,mesh
-	return Rhino.Commands.Result.Failure
-
-
-class Node():
-	hasBeenCenter = False
-	def __init__(self,coord,neighbors,edges):
-		self.coord = coord
-		self.X = coord[0]
-		self.Y = coord[1]
-		self.Z = coord[2]
-		self.neighbors = neighbors
-		self.edges = edges
-
-	def draw(self):
-		rs.AddPoint(self.X,self.Y,self.Z)
-
-def getTriangleCoords(nodes):
-	# this is the clique problem!
-	polylineCoords = []
-	faces = []
-	for i, node in enumerate(nodes):
-		edges = node.edges
-		node.hasBeenCenter = True
-
-		touchedNeighbors = []
-		for neighIdx in node.neighbors:
-			node2 = nodes[neighIdx]
-			touchedNeighbors.append(neighIdx)
-
-			if(not node2.hasBeenCenter):
-				for nnIdx in node2.neighbors:
-					node3 = nodes[nnIdx]
-
-					if(not node3.hasBeenCenter and nnIdx not in touchedNeighbors):				
-						if nnIdx in node.neighbors and nnIdx!=i:
-							polylineCoords.append([node.coord,node2.coord,node3.coord,node.coord])
-							faces.append([i,neighIdx,nnIdx])
-	
-
-	return polylineCoords, faces
-
-def removeDups(list2D):
-	#stackoverflow.com/questions/2213923/python-removing-duplicates-from-a-list-of-lists
-	return list(k for k,_ in itertools.groupby(list2D))
-
-
-def createGraph(rawNodes,rawEdges):
-	nodes = []
-	for i, coord in enumerate(rawNodes):
-		#print i 
-		neighbors,edges = findNeighbors(i,rawEdges)
-		#if neighbors:
-		node = Node(coord,neighbors,edges)
-		nodes.append(node)
-	return nodes
-
-def findNeighbors(i,rawEdges):
-	neighbors = []
-	edges = []
-	for edge in rawEdges:
-		if(i in edge):
-			edges.append(edge)
-			idx = edge.index(i)
-			#print(idx)
-			if (idx == 0):
-				neighbors.append(edge[1])
-			elif (idx ==1):
-				neighbors.append(edge[0])
-	return neighbors,edges
-
-test_rawEdges = [[1,2],[3,4],[2,4],[1,5],[2,100]]
-tNeighbors,tEdges = findNeighbors(1,test_rawEdges)
-assert(tNeighbors==[2,5] and tEdges==[[1,2],[1,5]]), "problem in findNeighbors"
-#print(test_neighbors)
-
-
 
 
 
