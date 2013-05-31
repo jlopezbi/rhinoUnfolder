@@ -43,14 +43,15 @@ def unwrap(mesh,mesh_id):
 	faceIdx = 0
 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
+	initBasisInfo = (faceIdx,edgeIdx,tVertIdx)
 	#fromBasis = getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
 	toBasis = origin
 
 	#displayOrthoBasis(fromBasis,faceIdx)
 	#displayOrthoBasis(toBasis,faceIdx)
 
-	flatEdgeCoords = layoutFace(0,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
-	
+	flatEdgeCoords = layoutFace(0,initBasisInfo,foldList,mesh,toBasis,flatEdgeCoords)
+
 	print "flatEdgeCoords:"
 	print flatEdgeCoords[47]
 	
@@ -62,15 +63,13 @@ def unwrap(mesh,mesh_id):
 
 """FLATTEN/LAYOUT"""
 
-def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords):
+def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdgeCoords):
 	''' Recurse through faces, moving along fold edges
 	'''
+	xForm = getTransform(basisInfo,toBasis,mesh)
+	faceEdges = getFaceEdges(basisInfo[0],mesh)
 	
-	fromBasis = getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
-	faceEdges = getFaceEdges(faceIdx,mesh)
-	xForm = createTransformMatrix(fromBasis,toBasis)
-
-	spaces = " | "*rc
+	spaces = " | "*depth
 	listStr = "[%02d,%02d,%02d]"%(faceEdges[0],faceEdges[1],faceEdges[2])
 	print spaces + listStr
 
@@ -81,38 +80,38 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 
 		addEdgeLegal = isLegalToAddEdge(newCoords,testEdgeIdx,flatEdgeCoords,foldList,mesh)
 
-		if testEdgeIdx == 47:
-			print "47!!"
-			print "edgeLegality: " + str(addEdgeLegal)
-			print str(testEdgeIdx in foldList)
-			print str(flatEdgeCoords[testEdgeIdx])
-			print str(flatEdgeCoords[47])
-
 		if testEdgeIdx in foldList:
 
 			drawLine(line,testEdgeIdx,isFoldEdge=True,displayIdx=True)
 
 			if addEdgeLegal:
+
 				flatEdgeCoords.insert(testEdgeIdx,newCoords)
 
-				if testEdgeIdx == 47:
-					print "added at 47"
 
-				newFaceIdx = getOtherFaceIdx(testEdgeIdx,faceIdx,mesh)
-				newEdgeIdx = testEdgeIdx
-				newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(testEdgeIdx).I #convention: useI
+				newBasisInfo = getNewBasisInfo(basisInfo,testEdgeIdx,mesh)
 				newToBasis = getBasisFlat(newCoords)
-				#newFromBasis = getBasisOnMesh(newFaceIdx,testEdgeIdx,newTVertIdx,mesh)
-				#displayOrthoBasis(newToBasis,newFaceIdx)
-				#displayOrthoBasis(newFromBasis,newFaceIdx)
 
-				flatEdgeCoords = layoutFace(rc+1,newFaceIdx,newEdgeIdx,newTVertIdx,foldList,mesh,newToBasis,flatEdgeCoords)
+				flatEdgeCoords = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdgeCoords)
 			
-		elif testEdgeIdx not in foldList:
+		else:
 			drawLine(line,testEdgeIdx,isFoldEdge=False,displayIdx=True)
 			flatEdgeCoords.insert(testEdgeIdx,newCoords)
 	
 	return flatEdgeCoords
+
+def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
+	faceIdx,edgeIdx,tVertIdx = oldBasisInfo
+	newFaceIdx = getOtherFaceIdx(testEdgeIdx,faceIdx,mesh)
+	newEdgeIdx = testEdgeIdx
+	newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(testEdgeIdx).I #convention: useI
+	return newFaceIdx,newEdgeIdx,newTVertIdx
+
+
+def getTransform(basisInfo,toBasis,mesh):
+	fromBasis = getBasisOnMesh(basisInfo,mesh)
+	xForm = createTransformMatrix(fromBasis,toBasis)
+	return xForm
 
 def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
 	if isFoldEdge:
@@ -227,7 +226,8 @@ def createTransformMatrix(fromBasis,toBasis):
 
 	return xForm2
 
-def getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh):
+def getBasisOnMesh(basisInfo,mesh):
+	faceIdx,edgeIdx,tVertIdx = basisInfo
 	faceTopoVerts = convertArray(mesh.Faces.GetTopologicalVertices(faceIdx))
 	assert(tVertIdx in faceTopoVerts),"prblm in getBasisOnMesh():tVert not in faceTopoVerts "
 	edgeTopoVerts = [mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I,mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J]
