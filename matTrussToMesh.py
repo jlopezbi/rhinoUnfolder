@@ -4,6 +4,11 @@ import scriptcontext
 import System
 
 
+def loadExampleMesh():
+  rawNodes,rawEdges = importTrussData()
+  mesh,mesh_id = constructMesh(rawNodes,rawEdges)
+  return mesh
+
 def importTrussData(nodesFileName='data/trussNodes.csv',edgesFileName='data/trussEdges.csv'):
 	rawNodes = getRawNodes(nodesFileName)
 	rawEdges = getRawEdges(edgesFileName)

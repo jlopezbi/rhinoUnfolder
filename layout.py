@@ -6,6 +6,23 @@ class FlatEdge():
     self.edgeIdx = _edgeIdx
     self.coordinates = _coordinates
 
+def initBasisInfo(mesh, origin):
+  faceIdx = 0
+  edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
+  tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
+  initBasisInfo = (faceIdx,edgeIdx,tVertIdx)
+  return initBasisInfo
+
+def layoutMesh(foldList, mesh):
+  flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
+
+  origin = rs.WorldXYPlane()
+  basisInfo = initBasisInfo(mesh, origin)
+  toBasis = origin
+
+  flatEdges = layoutFace(0,basisInfo,foldList,mesh,toBasis,flatEdges)
+  return flatEdges
+
 def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
   ''' Recurse through faces, moving along fold edges
   '''
