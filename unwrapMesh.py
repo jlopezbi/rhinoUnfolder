@@ -73,20 +73,14 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdgeCoords):
 	listStr = "[%02d,%02d,%02d]"%(faceEdges[0],faceEdges[1],faceEdges[2])
 	print spaces + listStr
 
-
 	for testEdgeIdx in faceEdges:
 		newCoords = assignNewPntsToEdge(xForm,testEdgeIdx,mesh)
 		line = Rhino.Geometry.Line(newCoords[0],newCoords[1])
 
-		addEdgeLegal = isLegalToAddEdge(newCoords,testEdgeIdx,flatEdgeCoords,foldList,mesh)
-
-		if testEdgeIdx in foldList:
-			if not alreadyBeenPlaced(testEdgeIdx,flatEdgeCoords):
-				drawLine(line,testEdgeIdx,isFoldEdge=True,displayIdx=True)
-
-			#if addEdgeLegal:
-
-				flatEdgeCoords.insert(testEdgeIdx,newCoords)
+		if (testEdgeIdx in foldList):
+			if (not alreadyBeenPlaced(testEdgeIdx,flatEdgeCoords)):
+				drawLine(line,testEdgeIdx,isFoldEdge=True,displayIdx=False)
+				flatEdgeCoords[testEdgeIdx] = newCoords
 
 
 				newBasisInfo = getNewBasisInfo(basisInfo,testEdgeIdx,mesh)
@@ -95,8 +89,8 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdgeCoords):
 				flatEdgeCoords = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdgeCoords)
 			
 		else:
-			drawLine(line,testEdgeIdx,isFoldEdge=False,displayIdx=True)
-			flatEdgeCoords.insert(testEdgeIdx,newCoords)
+			drawLine(line,testEdgeIdx,isFoldEdge=False,displayIdx=False)
+			flatEdgeCoords[testEdgeIdx] = newCoords
 	
 	return flatEdgeCoords
 
@@ -130,27 +124,6 @@ def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
 	if displayIdx:
 		displayEdgeIdx(line,edgeIdx)
 
-
-def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
-	#WTF!!!!!!!!!
-	if flatEdgeCoords[edgeIdx] == None:
-			return True
-	elif edgeIdx in foldList:
-		assert(len(flatEdgeCoords[edgeIdx])==2)
-		if(flatEdgeCoords[edgeIdx]==newCoords):
-			return False
-		if(flatEdgeCoords[edgeIdx]==newCoords.reverse()):
-			return False
-	elif edgeIdx not in foldList:
-		if len(flatEdgeCoords[edgeIdx])==4:
-			return False
-		else:
-			return True
-	else:
-		print "######################"
-		print "error: %d coords assigned to edge %d"%len(flatEdgeCoords[edgeIdx])%edgeIdx
-		return None
-		
 
 def getBasisFlat(newCoords):
 	#Convention: always use .I element from the tVerts associated with a given edge
