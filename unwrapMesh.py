@@ -9,34 +9,18 @@ import rhino_helpers
 reload(rhino_helpers)
 from rhino_helpers import *
 
+import matTrussToMesh
+reload(matTrussToMesh)
+from matTrussToMesh import *
+
 def unwrapper():
-	nodeCsvFile = open('trussNodes.csv','rb')
-	nodeLines = nodeCsvFile.readlines()
-	nodeCsvFile.close()
 
-	rawNodes = []
+	rawNodes,rawEdges = importTrussData()
+	mesh,mesh_id = constructMesh(rawNodes,rawEdges)
 
-	for line in nodeLines:
-		tokens = line.split(',')
-		pnt = [float(item) for item in tokens]
-		#rs.AddPoint( pnt)
-		rawNodes.append(pnt)
-
-	edgeCsvFile = open('trussEdges.csv','rb')
-	edgeLines = edgeCsvFile.readlines()
-	edgeCsvFile.close()
-
-	rawEdges = []
-
-	for line in edgeLines:
-		tokens = line.split(',')
-		edge = [int(item) for item in tokens]
-		idx1 = edge[0]-1 #matlab is 1-indexed!
-		idx2 = edge[1]-1
-		#p1 = rawNodes[idx1] 
-		#p2 = rawNodes[idx2]
-		#rs.AddLine(p1,p2)
-		rawEdges.append([idx1,idx2])
+	'''
+	rawNodes = getRawNodes()
+	rawEdges = getRawEdges()
 
 	nodes = createGraph(rawNodes,rawEdges)
 	#print"lenNodes: %d" %len(nodes)
@@ -44,21 +28,14 @@ def unwrapper():
 	polylineCoords,faces = getTriangleCoords(nodes)
 
 	mesh_id,mesh = generateMesh(rawNodes,faces)
+
+	'''
 	faces,edge_weights,thetaMax = getDual(mesh)
 	displayDual(faces,edge_weights,thetaMax,mesh)
 	#displayFaceIdxs(mesh)
-
+	#displayNormals(mesh)
 	foldList = getSpanningKruskal(faces,edge_weights,mesh)
 	displayCutEdges(foldList,mesh)
-	#displayNormals(mesh)
-
-
-	# for i in range(mesh.Faces.Count):
-	# 	#face = mesh.Faces.Item[i]
-	# 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(i).GetValue(0)
-	# 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
-	# 	u,v,w,p = getBasisOnMesh(i,edgeIdx,tVertIdx,mesh)
-	# 	displayOrthoBasis(u,v,w,p)
 
 	flatEdgeCoords = [None]*mesh.TopologyEdges.Count
 
@@ -75,21 +52,49 @@ def unwrapper():
 	print "flatEdgeCoords:"
 	print flatEdgeCoords[47]
 	
-	
-
-	# xForm = createTransformMatrix(origin,fromBasis)
-	# getrc,p0,p1,p2,p3 = mesh.Faces.GetFaceVertices(faceIdx)
-	# pnts = [p0,p1,p2]
-	# for i, pnt in enumerate(pnts):
-	# 	#print type(pnt)
-	# 	pnt.Transform(xForm)
-	# 	rs.AddPoint(pnt)
-	# rs.AddPolyline(pnts)
-	
-
 
 	print('Version:')
 	print(sys.version )
+
+def something():
+		# for i in range(mesh.Faces.Count):
+	# 	#face = mesh.Faces.Item[i]
+	# 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(i).GetValue(0)
+	# 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
+	# 	u,v,w,p = getBasisOnMesh(i,edgeIdx,tVertIdx,mesh)
+	# 	displayOrthoBasis(u,v,w,p)
+	pass
+
+
+
+def getRawNodes(fileName='trussNodes.csv'):
+	nodeLines = importCsvFile(fileName)
+	rawNodes = []
+
+	for line in nodeLines:
+		tokens = line.split(',')
+		pnt = [float(item) for item in tokens]
+		#rs.AddPoint( pnt)
+		rawNodes.append(pnt)
+	return rawNodes
+
+def getRawEdges(fileName='trussEdges.csv'):
+	edgeLines = importCsvFile(fileName)
+	rawEdges = []
+
+	for line in edgeLines:
+		tokens = line.split(',')
+		edge = [int(item) for item in tokens]
+		idx1 = edge[0]-1 #matlab is 1-indexed!
+		idx2 = edge[1]-1
+		rawEdges.append([idx1,idx2])
+	return rawEdges
+
+def importCsvFile(fileName):
+	csvFile = open(fileName,'rb')
+	lines = csvFile.readlines()
+	csvFile.close()
+	return lines
 
 
 """FLATTEN/LAYOUT"""
@@ -319,7 +324,7 @@ def displayOrthoBasis(basis,faceIdx):
 
 
 def getSpanningKruskal(faces,edge_weights,mesh):
-	
+
 	'''
 	note: have not considered open mesh, or non-manifold edges
 	input:
@@ -529,6 +534,8 @@ test_rawEdges = [[1,2],[3,4],[2,4],[1,5],[2,100]]
 tNeighbors,tEdges = findNeighbors(1,test_rawEdges)
 assert(tNeighbors==[2,5] and tEdges==[[1,2],[1,5]]), "problem in findNeighbors"
 #print(test_neighbors)
+
+
 
 
 
