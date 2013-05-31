@@ -31,15 +31,8 @@ def unwrapExampleMesh():
 
 
 def unwrap(mesh,mesh_id):
-
 	faces,edge_weights,thetaMax = assignEdgeWeights(mesh)
-	#displayDual(faces,edge_weights,thetaMax,mesh)
-	#displayFaceIdxs(mesh)
-	#displayNormals(mesh)
 	foldList = getSpanningKruskal(faces,edge_weights,mesh)
-
-	#displayCutEdges(foldList,mesh,True)
-	#displayFoldEdges(foldList,mesh,True)
 
 	flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
 
@@ -48,16 +41,11 @@ def unwrap(mesh,mesh_id):
 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
 	initBasisInfo = (faceIdx,edgeIdx,tVertIdx)
-	#fromBasis = getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
-	toBasis = origin
 
-	#displayOrthoBasis(fromBasis,faceIdx)
-	#displayOrthoBasis(toBasis,faceIdx)
+	toBasis = origin
 
 	flatEdges = layoutFace(0,initBasisInfo,foldList,mesh,toBasis,flatEdges)
 	drawNet(flatEdges)
-
-	
 
 	print('Version:')
 	print(sys.version )
@@ -86,12 +74,12 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
 				newToBasis = getBasisFlat(flatCoords)
 
 				flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges)
-			
+
 		else:
 			if len(flatEdges[edgeIndex])<2:
 				flatEdge.type  = "cut"
 				flatEdges[edgeIndex].append(flatEdge)
-	
+
 	return flatEdges
 
 
@@ -137,7 +125,7 @@ def getBasisFlat(newCoords):
 
 	return [o,x,y,z]
 
- 
+
 def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
 	connectedFaces = convertArray(mesh.TopologyEdges.GetConnectedFaces(edgeIdx))
 	assert(len(connectedFaces)==2),"getOtherFaceIdx(): more than two faces connecting an edge"
@@ -179,10 +167,10 @@ def createTransformMatrix(fromBasis,toBasis):
 	i = toBasis[1]
 	j = toBasis[2]
 	k = toBasis[3]
-	
+
 	o = Rhino.Geometry.Vector3d(o)
 	p = Rhino.Geometry.Vector3d(p)
-	
+
 	changeBasisXform = Rhino.Geometry.Transform.ChangeBasis(u,v,w,i,j,k)
 
 	transFormToOrigin = Rhino.Geometry.Transform.Translation(-p)
@@ -214,7 +202,7 @@ def getBasisOnMesh(basisInfo,mesh):
 	"""U"""
 	p1 = mesh.TopologyVertices.Item[tVertIdx]
 	p2 = mesh.TopologyVertices.Item[getOther(tVertIdx,edgeTopoVerts)]
-	
+
 	pU = p2-p1
 	u = Rhino.Geometry.Vector3d(pU)
 	u.Unitize()
@@ -231,46 +219,6 @@ def getBasisOnMesh(basisInfo,mesh):
 	p = mesh.TopologyVertices.Item[tVertIdx]
 
 	return [p,u,v,w]
-
-def displayOrthoBasis(basis,faceIdx):
-	p = basis[0]
-	u = basis[1]
-	v = basis[2]
-	w = basis[3]
-	
-	assert(u.Length-1<.00000001), "u.Length!~=1"
-	assert(v.Length-1<.00000001), "v.Length!~=1"
-	assert(w.Length-1<.00000001), "w.Length!~=1"
-	basisGeom = []
-	"""U: BLUE"""
-	attrU = setAttrColor(0,10,103,163)
-	attrU.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
-	uLine = Rhino.Geometry.Line(p,u)
-	textPnt = Rhino.Geometry.Point3d.Add(p,u)
-	uText = Rhino.Geometry.TextDot("u",textPnt)
-	basisGeom.append(scriptcontext.doc.Objects.AddTextDot(uText,attrU))
-	basisGeom.append(scriptcontext.doc.Objects.AddLine(uLine,attrU))
-	"""V: YELLOW"""
-	attrV = setAttrColor(0,255,188,0)
-	attrV.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
-	vLine = Rhino.Geometry.Line(p,v)
-	textPnt = Rhino.Geometry.Point3d.Add(p,v)
-	vText = Rhino.Geometry.TextDot("v",textPnt)
-	basisGeom.append(scriptcontext.doc.Objects.AddTextDot(vText,attrV))
-	basisGeom.append(scriptcontext.doc.Objects.AddLine(vLine,attrV))
-	"""W: PAPAYA"""
-	attrW = setAttrColor(0,255,65,0)
-	attrW.ObjectDecoration = Rhino.DocObjects.ObjectDecoration.EndArrowhead
-	wLine = Rhino.Geometry.Line(p,w)
-	textPnt = Rhino.Geometry.Point3d.Add(p,w)
-	wText = Rhino.Geometry.TextDot("w",textPnt)
-	basisGeom.append(scriptcontext.doc.Objects.AddTextDot(wText,attrW))
-	basisGeom.append(scriptcontext.doc.Objects.AddLine(wLine,attrW))
-	
-	grpStr = "face" + str(faceIdx)
-
-	createGroup(grpStr,basisGeom)
-
 
 def getSpanningKruskal(faces,edge_weights,mesh):
 
@@ -318,49 +266,16 @@ def getSpanningKruskal(faces,edge_weights,mesh):
 				print(treeSets)
 				print(parentSets)
 				print(setConnFaces)
-				
+
 
 		# wow there must be a cleaner way of doing this!!! some set tricks
 		# also the if staements could be cleaned up probs.
 	return foldList
 
-"""FOLD DISPLAY"""
-def displayFoldEdges(foldList,mesh,displayIdx):
-	foldLines = []
-	#DARK GREEN foldEdge
-	attr = setAttrColor(0,25,145,33)
-	for i in range(mesh.TopologyEdges.Count):
-		if i in foldList:
-			line = getLineForTEdge(i,mesh)
-			foldLines.append(scriptcontext.doc.Objects.AddLine(line,attr))
-			if displayIdx:
-				displayEdgeIdx(line,i)
-
-	createGroup("foldLines",foldLines)
-
-def displayCutEdges(foldList,mesh,displayIdx):
-	cutLines = []
-	# RED cutEdge
-	attr= setAttrColor(0,237,17,53)
-	for i in range(mesh.TopologyEdges.Count):
-		if i not in foldList:
-			line = getLineForTEdge(i,mesh)
-			cutLines.append(scriptcontext.doc.Objects.AddLine(line,attr))
-			if displayIdx:
-				displayEdgeIdx(line,i)
-	createGroup("cutLines",cutLines)
-
-def getLineForTEdge(edgeIdx,mesh):
-	tVerts = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
-	p1 = mesh.TopologyVertices.Item[tVerts.I]
-	p2 = mesh.TopologyVertices.Item[tVerts.J]
-	return Rhino.Geometry.Line(p1,p2)
-
-
 """chang name to assign edgeWeights, implicit in methods available for topoEdges"""
 def assignEdgeWeights(mesh):
 	'''
-	input: 
+	input:
 		mesh = instance of Rhino.Geometry.Mesh()
 	ouput:
 		faces = list of Faces as MeshFace class (4.rhino3d.com/5/rhinocommon/)
@@ -384,14 +299,10 @@ def assignEdgeWeights(mesh):
 	edge_weights = sorted(edge_weights,key=lambda tup: tup[1],reverse=False)
 	#how to reverse order of sorting??
 
-	
+
 	#pretty2DListPrint(edge_weights)
 
 	return faces,edge_weights,thetaMax
-
-def pretty2DListPrint(array):
-	print "\n".join(" ".join(map(str, line)) for line in array)
-
 
 def calculateAngle(arrConnFaces,mesh):
 	faceIdx0 = arrConnFaces.GetValue(0)
@@ -401,24 +312,6 @@ def calculateAngle(arrConnFaces,mesh):
 	faceNorm1 = mesh.FaceNormals.Item[faceIdx1]
 
 	return rs.VectorAngle(faceNorm0,faceNorm1) #returns None on error
-
-
-def checkGetBasisOnMesh(mesh):
-	'''
-	arbitraty edge is chosen, so this method is only to see that getBasisOnMesh is working
-	HAVE NOT TESTED YET
-	'''
-	for faceIdx in range(mesh.Faces.Count):
-	#face = mesh.Faces.Item[i]
-		edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
-		tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
-		basis= getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
-		displayOrthoBasis(basis)
-	
-
-
-
-
 
 if __name__=="__main__":
 	unwrapExampleMesh()
