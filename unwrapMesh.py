@@ -37,7 +37,7 @@ def unwrap(mesh,mesh_id):
 	#displayCutEdges(foldList,mesh,True)
 	#displayFoldEdges(foldList,mesh,True)
 
-	flatEdgeCoords = [None]*mesh.TopologyEdges.Count
+	flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
 
 	origin = rs.WorldXYPlane()
 	faceIdx = 0
@@ -50,10 +50,9 @@ def unwrap(mesh,mesh_id):
 	#displayOrthoBasis(fromBasis,faceIdx)
 	#displayOrthoBasis(toBasis,faceIdx)
 
-	flatEdgeCoords = layoutFace(0,initBasisInfo,foldList,mesh,toBasis,flatEdgeCoords)
+	flatEdges = layoutFace(0,initBasisInfo,foldList,mesh,toBasis,flatEdges)
+	drawNet(flatEdges)
 
-	print "flatEdgeCoords:"
-	print flatEdgeCoords[47]
 	
 
 	print('Version:')
@@ -63,39 +62,66 @@ def unwrap(mesh,mesh_id):
 
 """FLATTEN/LAYOUT"""
 
-def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdgeCoords):
+def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
 	''' Recurse through faces, moving along fold edges
 	'''
 	xForm = getTransform(basisInfo,toBasis,mesh)
 	faceEdges = getFaceEdges(basisInfo[0],mesh)
-	
-	spaces = " | "*depth
-	listStr = "[%02d,%02d,%02d]"%(faceEdges[0],faceEdges[1],faceEdges[2])
-	print spaces + listStr
 
 	for testEdgeIdx in faceEdges:
 		newCoords = assignNewPntsToEdge(xForm,testEdgeIdx,mesh)
-		line = Rhino.Geometry.Line(newCoords[0],newCoords[1])
+
+		flatEdge = FlatEdge(testEdgeIdx,newCoords)
 
 		if (testEdgeIdx in foldList):
-			if (not alreadyBeenPlaced(testEdgeIdx,flatEdgeCoords)):
-				drawLine(line,testEdgeIdx,isFoldEdge=True,displayIdx=False)
-				flatEdgeCoords[testEdgeIdx] = newCoords
+			if (not alreadyBeenPlaced(testEdgeIdx,flatEdges)):
+				flatEdge.type  = "fold"
 
+				flatEdges[testEdgeIdx].append(flatEdge)
 
 				newBasisInfo = getNewBasisInfo(basisInfo,testEdgeIdx,mesh)
 				newToBasis = getBasisFlat(newCoords)
 
-				flatEdgeCoords = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdgeCoords)
+				flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges)
 			
 		else:
-			drawLine(line,testEdgeIdx,isFoldEdge=False,displayIdx=False)
-			flatEdgeCoords[testEdgeIdx] = newCoords
+			if len(flatEdges[testEdgeIdx])<2:
+				flatEdge.type  = "cut"
+				flatEdges[testEdgeIdx].append(flatEdge)
 	
-	return flatEdgeCoords
+	return flatEdges
 
-def alreadyBeenPlaced(testEdgeIdx,flatEdgeCoords):
-	return flatEdgeCoords[testEdgeIdx] != None
+
+class FlatEdge():
+	def __init__(self,_edgeIdx,_coordinates):
+		# eventually add siblings data
+		self.edgeIdx = _edgeIdx
+		self.coordinates = _coordinates
+def drawNet(flatEdgePairs):
+	flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
+	for flatEdge in flatEdges:
+		if flatEdge.type == "fold":
+			drawFoldEdge(flatEdge)
+		elif flatEdge.type == "cut":
+			drawCutEdge(flatEdge)
+		else:
+			assert(False), "incorrect type for edge, must be 'fold' or 'cut' "
+
+
+def drawFoldEdge(flatEdge):
+	p1,p2 = flatEdge.coordinates
+	line = Rhino.Geometry.Line(p1,p2)
+	drawLine(line,flatEdge.edgeIdx,isFoldEdge=True,displayIdx=False)
+
+def drawCutEdge(flatEdge):
+	p1,p2 = flatEdge.coordinates
+	line = Rhino.Geometry.Line(p1,p2)
+	drawLine(line,flatEdge.edgeIdx,isFoldEdge=False,displayIdx=False)
+
+
+
+def alreadyBeenPlaced(testEdgeIdx,flatEdges):
+	return len(flatEdges[testEdgeIdx]) > 0
 		
 
 def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
