@@ -14,10 +14,19 @@ import matTrussToMesh
 reload(matTrussToMesh)
 from matTrussToMesh import *
 
-def unwrapper():
+def loadExampleMesh():
 
 	rawNodes,rawEdges = importTrussData()
 	mesh,mesh_id = constructMesh(rawNodes,rawEdges)
+
+	return mesh,mesh_id
+
+def unwrapExampleMesh():
+	mesh,mesh_id = loadExampleMesh()
+	unwrap(mesh,mesh_id)
+
+
+def unwrap(mesh,mesh_id):
 
 	faces,edge_weights,thetaMax = getDual(mesh)
 	#displayDual(faces,edge_weights,thetaMax,mesh)
@@ -441,4 +450,4 @@ def checkGetBasisOnMesh(mesh):
 
 
 if __name__=="__main__":
-	unwrapper()
+	unwrapExampleMesh()
