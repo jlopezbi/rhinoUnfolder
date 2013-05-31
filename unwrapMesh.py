@@ -18,6 +18,10 @@ import matTrussToMesh
 reload(matTrussToMesh)
 from matTrussToMesh import *
 
+import flat_edge
+reload(flat_edge)
+from flat_edge import FlatEdge
+
 def loadExampleMesh():
 
 	rawNodes,rawEdges = importTrussData()
@@ -81,13 +85,6 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
 				flatEdges[edgeIndex].append(flatEdge)
 
 	return flatEdges
-
-
-class FlatEdge():
-	def __init__(self,_edgeIdx,_coordinates):
-		# eventually add siblings data
-		self.edgeIdx = _edgeIdx
-		self.coordinates = _coordinates
 
 def alreadyBeenPlaced(testEdgeIdx,flatEdges):
 	return len(flatEdges[testEdgeIdx]) > 0
