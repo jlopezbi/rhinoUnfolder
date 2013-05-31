@@ -5,6 +5,7 @@ import scriptcontext
 import sys
 import itertools
 import System.Guid
+
 import rhino_helpers
 reload(rhino_helpers)
 from rhino_helpers import *
@@ -23,7 +24,9 @@ def unwrapper():
 	#displayFaceIdxs(mesh)
 	#displayNormals(mesh)
 	foldList = getSpanningKruskal(faces,edge_weights,mesh)
-	displayCutEdges(foldList,mesh)
+
+	#displayCutEdges(foldList,mesh,True)
+	#displayFoldEdges(foldList,mesh,True)
 
 	flatEdgeCoords = [None]*mesh.TopologyEdges.Count
 
@@ -45,20 +48,13 @@ def unwrapper():
 	print('Version:')
 	print(sys.version )
 
-def something():
-		# for i in range(mesh.Faces.Count):
-	# 	#face = mesh.Faces.Item[i]
-	# 	edgeIdx = mesh.TopologyEdges.GetEdgesForFace(i).GetValue(0)
-	# 	tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J
-	# 	u,v,w,p = getBasisOnMesh(i,edgeIdx,tVertIdx,mesh)
-	# 	displayOrthoBasis(u,v,w,p)
-	pass
-
 
 
 """FLATTEN/LAYOUT"""
 
 def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords):
+	''' Recurse through faces, moving along fold edges
+	'''
 	
 	fromBasis = getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
 	faceEdges = getFaceEdges(faceIdx,mesh)
@@ -69,48 +65,57 @@ def layoutFace(rc,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
 	print spaces + listStr
 
 
-	for edgeIdx in faceEdges:
-		newCoords = assignNewPntsToEdge(xForm,edgeIdx,mesh)
+	for testEdgeIdx in faceEdges:
+		newCoords = assignNewPntsToEdge(xForm,testEdgeIdx,mesh)
 		line = Rhino.Geometry.Line(newCoords[0],newCoords[1])
 
-		addEdgeLegal = isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh)
-		if edgeIdx == 47:
+		addEdgeLegal = isLegalToAddEdge(newCoords,testEdgeIdx,flatEdgeCoords,foldList,mesh)
+
+		if testEdgeIdx == 47:
 			print "47!!"
-			print str(edgeIdx in foldList)
-			print str(flatEdgeCoords[edgeIdx])
+			print "edgeLegality: " + str(addEdgeLegal)
+			print str(testEdgeIdx in foldList)
+			print str(flatEdgeCoords[testEdgeIdx])
 			print str(flatEdgeCoords[47])
 
-		if edgeIdx in foldList:
-			attrCol = setAttrColor(0,49,224,61)
-			scriptcontext.doc.Objects.AddLine(line,attrCol)
-			scriptcontext.doc.Views.Redraw()
-			if addEdgeLegal:
-				displayFlatEdgeIdx(line,edgeIdx)
-				flatEdgeCoords.insert(edgeIdx,newCoords)
+		if testEdgeIdx in foldList:
 
-				if edgeIdx == 47:
+			drawLine(line,testEdgeIdx,isFoldEdge=True,displayIdx=True)
+
+			if addEdgeLegal:
+				flatEdgeCoords.insert(testEdgeIdx,newCoords)
+
+				if testEdgeIdx == 47:
 					print "added at 47"
 
-				newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
-				assert(newFaceIdx!=faceIdx), "newFaceIdx==faceIdx!"
-				newEdgeIdx = edgeIdx
-				newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I #convention: useI
+				newFaceIdx = getOtherFaceIdx(testEdgeIdx,faceIdx,mesh)
+				newEdgeIdx = testEdgeIdx
+				newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(testEdgeIdx).I #convention: useI
 				newToBasis = getBasisFlat(newCoords)
-				newFromBasis = getBasisOnMesh(newFaceIdx,newEdgeIdx,newTVertIdx,mesh)
+				#newFromBasis = getBasisOnMesh(newFaceIdx,testEdgeIdx,newTVertIdx,mesh)
 				#displayOrthoBasis(newToBasis,newFaceIdx)
 				#displayOrthoBasis(newFromBasis,newFaceIdx)
 
 				flatEdgeCoords = layoutFace(rc+1,newFaceIdx,newEdgeIdx,newTVertIdx,foldList,mesh,newToBasis,flatEdgeCoords)
 			
-		elif edgeIdx not in foldList:
-			attrCol = setAttrColor(0,237,43,120)
-			scriptcontext.doc.Objects.AddLine(line,attrCol)
-			displayFlatEdgeIdx(line,edgeIdx)
-			flatEdgeCoords.insert(edgeIdx,newCoords)
+		elif testEdgeIdx not in foldList:
+			drawLine(line,testEdgeIdx,isFoldEdge=False,displayIdx=True)
+			flatEdgeCoords.insert(testEdgeIdx,newCoords)
 	
 	return flatEdgeCoords
 
+def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
+	if isFoldEdge:
+		#GREEN for foldEdge
+		attrCol = setAttrColor(0,49,224,61)
+	else:
+		#RED for cutEdge
+		attrCol = setAttrColor(0,237,43,120)
 
+	scriptcontext.doc.Objects.AddLine(line,attrCol)
+
+	if displayIdx:
+		displayEdgeIdx(line,edgeIdx)
 
 
 def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
@@ -121,7 +126,7 @@ def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
 		assert(len(flatEdgeCoords[edgeIdx])==2)
 		if(flatEdgeCoords[edgeIdx]==newCoords):
 			return False
-		elif(flatEdgeCoords[edgeIdx]==newCoords.reverse()):
+		if(flatEdgeCoords[edgeIdx]==newCoords.reverse()):
 			return False
 	elif edgeIdx not in foldList:
 		if len(flatEdgeCoords[edgeIdx])==4:
@@ -129,6 +134,7 @@ def isLegalToAddEdge(newCoords,edgeIdx,flatEdgeCoords,foldList,mesh):
 		else:
 			return True
 	else:
+		print "######################"
 		print "error: %d coords assigned to edge %d"%len(flatEdgeCoords[edgeIdx])%edgeIdx
 		return None
 		
@@ -152,20 +158,24 @@ def getBasisFlat(newCoords):
 
 	return [o,x,y,z]
 
-
  
 def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
 	connectedFaces = convertArray(mesh.TopologyEdges.GetConnectedFaces(edgeIdx))
-	assert(len(connectedFaces)==2),"prblm:getOtherFaceIdx: more than two faces connecting an edge"
-	assert(faceIdx in connectedFaces),"prblm:getOtherFaceIdx: faceIdx not in faces associated edge"
+	assert(len(connectedFaces)==2),"getOtherFaceIdx(): more than two faces connecting an edge"
+	assert(faceIdx in connectedFaces),"getOtherFaceIdx(): faceIdx not in faces associated with edge"
+
 	#eventually probably need to relax this condition for more complex trusses
+	newFaceIdx = None
 	if (connectedFaces[0]==faceIdx):
-		return connectedFaces[1]
+		newFaceIdx = connectedFaces[1]
 	elif (connectedFaces[1]==faceIdx):
-		return connectedFaces[0]
+		newFaceIdx = connectedFaces[0]
 	else:
 		print "problem in getOtherFaceIdx: edgeIdx not in faceIdx,assert should have caught error"
 		return None
+
+	assert(newFaceIdx!=faceIdx), "getOtherFaceIdx(): newFaceIdx == faceIdx!"
+	return newFaceIdx
 
 def assignNewPntsToEdge(xForm,edgeIdx,mesh):
 	#output: list of new coords, Point3f
@@ -334,26 +344,33 @@ def getSpanningKruskal(faces,edge_weights,mesh):
 		# also the if staements could be cleaned up probs.
 	return foldList
 
-
-def displayFoldEdges(foldList,mesh):
+"""FOLD DISPLAY"""
+def displayFoldEdges(foldList,mesh,displayIdx):
 	foldLines = []
+	#DARK GREEN foldEdge
 	attr = setAttrColor(0,25,145,33)
 	for i in range(mesh.TopologyEdges.Count):
-		if i in foldLines:
-			line = lineForTEdge(i,mesh)
+		if i in foldList:
+			line = getLineForTEdge(i,mesh)
 			foldLines.append(scriptcontext.doc.Objects.AddLine(line,attr))
+			if displayIdx:
+				displayEdgeIdx(line,i)
+
 	createGroup("foldLines",foldLines)
 
-def displayCutEdges(foldLines,mesh):
+def displayCutEdges(foldList,mesh,displayIdx):
 	cutLines = []
+	# RED cutEdge
 	attr= setAttrColor(0,237,17,53)
 	for i in range(mesh.TopologyEdges.Count):
-		if i not in foldLines:
-			line = lineForTEdge(i,mesh)
+		if i not in foldList:
+			line = getLineForTEdge(i,mesh)
 			cutLines.append(scriptcontext.doc.Objects.AddLine(line,attr))
+			if displayIdx:
+				displayEdgeIdx(line,i)
 	createGroup("cutLines",cutLines)
 
-def lineForTEdge(edgeIdx,mesh):
+def getLineForTEdge(edgeIdx,mesh):
 	tVerts = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
 	p1 = mesh.TopologyVertices.Item[tVerts.I]
 	p2 = mesh.TopologyVertices.Item[tVerts.J]
@@ -361,12 +378,14 @@ def lineForTEdge(edgeIdx,mesh):
 
 
 """chang name to assign edgeWeights, implicit in methods available for topoEdges"""
-def getDual(mesh): 
-	#input: 
-	#	mesh
-	#ouput:
-	#	faces = list of Faces as MeshFace class (4.rhino3d.com/5/rhinocommon/)
-	#	connFaces = list of tuples (edgeIdx,weight)
+def getDual(mesh):
+	'''
+	input: 
+		mesh = instance of Rhino.Geometry.Mesh()
+	ouput:
+		faces = list of Faces as MeshFace class (4.rhino3d.com/5/rhinocommon/)
+		connFaces = list of tuples (edgeIdx,weight)
+	'''
 	faces = []
 	thetaMax = -1
 	for i in range(mesh.Faces.Count):
@@ -403,6 +422,19 @@ def calculateAngle(arrConnFaces,mesh):
 
 	return rs.VectorAngle(faceNorm0,faceNorm1) #returns None on error
 
+
+def checkGetBasisOnMesh(mesh):
+	'''
+	arbitraty edge is chosen, so this method is only to see that getBasisOnMesh is working
+	HAVE NOT TESTED YET
+	'''
+	for faceIdx in range(mesh.Faces.Count):
+	#face = mesh.Faces.Item[i]
+		edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
+		tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
+		basis= getBasisOnMesh(faceIdx,edgeIdx,tVertIdx,mesh)
+		displayOrthoBasis(basis)
+	
 
 
 

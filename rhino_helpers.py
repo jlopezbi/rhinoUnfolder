@@ -15,10 +15,11 @@ def displayFaceIdxs(mesh):
 		centerPnt = mesh.Faces.GetFaceCenter(i)
 		rs.AddTextDot(str(i),centerPnt)
 
-def displayFlatEdgeIdx(line,edgeIdx):
+
+def displayEdgeIdx(line,edgeIdx):
 	cenX = (line.FromX+line.ToX)/2
 	cenY = (line.FromY+line.ToY)/2
-	cenZ = 0
+	cenZ = (line.FromZ+line.ToZ)/2
 	eIdx = str(edgeIdx)
 	rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
 

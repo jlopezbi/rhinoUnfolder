@@ -125,7 +125,7 @@ def findNeighbors( nodeIdx, rawEdges):
 			elif (idx ==1):
 				neighbors.append(edge[0])
 	return neighbors,edges
-	
+
 test_rawEdges = [[1,2],[3,4],[2,4],[1,5],[2,100]]
 tNeighbors,tEdges = findNeighbors(1,test_rawEdges)
 assert(tNeighbors==[2,5] and tEdges==[[1,2],[1,5]]), "problem in findNeighbors"
