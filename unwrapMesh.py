@@ -10,6 +10,10 @@ import rhino_helpers
 reload(rhino_helpers)
 from rhino_helpers import *
 
+import visualization
+reload(visualization)
+from visualization import *
+
 import matTrussToMesh
 reload(matTrussToMesh)
 from matTrussToMesh import *
@@ -96,32 +100,10 @@ class FlatEdge():
 		# eventually add siblings data
 		self.edgeIdx = _edgeIdx
 		self.coordinates = _coordinates
-def drawNet(flatEdgePairs):
-	flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
-	for flatEdge in flatEdges:
-		if flatEdge.type == "fold":
-			drawFoldEdge(flatEdge)
-		elif flatEdge.type == "cut":
-			drawCutEdge(flatEdge)
-		else:
-			assert(False), "incorrect type for edge, must be 'fold' or 'cut' "
-
-
-def drawFoldEdge(flatEdge):
-	p1,p2 = flatEdge.coordinates
-	line = Rhino.Geometry.Line(p1,p2)
-	drawLine(line,flatEdge.edgeIdx,isFoldEdge=True,displayIdx=False)
-
-def drawCutEdge(flatEdge):
-	p1,p2 = flatEdge.coordinates
-	line = Rhino.Geometry.Line(p1,p2)
-	drawLine(line,flatEdge.edgeIdx,isFoldEdge=False,displayIdx=False)
-
-
 
 def alreadyBeenPlaced(testEdgeIdx,flatEdges):
 	return len(flatEdges[testEdgeIdx]) > 0
-		
+
 
 def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
 	faceIdx,edgeIdx,tVertIdx = oldBasisInfo
@@ -135,20 +117,6 @@ def getTransform(basisInfo,toBasis,mesh):
 	fromBasis = getBasisOnMesh(basisInfo,mesh)
 	xForm = createTransformMatrix(fromBasis,toBasis)
 	return xForm
-
-def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
-	if isFoldEdge:
-		#GREEN for foldEdge
-		attrCol = setAttrColor(0,49,224,61)
-	else:
-		#RED for cutEdge
-		attrCol = setAttrColor(0,237,43,120)
-
-	scriptcontext.doc.Objects.AddLine(line,attrCol)
-
-	if displayIdx:
-		displayEdgeIdx(line,edgeIdx)
-
 
 def getBasisFlat(newCoords):
 	#Convention: always use .I element from the tVerts associated with a given edge
