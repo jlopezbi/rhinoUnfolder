@@ -65,29 +65,28 @@ def unwrap(mesh,mesh_id):
 def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
 	''' Recurse through faces, moving along fold edges
 	'''
-	xForm = getTransform(basisInfo,toBasis,mesh)
+	transformToFlat = getTransform(basisInfo,toBasis,mesh)
 	faceEdges = getFaceEdges(basisInfo[0],mesh)
 
-	for testEdgeIdx in faceEdges:
-		newCoords = assignNewPntsToEdge(xForm,testEdgeIdx,mesh)
+	for edgeIndex in faceEdges:
+		flatCoords = assignNewPntsToEdge(transformToFlat,edgeIndex,mesh)
+		flatEdge = FlatEdge(edgeIndex,flatCoords)
 
-		flatEdge = FlatEdge(testEdgeIdx,newCoords)
-
-		if (testEdgeIdx in foldList):
-			if (not alreadyBeenPlaced(testEdgeIdx,flatEdges)):
+		if (edgeIndex in foldList):
+			if (not alreadyBeenPlaced(edgeIndex,flatEdges)):
 				flatEdge.type  = "fold"
 
-				flatEdges[testEdgeIdx].append(flatEdge)
+				flatEdges[edgeIndex].append(flatEdge)
 
-				newBasisInfo = getNewBasisInfo(basisInfo,testEdgeIdx,mesh)
-				newToBasis = getBasisFlat(newCoords)
+				newBasisInfo = getNewBasisInfo(basisInfo,edgeIndex,mesh)
+				newToBasis = getBasisFlat(flatCoords)
 
 				flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges)
 			
 		else:
-			if len(flatEdges[testEdgeIdx])<2:
+			if len(flatEdges[edgeIndex])<2:
 				flatEdge.type  = "cut"
-				flatEdges[testEdgeIdx].append(flatEdge)
+				flatEdges[edgeIndex].append(flatEdge)
 	
 	return flatEdges
 
