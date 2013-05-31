@@ -81,10 +81,10 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdgeCoords):
 		addEdgeLegal = isLegalToAddEdge(newCoords,testEdgeIdx,flatEdgeCoords,foldList,mesh)
 
 		if testEdgeIdx in foldList:
+			if not alreadyBeenPlaced(testEdgeIdx,flatEdgeCoords):
+				drawLine(line,testEdgeIdx,isFoldEdge=True,displayIdx=True)
 
-			drawLine(line,testEdgeIdx,isFoldEdge=True,displayIdx=True)
-
-			if addEdgeLegal:
+			#if addEdgeLegal:
 
 				flatEdgeCoords.insert(testEdgeIdx,newCoords)
 
@@ -99,6 +99,10 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdgeCoords):
 			flatEdgeCoords.insert(testEdgeIdx,newCoords)
 	
 	return flatEdgeCoords
+
+def alreadyBeenPlaced(testEdgeIdx,flatEdgeCoords):
+	return flatEdgeCoords[testEdgeIdx] != None
+		
 
 def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
 	faceIdx,edgeIdx,tVertIdx = oldBasisInfo
