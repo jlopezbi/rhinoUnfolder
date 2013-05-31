@@ -28,7 +28,7 @@ def unwrapExampleMesh():
 
 def unwrap(mesh,mesh_id):
 
-	faces,edge_weights,thetaMax = getDual(mesh)
+	faces,edge_weights,thetaMax = assignEdgeWeights(mesh)
 	#displayDual(faces,edge_weights,thetaMax,mesh)
 	#displayFaceIdxs(mesh)
 	#displayNormals(mesh)
@@ -50,6 +50,7 @@ def unwrap(mesh,mesh_id):
 	#displayOrthoBasis(toBasis,faceIdx)
 
 	flatEdgeCoords = layoutFace(0,faceIdx,edgeIdx,tVertIdx,foldList,mesh,toBasis,flatEdgeCoords)
+	
 	print "flatEdgeCoords:"
 	print flatEdgeCoords[47]
 	
@@ -387,7 +388,7 @@ def getLineForTEdge(edgeIdx,mesh):
 
 
 """chang name to assign edgeWeights, implicit in methods available for topoEdges"""
-def getDual(mesh):
+def assignEdgeWeights(mesh):
 	'''
 	input: 
 		mesh = instance of Rhino.Geometry.Mesh()
