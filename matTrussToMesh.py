@@ -4,7 +4,7 @@ import scriptcontext
 import System
 
 
-def importTrussData(nodesFileName=None,edgesFileName=None):
+def importTrussData(nodesFileName='data/trussNodes.csv',edgesFileName='data/trussEdges.csv'):
 	rawNodes = getRawNodes(nodesFileName)
 	rawEdges = getRawEdges(edgesFileName)
 	return rawNodes,rawEdges
