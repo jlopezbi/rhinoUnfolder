@@ -1,13 +1,16 @@
 rhinoUnwrapper
 ==============
 
-A Python plugin to Rhino that unwraps triangulated meshes
+A Python plugin to Rhino that unwraps triangulated meshes.
 
-Install
--------
+You can use it to create flat, foldable versions of your 3D models. It's like [Pepakura](http://www.tamasoft.co.jp/pepakura-en/) for Rhino.
+
+How To Run
+----------
 
 1. [Install Rhino and RhinoPython](http://python.rhino3d.com/content/118-Getting-Started-1-quot-Hello-Rhino-quot)
-2. Download this repository and save it to your Rhino 'Scripts' directory
+2. Download this repository and save it to your Rhino 'Scripts' directory:
+  `git clone https://github.com/jlopezbi/rhinoUnwrapper.git`
 3. Execute 'RunPythonScript' from Rhino
 4. Select 'unwrapmesh.py' from the rhinoUnwrapper directory
 
@@ -15,7 +18,7 @@ Install
 Status
 ------
 
-rhinoUnwrapper is alpha software---it isn't finished yet.
+rhinoUnwrapper is alpha software—it isn't finished yet. Don't expect it to work for you.
 
 **Basic mesh unwrapping is working**! However, you will need to modify the code to apply it to your own mesh.
 
