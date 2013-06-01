@@ -1,6 +1,7 @@
 import Rhino
 import scriptcontext
 import System.Drawing
+from rhino_unwrapper.rhino_helpers import createGroup
 
 def setAttrColor(a,r,g,b):
   attr = Rhino.DocObjects.ObjectAttributes()
@@ -36,10 +37,12 @@ def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
     #RED for cutEdge
     attrCol = setAttrColor(0,237,43,120)
 
-  scriptcontext.doc.Objects.AddLine(line,attrCol)
+  
 
   if displayIdx:
     displayEdgeIdx(line,edgeIdx)
+
+  return scriptcontext.doc.Objects.AddLine(line,attrCol)
 
 
 
@@ -49,17 +52,19 @@ EDGE_DRAW_FUNCTIONS = {}
 def drawFoldEdge(flatEdge):
   p1,p2 = flatEdge.coordinates
   line = Rhino.Geometry.Line(p1,p2)
-  drawLine(line,flatEdge.edgeIdx,isFoldEdge=True,displayIdx=False)
+  return drawLine(line,flatEdge.edgeIdx,isFoldEdge=True,displayIdx=False)
 EDGE_DRAW_FUNCTIONS['fold'] = drawFoldEdge
 
 def drawCutEdge(flatEdge):
   p1,p2 = flatEdge.coordinates
   line = Rhino.Geometry.Line(p1,p2)
-  drawLine(line,flatEdge.edgeIdx,isFoldEdge=False,displayIdx=False)
+  return drawLine(line,flatEdge.edgeIdx,isFoldEdge=False,displayIdx=False)
 EDGE_DRAW_FUNCTIONS['cut'] = drawCutEdge
 
 
 def drawNet(flatEdgePairs):
+  net = []
   flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
   for flatEdge in flatEdges:
-    EDGE_DRAW_FUNCTIONS[flatEdge.type](flatEdge)
+    net.append(EDGE_DRAW_FUNCTIONS[flatEdge.type](flatEdge))
+  createGroup("net",net)
