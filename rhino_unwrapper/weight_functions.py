@@ -12,3 +12,7 @@ def edgeAngle(mesh, edgeIndex):
 
 def uniform(mesh, edgeIndex):
   return 1
+
+import random as rand
+def random(mesh, edgeIndex):
+  return rand.random()
