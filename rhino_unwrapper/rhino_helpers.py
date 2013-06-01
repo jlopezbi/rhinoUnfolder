@@ -34,6 +34,10 @@ def getFaceEdges(faceIdx,mesh):
 	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
 	return convertArray(arrFaceEdges)
 
+def getTVerts(edgeIdx,mesh):
+	vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
+	return vertPair.I, vertPair.J
+
 def getMedianEdgeLen(mesh):
 	edgeLens = getEdgeLengths(mesh)
 	return getMedian(edgeLens)

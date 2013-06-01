@@ -1,7 +1,7 @@
 import Rhino
 import scriptcontext
 import System.Drawing
-from rhino_unwrapper.rhino_helpers import createGroup
+from rhino_helpers import *
 
 def setAttrColor(a,r,g,b):
   attr = Rhino.DocObjects.ObjectAttributes()
@@ -28,6 +28,16 @@ def displayFaceIdxs(mesh):
   for i in xrange(mesh.Faces.Count):
     centerPnt = mesh.Faces.GetFaceCenter(i)
     rs.AddTextDot(str(i),centerPnt)
+
+def displayMeshCutEdges(mesh,foldList):
+  for i in range(mesh.TopologyEdges.Count):
+    if i not in foldList:
+      tVertI,tVertJ = getTVerts(i,mesh)
+      point3fI = mesh.TopologyVertices.Item[tVertI]
+      point3fJ = mesh.TopologyVertices.Item[tVertJ]
+      line = Rhino.Geometry.Line(point3fI,point3fJ)
+      edgeLine = drawLine(line,i,isFoldEdge=False,displayIdx=False)
+
 
 def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
   if isFoldEdge:

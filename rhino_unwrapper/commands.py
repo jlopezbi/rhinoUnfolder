@@ -8,3 +8,4 @@ def unwrap(mesh):
   foldList = traversal.getSpanningKruskal(meshGraph,mesh)
   flatEdges = layout.layoutMesh(foldList, mesh)
   visualization.drawNet(flatEdges)
+  visualization.displayMeshCutEdges(mesh,foldList)
