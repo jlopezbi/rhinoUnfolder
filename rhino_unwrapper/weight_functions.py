@@ -9,3 +9,6 @@ def edgeAngle(mesh, edgeIndex):
   faceNorm1 = mesh.FaceNormals.Item[faceIdx1]
 
   return rs.VectorAngle(faceNorm0,faceNorm1) # returns None on error
+
+def uniform(mesh, edgeIndex):
+  return 1
