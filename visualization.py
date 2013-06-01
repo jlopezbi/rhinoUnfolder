@@ -62,4 +62,4 @@ EDGE_DRAW_FUNCTIONS['cut'] = drawCutEdge
 def drawNet(flatEdgePairs):
   flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
   for flatEdge in flatEdges:
-    EDGE_DRAW_FUNCTIONS[flatEdge.type]()
+    EDGE_DRAW_FUNCTIONS[flatEdge.type](flatEdge)
