@@ -1,6 +1,14 @@
 import Rhino
 import rhinoscriptsyntax as rs
 
+def connectedFaces(mesh, edgeIndex):
+  arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
+
+  faceIdx0 = arrConnFaces.GetValue(0)
+  faceIdx1 = arrConnFaces.GetValue(1)
+
+  return faceIdx0, faceIdx1
+
 def getMesh(message=None):
   getter = Rhino.Input.Custom.GetObject()
   getter.SetCommandPrompt(message)
