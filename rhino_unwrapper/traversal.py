@@ -54,22 +54,6 @@ def getSpanningKruskal(graph,mesh):
     # also the if staements could be cleaned up probs.
   return foldList
 
-def connectedFaces(mesh, edgeIndex):
-  arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
-
-  faceIdx0 = arrConnFaces.GetValue(0)
-  faceIdx1 = arrConnFaces.GetValue(1)
-
-  return faceIdx0, faceIdx1
-
-def edgeAngle(mesh, edgeIndex):
-  faceIdx0, faceIdx1 = connectedFaces(mesh, edgeIndex)
-
-  faceNorm0 = mesh.FaceNormals.Item[faceIdx0]
-  faceNorm1 = mesh.FaceNormals.Item[faceIdx1]
-
-  return rs.VectorAngle(faceNorm0,faceNorm1) # returns None on error
-
 def meshFaces(mesh):
   return (mesh.Faces.GetFace(i) for i in xrange(mesh.Faces.Count))
 

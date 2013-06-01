@@ -12,7 +12,7 @@ How To Run
 2. Download this repository and save it to your Rhino 'Scripts' directory:
   `git clone https://github.com/jlopezbi/rhinoUnwrapper.git`
 3. Execute 'RunPythonScript' from Rhino
-4. Select 'unwrapmesh.py' from the rhinoUnwrapper directory
+4. Select 'Unwrap_cmd.py' from the rhinoUnwrapper directory
 
 
 Status
