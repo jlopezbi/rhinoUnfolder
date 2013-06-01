@@ -52,8 +52,24 @@ def getSpanningKruskal(faces,edge_weights,mesh):
     # also the if staements could be cleaned up probs.
   return foldList
 
+def connectedFaces(mesh, edgeIndex):
+  arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
+
+  faceIdx0 = arrConnFaces.GetValue(0)
+  faceIdx1 = arrConnFaces.GetValue(1)
+
+  return faceIdx0, faceIdx1
+
+def edgeAngle(mesh, edgeIndex):
+  faceIdx0, faceIdx1 = connectedFaces(mesh, edgeIndex)
+
+  faceNorm0 = mesh.FaceNormals.Item[faceIdx0]
+  faceNorm1 = mesh.FaceNormals.Item[faceIdx1]
+
+  return rs.VectorAngle(faceNorm0,faceNorm1) # returns None on error
+
 """chang name to assign edgeWeights, implicit in methods available for topoEdges"""
-def assignEdgeWeights(mesh):
+def assignEdgeWeights(mesh, weightFunction):
   '''
   input:
     mesh = instance of Rhino.Geometry.Mesh()
@@ -67,28 +83,11 @@ def assignEdgeWeights(mesh):
     faces.append(mesh.Faces.GetFace(i))
   edge_weights = []
   for i in range(mesh.TopologyEdges.Count):
-    arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(i)
 
-    f0 = arrConnFaces.GetValue(0)
-    f1 = arrConnFaces.GetValue(1)
-    angWeight = calculateAngle(arrConnFaces,mesh)
-    if angWeight > thetaMax:
-      thetaMax = angWeight
-    edge_weights.append((i,angWeight))
+    weight = weightFunction(mesh,i)
+    edge_weights.append((i,weight))
     #connFaces.append(tupleConnFaces)
   edge_weights = sorted(edge_weights,key=lambda tup: tup[1],reverse=False)
   #how to reverse order of sorting??
 
-
-  #pretty2DListPrint(edge_weights)
-
-  return faces,edge_weights,thetaMax
-
-def calculateAngle(arrConnFaces,mesh):
-  faceIdx0 = arrConnFaces.GetValue(0)
-  faceIdx1 = arrConnFaces.GetValue(1)
-
-  faceNorm0 = mesh.FaceNormals.Item[faceIdx0]
-  faceNorm1 = mesh.FaceNormals.Item[faceIdx1]
-
-  return rs.VectorAngle(faceNorm0,faceNorm1) #returns None on error
+  return faces,edge_weights
