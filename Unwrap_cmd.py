@@ -3,11 +3,7 @@ from rhino_unwrapper.rhino_helpers import getMesh, getOption
 
 from rhino_unwrapper import weight_functions
 
-# Reload modules each time during development
-import sys
-modules = ['commands', 'traversal', 'layout', 'rhino_helpers', 'transformations', 'visualization']
-for module in modules:
-  reload(sys.modules['rhino_unwrapper.'+module])
+# -RunPythonScript ResetEngine RhinoUnwrapper.Unwrap_cmd
 
 from inspect import getmembers, isfunction
 
