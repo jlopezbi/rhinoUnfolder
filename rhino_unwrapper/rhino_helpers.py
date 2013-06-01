@@ -9,6 +9,27 @@ def connectedFaces(mesh, edgeIndex):
 
   return faceIdx0, faceIdx1
 
+def getOption(options, option_name, message=None):
+  '''
+    options = list of tuples (name, value)
+    option_name = alphanumeric-only name for desired value
+    message = message displayed above combo box in dialog
+  '''
+  getter = Rhino.Input.Custom.GetOption()
+  getter.SetCommandPrompt(message)
+  getter.AcceptNothing(False)
+
+  option_name = filter(str.isalnum, option_name)
+
+  texts = [filter(str.isalnum, option[0]) for option in options]
+  getter.AddOptionList(option_name, texts, 0)
+
+  if getter.Get() != Rhino.Input.GetResult.Option:
+    return
+
+  option = options[getter.Option().CurrentListOptionIndex][1]
+  return option
+
 def getMesh(message=None):
   getter = Rhino.Input.Custom.GetObject()
   getter.SetCommandPrompt(message)
