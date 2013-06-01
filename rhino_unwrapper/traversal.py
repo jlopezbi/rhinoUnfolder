@@ -1,6 +1,6 @@
 import rhinoscriptsyntax as rs
 
-def getSpanningKruskal(faces,edge_weights,mesh):
+def getSpanningKruskal(graph,mesh):
 
   '''
   note: have not considered open mesh, or non-manifold edges
@@ -10,6 +10,8 @@ def getSpanningKruskal(faces,edge_weights,mesh):
   output:
     foldList = list of edgeIdx's that are to be cut
   '''
+  faces, edge_weights = graph
+
   treeSets = []
   foldList = []
   for tupEdge in edge_weights:

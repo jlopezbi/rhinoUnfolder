@@ -1,10 +1,10 @@
 import visualization
 import layout
-import graph
+import traversal
 
 def unwrap(mesh):
   mesh.FaceNormals.ComputeFaceNormals()
-  faces,edge_weights = graph.buildMeshGraph(mesh, graph.edgeAngle)
-  foldList = graph.getSpanningKruskal(faces,edge_weights,mesh)
+  meshGraph = traversal.buildMeshGraph(mesh, graph.edgeAngle)
+  foldList = traversal.getSpanningKruskal(meshGraph,mesh)
   flatEdges = layout.layoutMesh(foldList, mesh)
   visualization.drawNet(flatEdges)

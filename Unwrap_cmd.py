@@ -3,7 +3,7 @@ from rhino_unwrapper.rhino_helpers import getMesh
 
 # Reload modules each time during development
 import sys
-modules = ['commands', 'graph', 'layout', 'rhino_helpers', 'transformations', 'visualization']
+modules = ['commands', 'traversal', 'layout', 'rhino_helpers', 'transformations', 'visualization']
 for module in modules:
   reload(sys.modules['rhino_unwrapper.'+module])
 
