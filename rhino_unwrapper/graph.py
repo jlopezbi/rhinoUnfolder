@@ -68,26 +68,13 @@ def edgeAngle(mesh, edgeIndex):
 
   return rs.VectorAngle(faceNorm0,faceNorm1) # returns None on error
 
-"""chang name to assign edgeWeights, implicit in methods available for topoEdges"""
-def assignEdgeWeights(mesh, weightFunction):
-  '''
-  input:
-    mesh = instance of Rhino.Geometry.Mesh()
-  ouput:
-    faces = list of Faces as MeshFace class (4.rhino3d.com/5/rhinocommon/)
-    connFaces = list of tuples (edgeIdx,weight)
-  '''
-  faces = []
-  thetaMax = -1
-  for i in range(mesh.Faces.Count):
-    faces.append(mesh.Faces.GetFace(i))
-  edge_weights = []
-  for i in range(mesh.TopologyEdges.Count):
+def meshFaces(mesh):
+  return (mesh.Faces.GetFace(i) for i in xrange(mesh.Faces.Count))
 
-    weight = weightFunction(mesh,i)
-    edge_weights.append((i,weight))
-    #connFaces.append(tupleConnFaces)
+def buildMeshGraph(mesh, weight):
+  vertices = meshFaces(mesh)
+  edge_weights = [(i, weight(mesh, i)) for i in xrange(mesh.TopologyEdges.Count)]
+
   edge_weights = sorted(edge_weights,key=lambda tup: tup[1],reverse=False)
-  #how to reverse order of sorting??
 
-  return faces,edge_weights
+  return vertices,edge_weights
