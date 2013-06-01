@@ -1,8 +1,6 @@
-import matTrussToMesh
 import visualization
 import layout
 import graph
-import Rhino
 
 def unwrap(mesh):
   faces,edge_weights,thetaMax = graph.assignEdgeWeights(mesh)
