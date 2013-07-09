@@ -3,12 +3,14 @@ import rhinoscriptsyntax as rs
 import rhino_helpers
 
 def edgeAngle(mesh, edgeIndex):
-  faceIdx0, faceIdx1 = rhino_helpers.connectedFaces(mesh, edgeIndex)
+  faceIdxs = rhino_helpers.connectedFaces(mesh, edgeIndex)
 
-  faceNorm0 = mesh.FaceNormals.Item[faceIdx0]
-  faceNorm1 = mesh.FaceNormals.Item[faceIdx1]
-
-  return rs.VectorAngle(faceNorm0,faceNorm1) # returns None on error
+  if (len(faceIdxs)==2):
+    faceNorm0 = mesh.FaceNormals.Item[faceIdxs[0]]
+    faceNorm1 = mesh.FaceNormals.Item[faceIdxs[1]]
+    return rs.VectorAngle(faceNorm0,faceNorm1) 
+  else:
+    return None
 
 def uniform(mesh, edgeIndex):
   return 1

@@ -25,6 +25,14 @@ def layoutMesh(foldList, mesh):
 
 def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
   ''' Recurse through faces, moving along fold edges
+    input:
+      depth = recursion level
+      basisInfo = (faceIdx,edgeIdx,tVertIdx) information required to make basis
+      foldList = list of edges that are folded
+      mesh = mesh to unfold
+      toBasis = basis in flat world
+    out/in:
+      flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
   transformToFlat = getTransform(basisInfo,toBasis,mesh)
   faceEdges = getFaceEdges(basisInfo[0],mesh)

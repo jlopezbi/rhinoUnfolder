@@ -5,3 +5,5 @@ nodeTest.xml
 spinTest.py
 xmlToRhino.py
 unwrapMesh.pyc
+pipes/
+showEdgeIdxs_cmd.py

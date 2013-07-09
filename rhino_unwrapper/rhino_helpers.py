@@ -2,12 +2,18 @@ import Rhino
 import rhinoscriptsyntax as rs
 
 def connectedFaces(mesh, edgeIndex):
+  '''
+  returns an array of indices of the faces connected to a given edge
+  if the array has only one face this inidicates it is a naked edge
+  '''
   arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
 
-  faceIdx0 = arrConnFaces.GetValue(0)
-  faceIdx1 = arrConnFaces.GetValue(1)
+  faceIdxs = []
+  faceIdxs.append(arrConnFaces.GetValue(0))
+  if arrConnFaces.Length == 2:
+    faceIdxs.append(arrConnFaces.GetValue(1))
 
-  return faceIdx0, faceIdx1
+  return faceIdxs
 
 def getOption(options, option_name, message=None):
   '''
@@ -17,7 +23,7 @@ def getOption(options, option_name, message=None):
   '''
   getter = Rhino.Input.Custom.GetOption()
   getter.SetCommandPrompt(message)
-  getter.AcceptNothing(False)
+  getter.AcceptNothing(True)
 
   option_name = filter(str.isalnum, option_name)
 
