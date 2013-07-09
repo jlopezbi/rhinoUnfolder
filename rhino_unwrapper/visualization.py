@@ -30,23 +30,25 @@ def displayFaceIdxs(mesh):
     rs.AddTextDot(str(i),centerPnt)
 
 def displayMeshCutEdges(mesh,foldList):
+  seamRed = (0,255,0,0) 
   for i in range(mesh.TopologyEdges.Count):
     if i not in foldList:
       tVertI,tVertJ = getTVerts(i,mesh)
       point3fI = mesh.TopologyVertices.Item[tVertI]
       point3fJ = mesh.TopologyVertices.Item[tVertJ]
       line = Rhino.Geometry.Line(point3fI,point3fJ)
-      edgeLine = drawLine(line,i,isFoldEdge=False,displayIdx=False)
+      edgeLine = drawLine(line,i,seamRed,displayIdx=False)
 
 
-def drawLine(line,edgeIdx,isFoldEdge,displayIdx):
-  if isFoldEdge:
-    #GREEN for foldEdge
-    attrCol = setAttrColor(0,49,224,61)
-  else:
-    #RED for cutEdge
-    attrCol = setAttrColor(0,237,43,120)
+def drawLine(line,edgeIdx,color,displayIdx):
+  # if isFoldEdge:
+  #   #GREEN for foldEdge
+  #   attrCol = setAttrColor(0,49,224,61)
+  # else:
+  #   #RED for cutEdge
+  #   attrCol = setAttrColor(0,237,43,120)
 
+  attrCol = setAttrColor(color[0],color[1],color[2],color[3])
   
 
   if displayIdx:
@@ -62,15 +64,23 @@ EDGE_DRAW_FUNCTIONS = {}
 def drawFoldEdge(flatEdge):
   p1,p2 = flatEdge.coordinates
   line = Rhino.Geometry.Line(p1,p2)
-  return drawLine(line,flatEdge.edgeIdx,isFoldEdge=True,displayIdx=False)
+  green = (0,49,224,61)
+  return drawLine(line,flatEdge.edgeIdx,green,displayIdx=False)
 EDGE_DRAW_FUNCTIONS['fold'] = drawFoldEdge
 
 def drawCutEdge(flatEdge):
   p1,p2 = flatEdge.coordinates
   line = Rhino.Geometry.Line(p1,p2)
-  return drawLine(line,flatEdge.edgeIdx,isFoldEdge=False,displayIdx=False)
+  red = (0,237,43,120)
+  return drawLine(line,flatEdge.edgeIdx,red,displayIdx=False)
 EDGE_DRAW_FUNCTIONS['cut'] = drawCutEdge
 
+def drawNakedEdge(flatEdge):
+  p1,p2 = flatEdge.coordinates
+  line = Rhino.Geometry.Line(p1,p2)
+  blue = (0,55,156,196)
+  return drawLine(line,flatEdge.edgeIdx,blue,displayIdx=False)
+EDGE_DRAW_FUNCTIONS['naked'] = drawNakedEdge
 
 def drawNet(flatEdgePairs):
   net = []

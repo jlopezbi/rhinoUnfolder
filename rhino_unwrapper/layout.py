@@ -53,10 +53,13 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
         flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges)
 
     else:
-      if len(flatEdges[edgeIndex])<2:
-        flatEdge.type  = "cut"
+      if len(flatEdges[edgeIndex])==0:
+        flatEdge.type  = "naked"
         flatEdges[edgeIndex].append(flatEdge)
-
+      elif len(flatEdges[edgeIndex])==1:
+        flatEdge.type = "cut"
+        flatEdges[edgeIndex].append(flatEdge)
+        flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges
 
 def alreadyBeenPlaced(testEdgeIdx,flatEdges):
