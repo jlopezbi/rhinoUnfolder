@@ -15,6 +15,24 @@ def connectedFaces(mesh, edgeIndex):
 
   return faceIdxs
 
+def getOptionStr(options,option_name,message=None):
+  '''
+    options = list of tuples (name, value)
+    option_name = alphanumeric-only name for desired value
+    message = message displayed above combo box in dialog
+  '''
+  texts = [filter(str.isalnum, option[0]) for option in options]
+  texts.append('Accept')
+  #print str(texts[i]) for i in range(len(texts))
+  result = rs.GetString(option_name, "Accept", texts)
+  if not result:
+    print ('No Result from string getter!')
+    return
+  else:
+    result = result.upper()
+
+
+
 def getOption(options, option_name, message=None):
   '''
     options = list of tuples (name, value)
@@ -29,11 +47,20 @@ def getOption(options, option_name, message=None):
 
   texts = [filter(str.isalnum, option[0]) for option in options]
   getter.AddOptionList(option_name, texts, 0)
+  getter.SetDefaultInteger(0)
 
-  if getter.Get() != Rhino.Input.GetResult.Option:
+  getValue = getter.Get()
+
+  if getter.GotDefault() == True:
+    option = options[0][1] #default is the first function in weight_functions.py
+
+  elif getValue == Rhino.Input.GetResult.Option:
+    option = options[getter.Option().CurrentListOptionIndex][1]
+
+  elif getValue == Rhino.Input.GetResult.Cancel:
+    print("aborted command using escape key")
     return
 
-  option = options[getter.Option().CurrentListOptionIndex][1]
   return option
 
 def getMesh(message=None):

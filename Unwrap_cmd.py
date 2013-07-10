@@ -1,5 +1,5 @@
 from rhino_unwrapper.commands import unwrap
-from rhino_unwrapper.rhino_helpers import getMesh, getOption
+from rhino_unwrapper.rhino_helpers import getMesh, getOption, getOptionStr
 
 from rhino_unwrapper import weight_functions
 
@@ -14,8 +14,13 @@ __commandname__ = "Unwrap"
 def RunCommand( is_interactive ):
   mesh = getMesh("Select mesh to unwrap")
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
+  #weightFunction = getOptionStr(all_weight_functions(),"weightFunction")
   if mesh and weightFunction:
     unwrap(mesh, weightFunction)
+
+# def RunCommand( is_interactive ):
+# 	mesh = rs.GetObject("Select mesh to unwrap",32,True,False)
+
 
 if __name__=="__main__":
   RunCommand(True)
