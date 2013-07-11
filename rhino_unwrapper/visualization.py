@@ -39,8 +39,18 @@ def displayMeshCutEdges(mesh,foldList):
       line = Rhino.Geometry.Line(point3fI,point3fJ)
       edgeLine = drawLine(line,i,seamRed,displayIdx=False)
 
+def displayMeshEdges(mesh,color,edgeIdxs):
+  "generalized mesh edge display: replace this with above later"
+  if edgeIdxs:
+    for edgeIdx in edgeIdxs:
+      tVertI,tVertJ = getTVerts(edgeIdx,mesh)
+      point3fI = mesh.TopologyVertices.Item[tVertI]
+      point3fJ = mesh.TopologyVertices.Item[tVertJ]
+      line = Rhino.Geometry.Line(point3fI,point3fJ)
+      edgeLine = drawLine(line,edgeIdx,color,displayIdx=False)
 
-def drawLine(line,edgeIdx,color,displayIdx):
+
+def drawLine(line,edgeIdx,color,displayIdx=False):
   # if isFoldEdge:
   #   #GREEN for foldEdge
   #   attrCol = setAttrColor(0,49,224,61)
@@ -49,7 +59,6 @@ def drawLine(line,edgeIdx,color,displayIdx):
   #   attrCol = setAttrColor(0,237,43,120)
 
   attrCol = setAttrColor(color[0],color[1],color[2],color[3])
-  
 
   if displayIdx:
     displayEdgeIdx(line,edgeIdx)

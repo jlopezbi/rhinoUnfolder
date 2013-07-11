@@ -3,8 +3,6 @@ import rhinoscriptsyntax as rs
 def getSpanningKruskal(graph,mesh):
 
   '''
-  note: have not considered open mesh, or non-manifold edges
-  naked edges can never be in the foldList.
   this section of the code should be updated to use the union-find trick
   input:
     graph = contains faces and edge_weights
@@ -20,7 +18,7 @@ def getSpanningKruskal(graph,mesh):
   for tupEdge in edge_weights:
     edgeIdx = tupEdge[0]
     arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIdx)
-    if(len(arrConnFaces)>1):
+    if(len(arrConnFaces)>1): #this avoids problems with naked edges
       setConnFaces = set([arrConnFaces.GetValue(0),arrConnFaces.GetValue(1)])
 
 
@@ -61,10 +59,20 @@ def getSpanningKruskal(graph,mesh):
 def meshFaces(mesh):
   return (mesh.Faces.GetFace(i) for i in xrange(mesh.Faces.Count))
 
-def buildMeshGraph(mesh, weight):
+def buildMeshGraph(mesh, userCuts, weight):
   nodes = meshFaces(mesh)
-  edge_weights = [(i, weight(mesh, i)) for i in xrange(mesh.TopologyEdges.Count)]
+  edge_weights = []
+  for i in xrange(mesh.TopologyEdges.Count):
+    if userCuts:
+      if i not in userCuts:
+        edge_weights.append((i,weight(mesh,i)))
+      else:
+        edge_weights.append( (i,float('inf')) )
+    else:
+      edge_weights.append((i,weight(mesh,i)))
+
 
   edge_weights = sorted(edge_weights,key=lambda tup: tup[1],reverse=False)
+  print (edge_weights)
 
   return nodes,edge_weights

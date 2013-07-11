@@ -15,21 +15,29 @@ def connectedFaces(mesh, edgeIndex):
 
   return faceIdxs
 
-def getOptionStr(options,option_name,message=None):
-  '''
-    options = list of tuples (name, value)
-    option_name = alphanumeric-only name for desired value
-    message = message displayed above combo box in dialog
-  '''
-  texts = [filter(str.isalnum, option[0]) for option in options]
-  texts.append('Accept')
-  #print str(texts[i]) for i in range(len(texts))
-  result = rs.GetString(option_name, "Accept", texts)
-  if not result:
-    print ('No Result from string getter!')
+def getUserCuts(message=None):
+  ge = Rhino.Input.Custom.GetObject()
+  ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
+  ge.SetCommandPrompt(message)
+  ge.GetMultiple(0,0)
+
+  if ge.CommandResult() != Rhino.Commands.Result.Success:
+    print("failed to get mesh edges")
     return
-  else:
-    result = result.upper()
+
+  objRefs = [ge.Object(i) for i in range(ge.ObjectCount)]
+  edgeIdxs = [GetEdgeIdx(objref) for objref in objRefs] 
+  mesh = objRefs[0].Mesh()
+
+  return edgeIdxs
+
+
+def GetEdgeIdx(objref):
+   
+  # Rhino.DocObjects.ObjRef .GeometryComponentIndex to Rhino.Geometry.ComponentIndex
+  meshEdgeIndex = objref.GeometryComponentIndex
+   
+  return meshEdgeIndex.Index
 
 
 

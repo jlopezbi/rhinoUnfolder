@@ -101,6 +101,9 @@ def assignNewPntsToEdge(xForm,edgeIdx,mesh):
   pJ = mesh.TopologyVertices.Item[idxJ]
   pI.Transform(xForm)
   pJ.Transform(xForm)
+  #try out just setting z componenet to zero by defualt
+  pI.Z = 0.0
+  pJ.Z = 0.0
   #assert(pI.Z == 0), "pI.Z!=0"
   #assert(pJ.Z == 0), "pJ.Z!=0"
   return [pI,pJ]
