@@ -9,4 +9,6 @@ def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
   foldList = traversal.getSpanningKruskal(meshDual,mesh)
   flatEdges = layout.layoutMesh(foldList, mesh)
   visualization.drawNet(flatEdges)
+  visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts)
   visualization.displayMeshCutEdges(mesh,foldList)
+

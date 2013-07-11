@@ -3,11 +3,6 @@ import scriptcontext
 import System.Drawing
 from rhino_helpers import *
 
-def setAttrColor(a,r,g,b):
-  attr = Rhino.DocObjects.ObjectAttributes()
-  attr.ObjectColor = System.Drawing.Color.FromArgb(a,r,g,b)
-  attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
-  return attr
 
 def displayEdgeIdx(line,edgeIdx):
   cenX = (line.FromX+line.ToX)/2
@@ -49,14 +44,14 @@ def displayMeshEdges(mesh,color,edgeIdxs):
       line = Rhino.Geometry.Line(point3fI,point3fJ)
       edgeLine = drawLine(line,edgeIdx,color,displayIdx=False)
 
+def setAttrColor(a,r,g,b):
+  attr = Rhino.DocObjects.ObjectAttributes()
+  attr.ObjectColor = System.Drawing.Color.FromArgb(a,r,g,b)
+  attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
+  return attr
+
 
 def drawLine(line,edgeIdx,color,displayIdx=False):
-  # if isFoldEdge:
-  #   #GREEN for foldEdge
-  #   attrCol = setAttrColor(0,49,224,61)
-  # else:
-  #   #RED for cutEdge
-  #   attrCol = setAttrColor(0,237,43,120)
 
   attrCol = setAttrColor(color[0],color[1],color[2],color[3])
 
@@ -68,13 +63,15 @@ def drawLine(line,edgeIdx,color,displayIdx=False):
 
 
 ''' Dispatch Table for drawing different types of FlatEdges '''
+"""this is where specialized geometry like tabs might be added"""
 EDGE_DRAW_FUNCTIONS = {}
 
 def drawFoldEdge(flatEdge):
   p1,p2 = flatEdge.coordinates
   line = Rhino.Geometry.Line(p1,p2)
   green = (0,49,224,61)
-  return drawLine(line,flatEdge.edgeIdx,green,displayIdx=False)
+  geom =  drawLine(line,flatEdge.edgeIdx,green,displayIdx=False)
+  flatEdge.geom = geom
 EDGE_DRAW_FUNCTIONS['fold'] = drawFoldEdge
 
 def drawCutEdge(flatEdge):
