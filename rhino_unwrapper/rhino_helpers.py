@@ -15,6 +15,65 @@ def connectedFaces(mesh, edgeIndex):
 
   return faceIdxs
 
+def getNewCut(message,flatEdges):
+  ge = Rhino.Input.Custom.GetObject()
+  # | is a bitwise or. documentation says can combine filters with 'bitwize combination'
+  ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge | Rhino.DocObjects.ObjectType.Curve
+  ge.SetCommandPrompt(message)
+  ge.Get()
+
+  if ge.CommandResult() != Rhino.Commands.Result.Success:
+    print('failed to get mesh edge or curve in getNewCut')
+    return
+
+  objRef = ge.Object(0)
+  curve = objRef.Curve()
+  mesh = objRef.Mesh()
+  
+  if curve:
+    print("selected a curve")
+    curve_id = objRef.ObjectId
+    flatEdge = getFlatEdgeForCurve(curve_id,flatEdges)
+    if flatEdge:
+      print("selected a curve corresponding to mesh edge " +str(flatEdge.edgeIdx))
+      return flatEdge.edgeIdx
+    else:
+      print("did not find corresponding mesh edge for curve")
+      return 
+  elif mesh:
+    edgeIdx = GetEdgeIdx(objRef)
+    print("selected mesh edge "+str(edgeIdx))
+    return edgeIdx
+  else:
+    print("did not select anything valid")
+    return 
+
+def getFlatEdgeForCurve(curve_id,flatEdges):
+  '''
+  input:
+    curve_id = guid to curve object
+    flatEdges = list of lists which contain flatEdge objects:
+      flatEdge.edgeIdx
+              .coordinates
+              .type
+              .geom
+  output:
+    edgeIdx = the edgeIndex in the mesh that corresponeds to the given curve
+    type = 
+  '''
+  #match curve_id to .geom
+  for flatEdgeList in flatEdges:
+    flatEdge = flatEdgeList[0]
+
+    if len(flatEdgeList)>1:
+      assert (flatEdgeList[0].type==flatEdgeList[1].type), "types for associated flatEdges are not equal"
+
+    if curve_id == flatEdge.geom:
+      return flatEdge
+  return
+
+
+
 def getUserCuts(message=None):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
@@ -22,7 +81,7 @@ def getUserCuts(message=None):
   ge.GetMultiple(0,0)
 
   if ge.CommandResult() != Rhino.Commands.Result.Success:
-    print("failed to get mesh edges")
+    print("no mesh edges selected as cuts for unwrapping")
     return
 
   objRefs = [ge.Object(i) for i in range(ge.ObjectCount)]
@@ -90,48 +149,50 @@ def getMesh(message=None):
     return mesh
 
 def createGroup(groupName,objects):
-	name = rs.AddGroup(groupName)
-	if not rs.AddObjectsToGroup(objects,groupName):
-		print "failed to group"
+  name = rs.AddGroup(groupName)
+  if not rs.AddObjectsToGroup(objects,groupName):
+    print "failed to group"
+    return
+  return name
 
 def convertArray(array):
-	pyList = []
-	for i in range(array.Length):
-		pyList.append(array.GetValue(i))
-	return pyList
+  pyList = []
+  for i in range(array.Length):
+    pyList.append(array.GetValue(i))
+  return pyList
 
 def getFaceEdges(faceIdx,mesh):
-	arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
-	return convertArray(arrFaceEdges)
+  arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
+  return convertArray(arrFaceEdges)
 
 def getTVerts(edgeIdx,mesh):
-	vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
-	return vertPair.I, vertPair.J
+  vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
+  return vertPair.I, vertPair.J
 
 def getMedianEdgeLen(mesh):
-	edgeLens = getEdgeLengths(mesh)
-	return getMedian(edgeLens)
+  edgeLens = getEdgeLengths(mesh)
+  return getMedian(edgeLens)
 
 def getEdgeLengths(mesh):
-	edgeLens = []
-	for i in range(mesh.TopologyEdges.Count):
-		edgeLine = mesh.TopologyEdges.EdgeLine(i)
-		edgeLen = edgeLine.Length
-		edgeLens.append(edgeLen)
-	return edgeLens
+  edgeLens = []
+  for i in range(mesh.TopologyEdges.Count):
+    edgeLine = mesh.TopologyEdges.EdgeLine(i)
+    edgeLen = edgeLine.Length
+    edgeLens.append(edgeLen)
+  return edgeLens
 
 def getEdgeLen(edgIdx,mesh):
-	edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
-	return edgeLine.Length
+  edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
+  return edgeLine.Length
 
 def getMedian(edgeLens):
-	eLensSorted = sorted(edgeLens)
-	nEdges = len(edgeLens)
-	assert(nEdges>0), "nEdges is !>0, error in getMedianEdgeLen()"
-	if nEdges%2 ==0:
-		idxUpper = nEdges/2
-		idxLower = idxUpper-1
-		avg = (edgeLens[idxUpper]+edgeLens[idxLower])/2.0
-		return avg
-	else:
-		return edgeLens[int(nEdges/2)]
+  eLensSorted = sorted(edgeLens)
+  nEdges = len(edgeLens)
+  assert(nEdges>0), "nEdges is !>0, error in getMedianEdgeLen()"
+  if nEdges%2 ==0:
+    idxUpper = nEdges/2
+    idxLower = idxUpper-1
+    avg = (edgeLens[idxUpper]+edgeLens[idxLower])/2.0
+    return avg
+  else:
+    return edgeLens[int(nEdges/2)]
