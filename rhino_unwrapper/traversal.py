@@ -56,6 +56,14 @@ def getSpanningKruskal(graph,mesh):
     # also the if staements could be cleaned up probs.
   return foldList
 
+def getCutList(mesh,foldList):
+  cutList = []
+  for i in range(mesh.TopologyEdges.Count):
+    if i not in foldList:
+      cutList.append(i)
+  return cutList
+
+
 def meshFaces(mesh):
   return (mesh.Faces.GetFace(i) for i in xrange(mesh.Faces.Count))
 

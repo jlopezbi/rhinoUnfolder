@@ -24,18 +24,9 @@ def displayFaceIdxs(mesh):
     centerPnt = mesh.Faces.GetFaceCenter(i)
     rs.AddTextDot(str(i),centerPnt)
 
-def displayMeshCutEdges(mesh,foldList):
-  seamRed = (0,255,0,0) 
-  for i in range(mesh.TopologyEdges.Count):
-    if i not in foldList:
-      tVertI,tVertJ = getTVerts(i,mesh)
-      point3fI = mesh.TopologyVertices.Item[tVertI]
-      point3fJ = mesh.TopologyVertices.Item[tVertJ]
-      line = Rhino.Geometry.Line(point3fI,point3fJ)
-      edgeLine = drawLine(line,i,seamRed,displayIdx=False)
 
-def displayMeshEdges(mesh,color,edgeIdxs):
-  "generalized mesh edge display: replace this with above later"
+def displayMeshEdges(mesh,color,edgeIdxs,groupName):
+  drawnEdges = []
   if edgeIdxs:
     for edgeIdx in edgeIdxs:
       tVertI,tVertJ = getTVerts(edgeIdx,mesh)
@@ -43,6 +34,12 @@ def displayMeshEdges(mesh,color,edgeIdxs):
       point3fJ = mesh.TopologyVertices.Item[tVertJ]
       line = Rhino.Geometry.Line(point3fI,point3fJ)
       edgeLine = drawLine(line,edgeIdx,color,displayIdx=False)
+      drawnEdges.append(edgeLine)
+
+  name = createGroup(groupName,drawnEdges)
+
+  return name
+
 
 def setAttrColor(a,r,g,b):
   attr = Rhino.DocObjects.ObjectAttributes()
