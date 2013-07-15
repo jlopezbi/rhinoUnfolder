@@ -23,6 +23,7 @@ def deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB):
 
 def getSegmentsFromCut(mesh,foldList,cutEdgeIdx):
   faceList = getFacesForEdge(mesh,cutEdgeIdx)
+  print("faceList associated with new cut edge:" + str(faceList))
   if(len(faceList)==1):
     print("selected a naked edge!")
     return
@@ -43,10 +44,11 @@ def createSegment(mesh,faceIdx,foldList,segment):
   edgesForFace = getFaceEdges(faceIdx,mesh)
 
   for edgeIdx in edgesForFace:
-
+    newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
     if(edgeIdx in foldList):
-      newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
-      segment = createSegment(mesh,newFaceIdx,foldList,segment)
-    else:
-      return segment
+      if newFaceIdx not in segment:
+        segment = createSegment(mesh,newFaceIdx,foldList,segment)
+    # else:
+    #   return segment
+  return segment
 

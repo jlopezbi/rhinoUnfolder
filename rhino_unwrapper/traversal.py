@@ -82,6 +82,5 @@ def buildMeshGraph(mesh, userCuts, weight):
 
   edge_weights = sorted(edge_weights,key=lambda tup: tup[1],reverse=False)
   #sorted from smallest to greatest
-  print (edge_weights)
 
   return nodes,edge_weights

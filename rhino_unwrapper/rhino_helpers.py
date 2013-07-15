@@ -20,14 +20,14 @@ def getNewCut(message,flatEdges):
   mesh = objRef.Mesh()
   
   if curve:
-    print("selected a curve")
+    print("selected a curve:")
     curve_id = objRef.ObjectId
     flatEdge = getFlatEdgeForCurve(curve_id,flatEdges)
     if flatEdge:
-      print("selected a curve corresponding to mesh edge " +str(flatEdge.edgeIdx))
+      print(" corresponding to mesh edge " +str(flatEdge.edgeIdx))
       return flatEdge.edgeIdx
     else:
-      print("did not find corresponding mesh edge for curve")
+      print(" no corresponding mesh edge")
       return 
   elif mesh:
     edgeIdx = GetEdgeIdx(objRef)
@@ -154,6 +154,8 @@ def getFacesForEdge(mesh, edgeIndex):
   '''
   returns an array of indices of the faces connected to a given edge
   if the array has only one face this inidicates it is a naked edge
+  should be changed to get any number of faces, and return None if couldnt find 
+  any faces
   '''
   arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
 

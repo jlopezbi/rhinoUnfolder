@@ -4,12 +4,13 @@ import System.Drawing
 from rhino_helpers import *
 
 
-def displayEdgeIdx(line,edgeIdx):
+def displayEdgeIdx(line,edgeIdx,color):
   cenX = (line.FromX+line.ToX)/2
   cenY = (line.FromY+line.ToY)/2
   cenZ = (line.FromZ+line.ToZ)/2
-  eIdx = str(edgeIdx)
-  rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
+  point = Rhino.Geometry.Point3d(cenX,cenY,cenZ)
+  return drawTextDot(point,str(edgeIdx),color)
+  #rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
 
 def displayNormals(mesh):
   normLines = []
@@ -56,6 +57,11 @@ def drawLine(line,edgeIdx,color,displayIdx=False):
     displayEdgeIdx(line,edgeIdx)
   # returns a Guid (globally unique identifier)
   return scriptcontext.doc.Objects.AddLine(line,attrCol)
+
+def drawTextDot(point,message,color):
+  attrCol = setAttrColor(color[0],color[1],color[2],color[3])
+  textDot = Rhino.Geometry.TextDot(message,point) #nust be point 3d
+  return scriptcontext.doc.Objects.AddTextDot(textDot,attrCol)
 
 
 

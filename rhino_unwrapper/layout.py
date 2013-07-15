@@ -80,11 +80,17 @@ def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
 
 
 def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
-  connectedFaces = convertArray(mesh.TopologyEdges.GetConnectedFaces(edgeIdx))
-  assert(len(connectedFaces)==2),"getOtherFaceIdx(): more than two faces connecting an edge"
+  connectedFaces = getFacesForEdge(mesh,edgeIdx)
+  #assert(len(connectedFaces)==2),"getOtherFaceIdx(): did not get two connected Faces"
   assert(faceIdx in connectedFaces),"getOtherFaceIdx(): faceIdx not in faces associated with edge"
 
-  #eventually probably need to relax this condition for more complex trusses
+  if edgeIdx in mesh.GetNakedEdges():
+    return 
+
+  if len(connectedFaces) != 2:
+    print("did not find two connected faces for edgeIdx %i, " %(edgeIdx))
+    return
+    
   newFaceIdx = None
   if (connectedFaces[0]==faceIdx):
     newFaceIdx = connectedFaces[1]

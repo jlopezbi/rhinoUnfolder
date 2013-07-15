@@ -20,8 +20,10 @@ def RunCommand( is_interactive ):
     flatEdges,foldList = unwrap(mesh, userCuts, weightFunction)
 
   edgeIdx = getNewCut("select new cut edge",flatEdges)
-  if edgeIdx:
+  if type(edgeIdx)==int:
   	segmentNet(mesh,foldList,flatEdges,edgeIdx)
+
+
 
 
 # def RunCommand( is_interactive ):
