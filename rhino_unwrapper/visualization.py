@@ -107,6 +107,8 @@ def drawNet(flatEdgePairs):
 
   return netGroupName
 
+#def drawNetAsMesh(flatEdgePairs)
+
 
 
 

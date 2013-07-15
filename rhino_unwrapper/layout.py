@@ -5,6 +5,9 @@ class FlatEdge():
     # eventually add siblings data
     self.edgeIdx = _edgeIdx
     self.coordinates = _coordinates
+    self.geom = None
+    self.type = None
+    self.faceIdx = None
 
 def initBasisInfo(mesh, origin):
   faceIdx = 0
@@ -40,10 +43,12 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
   for edgeIndex in faceEdges:
     flatCoords = assignNewPntsToEdge(transformToFlat,edgeIndex,mesh)
     flatEdge = FlatEdge(edgeIndex,flatCoords)
+    flatEdge.faceIdx = basisInfo[0]
 
     if (edgeIndex in foldList):
       if (not alreadyBeenPlaced(edgeIndex,flatEdges)):
         flatEdge.type  = "fold"
+
 
         flatEdges[edgeIndex].append(flatEdge)
 

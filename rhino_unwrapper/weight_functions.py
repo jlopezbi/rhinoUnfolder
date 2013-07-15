@@ -3,7 +3,7 @@ import rhinoscriptsyntax as rs
 import rhino_helpers
 
 def edgeAngle(mesh, edgeIndex):
-  faceIdxs = rhino_helpers.connectedFaces(mesh, edgeIndex)
+  faceIdxs = rhino_helpers.getFacesForEdge(mesh, edgeIndex)
 
   if (len(faceIdxs)==2):
     faceNorm0 = mesh.FaceNormals.Item[faceIdxs[0]]

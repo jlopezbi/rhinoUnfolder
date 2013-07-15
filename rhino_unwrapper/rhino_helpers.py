@@ -1,24 +1,13 @@
 import Rhino
 import rhinoscriptsyntax as rs
 
-def connectedFaces(mesh, edgeIndex):
-  '''
-  returns an array of indices of the faces connected to a given edge
-  if the array has only one face this inidicates it is a naked edge
-  '''
-  arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
 
-  faceIdxs = []
-  faceIdxs.append(arrConnFaces.GetValue(0))
-  if arrConnFaces.Length == 2:
-    faceIdxs.append(arrConnFaces.GetValue(1))
-
-  return faceIdxs
 
 def getNewCut(message,flatEdges):
   ge = Rhino.Input.Custom.GetObject()
   # | is a bitwise or. documentation says can combine filters with 'bitwize combination'
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge | Rhino.DocObjects.ObjectType.Curve
+  ge.EnablePreSelect(False,False)
   ge.SetCommandPrompt(message)
   ge.Get()
 
@@ -160,6 +149,20 @@ def convertArray(array):
   for i in range(array.Length):
     pyList.append(array.GetValue(i))
   return pyList
+
+def getFacesForEdge(mesh, edgeIndex):
+  '''
+  returns an array of indices of the faces connected to a given edge
+  if the array has only one face this inidicates it is a naked edge
+  '''
+  arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
+
+  faceIdxs = []
+  faceIdxs.append(arrConnFaces.GetValue(0))
+  if arrConnFaces.Length == 2:
+    faceIdxs.append(arrConnFaces.GetValue(1))
+
+  return faceIdxs
 
 def getFaceEdges(faceIdx,mesh):
   arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
