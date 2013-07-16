@@ -5,9 +5,21 @@ class FlatEdge():
     # eventually add siblings data
     self.edgeIdx = _edgeIdx
     self.coordinates = _coordinates
-    self.geom = None
+    self.line_id = None
+    self.geom = []
     self.type = None
     self.faceIdx = None
+
+  def clearAllGeom(self):
+    '''
+    note: clear self.geom and self.line_id ?
+    '''
+    if self.line_id !=None:
+      rs.DeleteObject(self.line_id)
+
+    if len(self.geom)>0:
+      for guid in self.geom:
+        rs.DeleteObject(guid)
 
 def initBasisInfo(mesh, origin):
   faceIdx = 0
@@ -88,7 +100,8 @@ def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
     return 
 
   if len(connectedFaces) != 2:
-    print("did not find two connected faces for edgeIdx %i, " %(edgeIdx))
+    #This is a naked edge
+    #print("did not find two connected faces for edgeIdx %i, " %(edgeIdx))
     return
     
   newFaceIdx = None

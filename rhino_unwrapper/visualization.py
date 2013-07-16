@@ -56,7 +56,8 @@ def drawLine(line,edgeIdx,color,displayIdx=False):
   if displayIdx:
     displayEdgeIdx(line,edgeIdx)
   # returns a Guid (globally unique identifier)
-  return scriptcontext.doc.Objects.AddLine(line,attrCol)
+  lineGuid = scriptcontext.doc.Objects.AddLine(line,attrCol)
+  return lineGuid
 
 def drawTextDot(point,message,color):
   attrCol = setAttrColor(color[0],color[1],color[2],color[3])
@@ -68,35 +69,37 @@ def drawTextDot(point,message,color):
 ''' Dispatch Table for drawing different types of FlatEdges '''
 """this is where specialized geometry like tabs might be added. 
 Even though these functions seam redundant, keep this structure so that 
-specialized draw commands for each type of edge is easier to implement"""
+specialized draw commands for each type of edge is easier to implement
+
+New thought: makes sense to have all edges displayed in addition to actual cad geom.
+so basically draw all edges, (cut, fold, naked) and then have specialized functions for 
+perforations, tabs, etc"""
+
+def drawEdgeLine(flatEdge,color):
+  p1,p2 = flatEdge.coordinates
+  line = Rhino.Geometry.Line(p1,p2)
+  lineGuid =  drawLine(line,flatEdge.edgeIdx,color,displayIdx=False)
+  return lineGuid
+
 
 EDGE_DRAW_FUNCTIONS = {}
 
 def drawFoldEdge(flatEdge):
-  p1,p2 = flatEdge.coordinates
-  line = Rhino.Geometry.Line(p1,p2)
   green = (0,49,224,61)
-  geom =  drawLine(line,flatEdge.edgeIdx,green,displayIdx=False)
-  flatEdge.geom = geom
-  return geom
+  lineGuid = drawEdgeLine(flatEdge,green)
+  return lineGuid
 EDGE_DRAW_FUNCTIONS['fold'] = drawFoldEdge
 
 def drawCutEdge(flatEdge):
-  p1,p2 = flatEdge.coordinates
-  line = Rhino.Geometry.Line(p1,p2)
   red = (0,237,43,120)
-  geom = drawLine(line,flatEdge.edgeIdx,red,displayIdx=False)
-  flatEdge.geom = geom
-  return geom
+  lineGuid = drawEdgeLine(flatEdge,red)
+  return lineGuid
 EDGE_DRAW_FUNCTIONS['cut'] = drawCutEdge
 
 def drawNakedEdge(flatEdge):
-  p1,p2 = flatEdge.coordinates
-  line = Rhino.Geometry.Line(p1,p2)
   blue = (0,55,156,196)
-  geom = drawLine(line,flatEdge.edgeIdx,blue,displayIdx=False)
-  flatEdge.geom = geom
-  return geom
+  lineGuid = drawEdgeLine(flatEdge,blue)
+  return lineGuid
 EDGE_DRAW_FUNCTIONS['naked'] = drawNakedEdge
 
 def drawNet(flatEdgePairs):
@@ -108,10 +111,15 @@ def drawNet(flatEdgePairs):
   #flatten list
   flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
   for flatEdge in flatEdges:
-    net.append(EDGE_DRAW_FUNCTIONS[flatEdge.type](flatEdge))
+    flatEdge.clearAllGeom()
+    lineGuid = EDGE_DRAW_FUNCTIONS[flatEdge.type](flatEdge)
+    net.append(lineGuid)
+    flatEdge.line_id = lineGuid
+
   netGroupName = createGroup("net",net)
 
   return netGroupName
+
 
 #def drawNetAsMesh(flatEdgePairs)
 

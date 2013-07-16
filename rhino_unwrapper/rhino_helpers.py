@@ -48,7 +48,8 @@ def getFlatEdgeForCurve(curve_id,flatEdges):
       flatEdge.edgeIdx
               .coordinates
               .type
-              .geom
+              .line_id
+              .geom[]
   output:
     edgeIdx = the edgeIndex in the mesh that corresponeds to the given curve
     type = 
@@ -60,7 +61,7 @@ def getFlatEdgeForCurve(curve_id,flatEdges):
     if len(flatEdgeList)>1:
       assert (flatEdgeList[0].type==flatEdgeList[1].type), "types for associated flatEdges are not equal"
 
-    if curve_id == flatEdge.geom:
+    if curve_id == flatEdge.line_id:
       return flatEdge
   return
 

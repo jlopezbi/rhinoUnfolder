@@ -6,19 +6,6 @@ from layout import *
 consider generalizing layout or something. Also maybe create a different module
 that both layout and segmentation use.
 '''
-def deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB):
-  if len(segA)<=len(segB):
-    segment = segA
-  else:
-    segment = segB
-
-  for flatEdgePair in flatEdges:
-    for flatEdge in flatEdgePair:
-      if flatEdge.faceIdx in segment and flatEdge.edgeIdx != cutEdgeIdx:
-        scriptcontext.doc.Objects.Delete(flatEdge.geom,True)
-        flatEdge.geom = None
-  return segment
-
 
 def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
   segmentEdges = []
@@ -27,7 +14,10 @@ def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
       if flatEdge.faceIdx in smallSeg and flatEdge.edgeIdx != cutEdgeIdx:
         #scriptcontext.doc.Objects.Delete(flatEdge.geom,True)
         #scriptcontext.doc.Objects.Replace(flatEdges.geom,)
-        segmentEdges.append(flatEdge.geom)
+        segmentEdges.append(flatEdge.line_id)
+        if len(flatEdge.geom)>0:
+          for guid in flatEdge.geom:
+            segmentEdges.append(guid)
   rs.TransformObjects(segmentEdges,xForm,False) 
 
 def orderListsByLen(listA,listB):

@@ -13,9 +13,9 @@ def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
   
   netGroupName = visualization.drawNet(flatEdges)
 
-  visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
-  visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"algoCuts")
-  visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
+  #visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
+  #visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"algoCuts")
+  #visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
   return flatEdges,foldList  
   
 def segmentNet(mesh,foldList,flatEdges,cutEdgeIdx,xForm):
