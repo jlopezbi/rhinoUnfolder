@@ -18,7 +18,8 @@ def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
   #visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
   return flatEdges,foldList  
   
-def segmentNet(mesh,foldList,flatEdges,cutEdgeIdx,xForm):
+def segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm):
+  cutEdgeIdx = flatEdgeCut.edgeIdx
   if(cutEdgeIdx in foldList):
     foldList.remove(cutEdgeIdx)
     segA,segB = segm.getSegmentsFromCut(mesh,foldList,cutEdgeIdx)

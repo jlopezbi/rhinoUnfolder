@@ -19,11 +19,11 @@ def RunCommand( is_interactive ):
   if mesh and weightFunction:
     flatEdges,foldList = unwrap(mesh, userCuts, weightFunction)
 
-  edgeIdx,basePoint = getNewCut("select new cut edge",flatEdges)
-  if type(edgeIdx)==int:
+  flatEdgeCut,basePoint = getNewCut("select new cut edge",flatEdges)
+  if flatEdgeCut != None:
 
     xForm = getUserTranslate("Pick point to translate segment to",basePoint)
-    segmentNet(mesh,foldList,flatEdges,edgeIdx,xForm)
+    segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm)
   	
 
 

@@ -8,6 +8,7 @@ that both layout and segmentation use.
 '''
 
 def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
+  #something in here appears to be rather slow :(
   segmentEdges = []
   for flatEdgePair in flatEdges:
     for flatEdge in flatEdgePair:
@@ -19,6 +20,7 @@ def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
           for guid in flatEdge.geom:
             segmentEdges.append(guid)
   rs.TransformObjects(segmentEdges,xForm,False) 
+
 
 def orderListsByLen(listA,listB):
   '''

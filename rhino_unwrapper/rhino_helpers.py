@@ -28,7 +28,7 @@ def getNewCut(message,flatEdges):
     flatEdge = getFlatEdgeForCurve(curve_id,flatEdges)
     if flatEdge:
       print(" corresponding to mesh edge " +str(flatEdge.edgeIdx))
-      return flatEdge.edgeIdx,midPnt
+      return flatEdge,midPnt
     else:
       print(" no corresponding mesh edge")
       return None,None
