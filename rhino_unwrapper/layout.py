@@ -10,6 +10,9 @@ class FlatEdge():
     self.type = None
     self.faceIdx = None
 
+  def reDraw(self):
+    pass
+
   def clearAllGeom(self):
     '''
     note: clear self.geom and self.line_id ?

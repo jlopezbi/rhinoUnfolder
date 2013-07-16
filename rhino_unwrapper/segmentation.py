@@ -6,6 +6,15 @@ from layout import *
 consider generalizing layout or something. Also maybe create a different module
 that both layout and segmentation use.
 '''
+def segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm):
+  cutEdgeIdx = flatEdgeCut.edgeIdx
+  if(cutEdgeIdx in foldList):
+    foldList.remove(cutEdgeIdx)
+    segA,segB = segm.getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
+    segLists = segm.orderListsByLen(segA,segB)
+    smallSeg = segLists[0]
+    #smallSegment = segm.deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB)
+    segm.translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm)
 
 def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
   #something in here appears to be rather slow :(

@@ -111,7 +111,7 @@ def drawNet(flatEdgePairs):
   #flatten list
   flatEdges = [flatEdge for edgePair in flatEdgePairs for flatEdge in edgePair]
   for flatEdge in flatEdges:
-    flatEdge.clearAllGeom()
+    #flatEdge.clearAllGeom()
     lineGuid = EDGE_DRAW_FUNCTIONS[flatEdge.type](flatEdge)
     net.append(lineGuid)
     flatEdge.line_id = lineGuid
