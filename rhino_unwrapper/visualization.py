@@ -1,6 +1,3 @@
-import Rhino
-import scriptcontext
-import System.Drawing
 from rhino_helpers import *
 
 

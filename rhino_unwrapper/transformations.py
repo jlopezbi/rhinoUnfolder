@@ -1,4 +1,3 @@
-import Rhino
 from rhino_helpers import *
 
 

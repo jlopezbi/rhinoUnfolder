@@ -1,8 +1,6 @@
-import Rhino
-import rhinoscriptsyntax as rs
 from rhino_helpers import *
 from layout import * 
-import scriptcontext
+
 
 '''# this code is very similar to layoutFace() in layout.py
 consider generalizing layout or something. Also maybe create a different module

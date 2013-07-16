@@ -1,5 +1,7 @@
 import Rhino
 import rhinoscriptsyntax as rs
+import scriptcontext
+import System.Drawing
 
 
 
@@ -13,7 +15,7 @@ def getNewCut(message,flatEdges):
 
   if ge.CommandResult() != Rhino.Commands.Result.Success:
     print('failed to get mesh edge or curve in getNewCut')
-    return
+    return None,None
 
   objRef = ge.Object(0)
   curve = objRef.Curve()
@@ -29,14 +31,14 @@ def getNewCut(message,flatEdges):
       return flatEdge.edgeIdx,midPnt
     else:
       print(" no corresponding mesh edge")
-      return 
+      return None,None
   elif mesh:
     edgeIdx = GetEdgeIdx(objRef)
     print("selected mesh edge "+str(edgeIdx))
     return edgeIdx,Rhino.Geometry.Point3d(0,0,0)
   else:
     print("did not select anything valid")
-    return 
+    return None,None
 
 def getFlatEdgeForCurve(curve_id,flatEdges):
   '''
