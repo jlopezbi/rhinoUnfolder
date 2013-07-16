@@ -1,5 +1,5 @@
 from rhino_unwrapper.commands import unwrap, segmentNet
-from rhino_unwrapper.rhino_helpers import getMesh, getOption, getUserCuts, getNewCut
+from rhino_unwrapper.rhino_helpers import getMesh, getOption, getUserCuts, getNewCut, getUserTranslate
 from rhino_unwrapper.visualization import displayMeshEdges
 
 from rhino_unwrapper import weight_functions
@@ -19,9 +19,12 @@ def RunCommand( is_interactive ):
   if mesh and weightFunction:
     flatEdges,foldList = unwrap(mesh, userCuts, weightFunction)
 
-  edgeIdx = getNewCut("select new cut edge",flatEdges)
+  edgeIdx,basePoint = getNewCut("select new cut edge",flatEdges)
   if type(edgeIdx)==int:
-  	segmentNet(mesh,foldList,flatEdges,edgeIdx)
+
+    xForm = getUserTranslate("Pick point to translate segment to",basePoint)
+    segmentNet(mesh,foldList,flatEdges,edgeIdx,xForm)
+  	
 
 
 

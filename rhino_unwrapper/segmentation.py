@@ -21,6 +21,29 @@ def deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB):
         flatEdge.geom = None
   return segment
 
+
+def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
+  segmentEdges = []
+  for flatEdgePair in flatEdges:
+    for flatEdge in flatEdgePair:
+      if flatEdge.faceIdx in smallSeg and flatEdge.edgeIdx != cutEdgeIdx:
+        #scriptcontext.doc.Objects.Delete(flatEdge.geom,True)
+        #scriptcontext.doc.Objects.Replace(flatEdges.geom,)
+        segmentEdges.append(flatEdge.geom)
+  rs.TransformObjects(segmentEdges,xForm,False) 
+
+def orderListsByLen(listA,listB):
+  '''
+  return list where first element is the shorter list. or listA if equal
+  '''
+  smallList = listA
+  bigList = listB
+  if len(listA)>len(listB):
+    bigList = listA
+    smallList = listB
+  return [smallList,bigList]
+
+
 def getSegmentsFromCut(mesh,foldList,cutEdgeIdx):
   faceList = getFacesForEdge(mesh,cutEdgeIdx)
   print("faceList associated with new cut edge:" + str(faceList))

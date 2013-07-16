@@ -22,17 +22,18 @@ def getNewCut(message,flatEdges):
   if curve:
     print("selected a curve:")
     curve_id = objRef.ObjectId
+    midPnt = getMidPoint(curve_id)
     flatEdge = getFlatEdgeForCurve(curve_id,flatEdges)
     if flatEdge:
       print(" corresponding to mesh edge " +str(flatEdge.edgeIdx))
-      return flatEdge.edgeIdx
+      return flatEdge.edgeIdx,midPnt
     else:
       print(" no corresponding mesh edge")
       return 
   elif mesh:
     edgeIdx = GetEdgeIdx(objRef)
     print("selected mesh edge "+str(edgeIdx))
-    return edgeIdx
+    return edgeIdx,Rhino.Geometry.Point3d(0,0,0)
   else:
     print("did not select anything valid")
     return 
@@ -61,8 +62,6 @@ def getFlatEdgeForCurve(curve_id,flatEdges):
       return flatEdge
   return
 
-
-
 def getUserCuts(message=None):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
@@ -81,7 +80,6 @@ def getUserCuts(message=None):
 
 
 def GetEdgeIdx(objref):
-   
   # Rhino.DocObjects.ObjRef .GeometryComponentIndex to Rhino.Geometry.ComponentIndex
   meshEdgeIndex = objref.GeometryComponentIndex
    
@@ -137,6 +135,26 @@ def getMesh(message=None):
   if obj:
     return mesh
 
+def getUserTranslate(message,basePoint):
+  '''
+  basePoint can be point3d, Vector3d, Vector3f, or thee numbers(?)
+  '''
+  gp = Rhino.Input.Custom.GetPoint()
+  #gp.DynamicDraw += DynamicDrawFunc
+  gp.Get()
+  if gp.CommandResult() != Rhino.Commands.Result.Success:
+    return
+
+
+  point = gp.Point()
+  vecFrom = Rhino.Geometry.Vector3d(basePoint)
+  vecTo = Rhino.Geometry.Vector3d(point)
+  vec = vecTo-vecFrom
+
+  xForm = Rhino.Geometry.Transform.Translation(vec)
+  return xForm
+
+
 def createGroup(groupName,objects):
   name = rs.AddGroup(groupName)
   if not rs.AddObjectsToGroup(objects,groupName):
@@ -166,6 +184,13 @@ def getFacesForEdge(mesh, edgeIndex):
 
   return faceIdxs
 
+def getCenterPointLine(line):
+  cenX = (line.FromX+line.ToX)/2
+  cenY = (line.FromY+line.ToY)/2
+  cenZ = (line.FromZ+line.ToZ)/2
+  point = Rhino.Geometry.Point3d(cenX,cenY,cenZ)
+  return point
+
 def getFaceEdges(faceIdx,mesh):
   arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
   return convertArray(arrFaceEdges)
@@ -189,6 +214,19 @@ def getEdgeLengths(mesh):
 def getEdgeLen(edgIdx,mesh):
   edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
   return edgeLine.Length
+
+def getMidPoint(curve_id):
+  '''get the midpoint of a curve
+  '''
+  startPnt = rs.CurveStartPoint(curve_id)
+  endPnt = rs.CurveEndPoint(curve_id)
+
+  cenX = (startPnt.X+endPnt.X)/2
+  cenY = (startPnt.Y+endPnt.Y)/2
+  cenZ = (startPnt.Z+endPnt.Z)/2
+  point = Rhino.Geometry.Point3d(cenX,cenY,cenZ)
+
+  return point
 
 def getMedian(edgeLens):
   eLensSorted = sorted(edgeLens)

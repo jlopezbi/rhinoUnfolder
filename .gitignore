@@ -12,3 +12,4 @@ rhino_unwrapper/UnionFind1.py
 pickMeshEdge.py
 rhino_unwrapper/test_getVectorForLine.py
 rhino_unwrapper/test_meshAdd.py
+rhino_unwrapper/test_dynamicDraw.py

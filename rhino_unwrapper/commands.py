@@ -18,12 +18,11 @@ def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
   visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
   return flatEdges,foldList  
   
-def segmentNet(mesh,foldList,flatEdges,cutEdgeIdx):
+def segmentNet(mesh,foldList,flatEdges,cutEdgeIdx,xForm):
   if(cutEdgeIdx in foldList):
     foldList.remove(cutEdgeIdx)
     segA,segB = segm.getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
-    print("segA")
-    print(segA)
-    print("segB")
-    print(segB)
-    smallSegment = segm.deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB)
+    segLists = segm.orderListsByLen(segA,segB)
+    smallSeg = segLists[0]
+    #smallSegment = segm.deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB)
+    segm.translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm)

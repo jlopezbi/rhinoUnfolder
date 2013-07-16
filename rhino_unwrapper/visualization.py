@@ -4,6 +4,7 @@ import System.Drawing
 from rhino_helpers import *
 
 
+
 def displayEdgeIdx(line,edgeIdx,color):
   cenX = (line.FromX+line.ToX)/2
   cenY = (line.FromY+line.ToY)/2
@@ -11,6 +12,8 @@ def displayEdgeIdx(line,edgeIdx,color):
   point = Rhino.Geometry.Point3d(cenX,cenY,cenZ)
   return drawTextDot(point,str(edgeIdx),color)
   #rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
+
+
 
 def displayNormals(mesh):
   normLines = []
