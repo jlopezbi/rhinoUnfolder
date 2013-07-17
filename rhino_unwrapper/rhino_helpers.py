@@ -2,6 +2,7 @@ import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
+from flatEdge import FlatEdge
 
 
 
