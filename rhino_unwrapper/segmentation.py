@@ -28,7 +28,7 @@ def segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm):
     edgesInSeg = getEdgesInSegment(flatEdges,smallSeg)
     FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
     translateSegmentCoords(edgesInSeg,xForm)
-    FlatEdge.drawEdges(edgesInSeg)
+    FlatEdge.drawEdges(edgesInSeg,'seg1')
 
    
 

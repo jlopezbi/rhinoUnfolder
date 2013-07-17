@@ -26,7 +26,8 @@ def RunCommand( is_interactive ):
     if strType == 'fold':
       basePoint = flatEdgeCut.getMidPoint()
       xForm = getUserTranslate("Pick point to translate segment to",basePoint)
-      segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm)
+      if xForm:
+        segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm)
     elif strType == 'cut':
       break
     # elif strType == 'invalid':

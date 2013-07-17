@@ -12,7 +12,10 @@ def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
   flatEdges = layout.layoutMesh(foldList, mesh)
   
   #netGroupName = visualization.drawNet(flatEdges)
-  netGroupName = FlatEdge.drawFlatEdges(flatEdges)
+  #netGroupName = FlatEdge.drawFlatEdges(flatEdges)
+  netGroupName = "net0"
+  flatEdgesSimple = FlatEdge.getFlatList(flatEdges)
+  FlatEdge.drawEdges(flatEdgesSimple,netGroupName)
   #visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
   #visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"algoCuts")
   #visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")

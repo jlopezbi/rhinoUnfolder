@@ -91,9 +91,11 @@ class FlatEdge():
       flatEdge.clearAllGeom()
 
   @staticmethod
-  def drawEdges(flatEdges):
+  def drawEdges(flatEdges,groupName):
+    collection = []
     for flatEdge in flatEdges:
-      flatEdge.drawLine()
+      collection.append(flatEdge.drawLine())
+    createGroup(groupName,collection)
 
 
 
