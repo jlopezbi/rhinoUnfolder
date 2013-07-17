@@ -33,6 +33,15 @@ class FlatEdge():
     if len(self.geom)>0:
       for guid in self.geom:
         rs.DeleteObject(guid)
+  
+  def getMidPoint(self):
+    pntA = self.coordinates[0]
+    pntB = self.coordinates[1]
+    x = (pntA.X+pntB.X)/2.0
+    y = (pntA.Y+pntB.Y)/2.0
+    z = (pntA.Z+pntB.Z)/2.0
+    return Rhino.Geometry.Point3f(x,y,z)
+
 
   @staticmethod
   def drawFlatEdges(flatEdges):
@@ -54,25 +63,25 @@ class FlatEdge():
     return [flatEdge for edgePair in flatEdges for flatEdge in edgePair]
 
   @staticmethod
-  def getFlatEdgePair(flatEdges,strField,value):
+  def getFlatEdge(flatEdges,strField,value):
+    flatEdges = FlatEdge.getFlatList(flatEdges)
     strField = strField.upper()
     if strField == 'EDGEIDX':
       assert(type(value)==int)
-      for flatEdgePair in flatEdges:
-        if flatEdgePair[0].edgeIdx == value:
-          return flatEdgePair
+      for flatEdge in flatEdges:
+        if flatEdge.edgeIdx == value:
+          return flatEdge
     elif strField == 'LINE_ID':
       #assert guid?
-      for flatEdgePair in flatEdges:
-        if flatEdgePair[0].line_id == value:
-          return flatEdgePair
+      for flatEdge in flatEdges:
+        if flatEdge.line_id == value:
+          return flatEdge
     elif strField =='TYPE':
       assert(type(value)==str)
-      for flatEdgePair in flatEdges:
-        if flatEdgePair[0].type == value:
-          return flatEdgePair
-    else:
-      return
+      for flatEdge in flatEdges:
+        if flatEdge.type == value:
+          return flatEdge
+    return 
 
   @staticmethod
   def clearEdges(flatEdges):
