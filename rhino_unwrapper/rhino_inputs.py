@@ -41,62 +41,6 @@ def getNewEdge(message,flatEdges):
     return flatEdge,flatEdge.type
 
 
-
-def getFlatEdgeForCurve(curve_id,flatEdges):
-  '''
-  input:
-    curve_id = guid to curve object
-    flatEdges = list of lists which contain flatEdge objects:
-      flatEdge.edgeIdx
-              .coordinates
-              .type
-              .line_id
-              .geom[]
-  output:
-    edgeIdx = the edgeIndex in the mesh that corresponeds to the given curve
-    type = 
-  '''
-  #match curve_id to .geom
-  for flatEdgeList in flatEdges:
-    flatEdge = flatEdgeList[0]
-
-    if len(flatEdgeList)>1:
-      assert (flatEdgeList[0].type==flatEdgeList[1].type), "types for associated flatEdges are not equal"
-
-    if curve_id == flatEdge.line_id:
-      return flatEdge
-  return
-
-def getFlatEdgePair(flatEdges,strField,value):
-  '''
-  self.edgeIdx = _edgeIdx
-  self.coordinates = _coordinates
-  self.line_id = None
-  self.geom = []
-  self.type = None
-  self.faceIdx = None
-    '''
-
-  strField = strField.upper()
-  if strField == 'EDGEIDX':
-    assert(type(value)==int)
-    for flatEdgePair in flatEdges:
-      if flatEdgePair[0].edgeIdx == value:
-        return flatEdgePair
-  elif strField == 'LINE_ID':
-    #assert guid?
-    for flatEdgePair in flatEdges:
-      if flatEdgePair[0].line_id == value:
-        return flatEdgePair
-  elif strField =='TYPE':
-    assert(type(value)==str)
-    for flatEdgePair in flatEdges:
-      if flatEdgePair[0].type == value:
-        return flatEdgePair
-  else:
-    return
-
-
 def getUserCuts(message=None):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
