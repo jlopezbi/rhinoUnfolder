@@ -1,5 +1,6 @@
 from rhino_helpers import *
 from layout import * 
+from classes import FlatEdge
 
 
 '''# this code is very similar to layoutFace() in layout.py
@@ -8,27 +9,44 @@ that both layout and segmentation use.
 '''
 def segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm):
   cutEdgeIdx = flatEdgeCut.edgeIdx
+
   if(cutEdgeIdx in foldList):
+    #flatEdgeCut.clearAllGeom()
+    flatEdgeCut.type = 'cut'
+    newFlatEdge = FlatEdge(flatEdgeCut.edgeIdx,flatEdgeCut.coordinates)
+    newFlatEdge.type = 'cut'
+    newFlatEdge.faceIdx = getOtherFaceIdx(cutEdgeIdx,flatEdgeCut.faceIdx,mesh)
+    newFlatEdge.drawLine()
+    flatEdges[cutEdgeIdx].append(newFlatEdge) #copy flatEdge
+
     foldList.remove(cutEdgeIdx)
     segA,segB = getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
     segLists = orderListsByLen(segA,segB)
     smallSeg = segLists[0]
-    #smallSegment = segm.deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB)
-    translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm)
+    edgesInSeg = getEdgesInSegment(flatEdges,smallSeg)
+    FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
+    translateSegmentCoords(edgesInSeg,xForm)
+    FlatEdge.drawEdges(edgesInSeg)
 
-def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
-  #something in here appears to be rather slow :(
-  segmentEdges = []
-  for flatEdgePair in flatEdges:
-    for flatEdge in flatEdgePair:
-      if flatEdge.faceIdx in smallSeg and flatEdge.edgeIdx != cutEdgeIdx:
-        #scriptcontext.doc.Objects.Delete(flatEdge.geom,True)
-        #scriptcontext.doc.Objects.Replace(flatEdges.geom,)
-        segmentEdges.append(flatEdge.line_id)
-        if len(flatEdge.geom)>0:
-          for guid in flatEdge.geom:
-            segmentEdges.append(guid)
-  rs.TransformObjects(segmentEdges,xForm,False) #appears to be slow
+   
+
+def translateSegmentCoords(edgesInSegment,xForm):
+  for flatEdge in edgesInSegment:
+    points = flatEdge.coordinates
+    points[0].Transform(xForm)
+    points[1].Transform(xForm)
+
+def getEdgesInSegment(flatEdges,faceList):
+  edges = []
+  flatEdges = FlatEdge.getFlatList(flatEdges)
+  for flatEdge in flatEdges:
+    if flatEdge.faceIdx in faceList:
+      edges.append(flatEdge)
+  return edges
+
+
+
+
 
 def resetFlatEdge(flatEdges,cutEdgeIdx,xForm):
   flatEdge = FlatEdge.getFlatEdgePair(flatEdges,'edgeIdx',cutEdgeIdx)[0]

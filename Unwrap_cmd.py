@@ -22,7 +22,7 @@ def RunCommand( is_interactive ):
 
   flatEdgeCut,basePoint = getNewCut("select new cut edge",flatEdges)
   if flatEdgeCut != None:
-
+    
     xForm = getUserTranslate("Pick point to translate segment to",basePoint)
     segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm)
   	

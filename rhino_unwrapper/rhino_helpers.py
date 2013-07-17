@@ -216,6 +216,31 @@ def getFacesForEdge(mesh, edgeIndex):
 
   return faceIdxs
 
+def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
+  connectedFaces = getFacesForEdge(mesh,edgeIdx)
+  #assert(len(connectedFaces)==2),"getOtherFaceIdx(): did not get two connected Faces"
+  assert(faceIdx in connectedFaces),"getOtherFaceIdx(): faceIdx not in faces associated with edge"
+
+  if edgeIdx in mesh.GetNakedEdges():
+    return 
+
+  if len(connectedFaces) != 2:
+    #This is a naked edge
+    #print("did not find two connected faces for edgeIdx %i, " %(edgeIdx))
+    return
+    
+  newFaceIdx = None
+  if (connectedFaces[0]==faceIdx):
+    newFaceIdx = connectedFaces[1]
+  elif (connectedFaces[1]==faceIdx):
+    newFaceIdx = connectedFaces[0]
+  else:
+    print "problem in getOtherFaceIdx: edgeIdx not in faceIdx,assert should have caught error"
+    return None
+
+  assert(newFaceIdx!=faceIdx), "getOtherFaceIdx(): newFaceIdx == faceIdx!"
+  return newFaceIdx
+
 def getCenterPointLine(line):
   cenX = (line.FromX+line.ToX)/2
   cenY = (line.FromY+line.ToY)/2

@@ -2,9 +2,8 @@ from visualization import *
 
 class FlatEdge():
   def __init__(self,_edgeIdx,_coordinates):
-    # eventually add siblings data
     self.edgeIdx = _edgeIdx
-    self.coordinates = _coordinates
+    self.coordinates = _coordinates #[[pntA,pntB],[pntA,pntB]]
     self.line_id = None
     self.geom = []
     self.type = None
@@ -29,6 +28,7 @@ class FlatEdge():
     '''
     if self.line_id !=None:
       rs.DeleteObject(self.line_id)
+      self.line_id = None
 
     if len(self.geom)>0:
       for guid in self.geom:
@@ -38,7 +38,7 @@ class FlatEdge():
   def drawFlatEdges(flatEdges):
     net = []
     #flatten list
-    flatEdges = [flatEdge for edgePair in flatEdges for flatEdge in edgePair]
+    flatEdges = FlatEdge.getFlatList(flatEdges)
     for flatEdge in flatEdges:
       #flatEdge.clearAllGeom()
       lineGuid = flatEdge.drawLine()
@@ -49,6 +49,9 @@ class FlatEdge():
 
     return netGroupName
 
+  @staticmethod
+  def getFlatList(flatEdges):
+    return [flatEdge for edgePair in flatEdges for flatEdge in edgePair]
 
   @staticmethod
   def getFlatEdgePair(flatEdges,strField,value):
@@ -72,6 +75,15 @@ class FlatEdge():
       return
 
   @staticmethod
-  def resetFlatEdge(flatEdges,cutEdgeIdx):
-    flatEdge = FlatEdge.getFlatEdgePair(flatEdges,'edgeIdx',cutEdgeIdx)[0]
-    flatEdge.clearAllGeom()
+  def clearEdges(flatEdges):
+    for flatEdge in flatEdges:
+      flatEdge.clearAllGeom()
+
+  @staticmethod
+  def drawEdges(flatEdges):
+    for flatEdge in flatEdges:
+      flatEdge.drawLine()
+
+
+
+
