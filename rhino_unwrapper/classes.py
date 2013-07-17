@@ -20,7 +20,9 @@ class FlatEdge():
       elif self.type == 'naked':
         color = (0,55,156,196) #blue
       points = self.coordinates
-    return drawLine(points,color)
+      line_id = drawLine(points,color)
+      self.line_id = line_id
+    return line_id
 
   def clearAllGeom(self):
     '''

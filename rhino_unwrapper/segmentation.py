@@ -11,8 +11,10 @@ def segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm):
   cutEdgeIdx = flatEdgeCut.edgeIdx
 
   if(cutEdgeIdx in foldList):
-    #flatEdgeCut.clearAllGeom()
+    flatEdgeCut.clearAllGeom()
     flatEdgeCut.type = 'cut'
+    flatEdgeCut.drawLine()
+
     newFlatEdge = FlatEdge(flatEdgeCut.edgeIdx,flatEdgeCut.coordinates)
     newFlatEdge.type = 'cut'
     newFlatEdge.faceIdx = getOtherFaceIdx(cutEdgeIdx,flatEdgeCut.faceIdx,mesh)
