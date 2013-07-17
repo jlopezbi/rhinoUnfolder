@@ -49,12 +49,9 @@ def setAttrColor(a,r,g,b):
   return attr
 
 
-def drawLine(line,edgeIdx,color,displayIdx=False):
-
+def drawLine(points,color):
+  line = Rhino.Geometry.Line(points[0],points[1])
   attrCol = setAttrColor(color[0],color[1],color[2],color[3])
-
-  if displayIdx:
-    displayEdgeIdx(line,edgeIdx)
   # returns a Guid (globally unique identifier)
   lineGuid = scriptcontext.doc.Objects.AddLine(line,attrCol)
   return lineGuid
@@ -86,19 +83,19 @@ EDGE_DRAW_FUNCTIONS = {}
 
 def drawFoldEdge(flatEdge):
   green = (0,49,224,61)
-  lineGuid = drawEdgeLine(flatEdge,green)
+  lineGuid = drawLine(flatEdge.coordinates,green)
   return lineGuid
 EDGE_DRAW_FUNCTIONS['fold'] = drawFoldEdge
 
 def drawCutEdge(flatEdge):
   red = (0,237,43,120)
-  lineGuid = drawEdgeLine(flatEdge,red)
+  lineGuid = drawLine(flatEdge.coordinates,red)
   return lineGuid
 EDGE_DRAW_FUNCTIONS['cut'] = drawCutEdge
 
 def drawNakedEdge(flatEdge):
   blue = (0,55,156,196)
-  lineGuid = drawEdgeLine(flatEdge,blue)
+  lineGuid = drawLine(flatEdge.coordinates,blue)
   return lineGuid
 EDGE_DRAW_FUNCTIONS['naked'] = drawNakedEdge
 

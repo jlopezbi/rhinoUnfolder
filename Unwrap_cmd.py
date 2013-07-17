@@ -1,4 +1,5 @@
-from rhino_unwrapper.commands import unwrap, segmentNet
+from rhino_unwrapper.commands import unwrap
+from rhino_unwrapper.segmentation import segmentNet
 from rhino_unwrapper.rhino_helpers import getMesh, getOption, getUserCuts, getNewCut, getUserTranslate
 from rhino_unwrapper.visualization import displayMeshEdges
 

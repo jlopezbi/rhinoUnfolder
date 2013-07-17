@@ -10,11 +10,11 @@ def segmentNet(mesh,foldList,flatEdges,flatEdgeCut,xForm):
   cutEdgeIdx = flatEdgeCut.edgeIdx
   if(cutEdgeIdx in foldList):
     foldList.remove(cutEdgeIdx)
-    segA,segB = segm.getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
-    segLists = segm.orderListsByLen(segA,segB)
+    segA,segB = getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
+    segLists = orderListsByLen(segA,segB)
     smallSeg = segLists[0]
     #smallSegment = segm.deleteSmallerSegment(flatEdges,cutEdgeIdx,segA,segB)
-    segm.translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm)
+    translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm)
 
 def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
   #something in here appears to be rather slow :(
@@ -28,7 +28,12 @@ def translateSmallerSegment(flatEdges,cutEdgeIdx,smallSeg,xForm):
         if len(flatEdge.geom)>0:
           for guid in flatEdge.geom:
             segmentEdges.append(guid)
-  rs.TransformObjects(segmentEdges,xForm,False) 
+  rs.TransformObjects(segmentEdges,xForm,False) #appears to be slow
+
+def resetFlatEdge(flatEdges,cutEdgeIdx,xForm):
+  flatEdge = FlatEdge.getFlatEdgePair(flatEdges,'edgeIdx',cutEdgeIdx)[0]
+  flatEdge.clearAllGeom()
+  
 
 
 def orderListsByLen(listA,listB):
@@ -45,7 +50,7 @@ def orderListsByLen(listA,listB):
 
 def getSegmentsFromCut(mesh,foldList,cutEdgeIdx):
   faceList = getFacesForEdge(mesh,cutEdgeIdx)
-  print("faceList associated with new cut edge:" + str(faceList))
+  #print("faceList associated with new cut edge:" + str(faceList))
   if(len(faceList)==1):
     print("selected a naked edge!")
     return

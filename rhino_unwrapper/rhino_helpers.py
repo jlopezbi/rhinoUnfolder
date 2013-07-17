@@ -2,10 +2,9 @@ import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
-from classes import FlatEdge
 
 
-
+'''rhinoInputs'''
 def getNewCut(message,flatEdges):
   ge = Rhino.Input.Custom.GetObject()
   # | is a bitwise or. documentation says can combine filters with 'bitwize combination'
@@ -66,6 +65,36 @@ def getFlatEdgeForCurve(curve_id,flatEdges):
       return flatEdge
   return
 
+def getFlatEdgePair(flatEdges,strField,value):
+  '''
+  self.edgeIdx = _edgeIdx
+  self.coordinates = _coordinates
+  self.line_id = None
+  self.geom = []
+  self.type = None
+  self.faceIdx = None
+    '''
+
+  strField = strField.upper()
+  if strField == 'EDGEIDX':
+    assert(type(value)==int)
+    for flatEdgePair in flatEdges:
+      if flatEdgePair[0].edgeIdx == value:
+        return flatEdgePair
+  elif strField == 'LINE_ID':
+    #assert guid?
+    for flatEdgePair in flatEdges:
+      if flatEdgePair[0].line_id == value:
+        return flatEdgePair
+  elif strField =='TYPE':
+    assert(type(value)==str)
+    for flatEdgePair in flatEdges:
+      if flatEdgePair[0].type == value:
+        return flatEdgePair
+  else:
+    return
+
+
 def getUserCuts(message=None):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
@@ -88,7 +117,6 @@ def GetEdgeIdx(objref):
   meshEdgeIndex = objref.GeometryComponentIndex
    
   return meshEdgeIndex.Index
-
 
 
 def getOption(options, option_name, message=None):
@@ -158,7 +186,7 @@ def getUserTranslate(message,basePoint):
   xForm = Rhino.Geometry.Transform.Translation(vec)
   return xForm
 
-
+'''Rhino_helpers'''
 def createGroup(groupName,objects):
   name = rs.AddGroup(groupName)
   if not rs.AddObjectsToGroup(objects,groupName):

@@ -1,5 +1,5 @@
 from transformations import *
-
+from classes import FlatEdge
 
 def initBasisInfo(mesh, origin):
   faceIdx = 0
