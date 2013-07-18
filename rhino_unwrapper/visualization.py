@@ -117,7 +117,7 @@ def drawEdgeLine(flatEdge,color):
   lineGuid =  drawLine(line,flatEdge.edgeIdx,color,displayIdx=False)
   return lineGuid
 
-
+'''
 EDGE_DRAW_FUNCTIONS = {}
 
 def drawFoldEdge(flatEdge):
@@ -137,6 +137,7 @@ def drawNakedEdge(flatEdge):
   lineGuid = drawLine(flatEdge.coordinates,blue)
   return lineGuid
 EDGE_DRAW_FUNCTIONS['naked'] = drawNakedEdge
+'''
 
 def drawNet(flatEdgePairs):
   '''

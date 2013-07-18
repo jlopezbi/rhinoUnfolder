@@ -100,6 +100,10 @@ def getEdgeVector(mesh,edgeIdx):
   vec = edgeLine.Direction
   return vec
 
+# def getVectorForPoints(pntA,pntB):
+#   vecA = Rhino.Geometry.Vector3d(pntA)
+#   vecB = Rhino.Geometry
+
 def getEdgeLen(edgIdx,mesh):
   edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
   return edgeLine.Length

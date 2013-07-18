@@ -1,4 +1,25 @@
 from visualization import *
+import math
+
+EDGE_GEOM_FUNCTIONS = {}
+
+# def drawTab(flatEdge,color):
+#   green = (0,49,224,61)
+#   lineGuid = drawLine(flatEdge.coordinates,green)
+#   return lineGuid
+# EDGE_GEOM_FUNCTIONS['fold'] = drawFoldEdge
+
+# def drawCutEdge(flatEdge):
+#   red = (0,237,43,120)
+#   lineGuid = drawLine(flatEdge.coordinates,red)
+#   return lineGuid
+# EDGE_GEOM_FUNCTIONS['cut'] = drawCutEdge
+
+# def drawNakedEdge(flatEdge):
+#   blue = (0,55,156,196)
+#   lineGuid = drawLine(flatEdge.coordinates,blue)
+#   return lineGuid
+# EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
 
 class FlatEdge():
   def __init__(self,_edgeIdx,_coordinates):
@@ -30,8 +51,28 @@ class FlatEdge():
       self.line_id = line_id
     return line_id
 
+
   def drawTab(self):
-    
+    geom = []
+    if len(self.tabAngles)<1:
+      return
+    pntA = self.coordinates[0]
+    pntB = self.coordinates[1]
+
+    alpha  = self.tabAngles[0]
+    beta = self.tabAngles[1]
+    lenI = self.tabWidth/math.sin(alpha)
+    lenJ = self.tabWidth/math.sin(beta)
+    vec = rs.VectorSubtract(self.coordinates[0],self.coordinates[1])
+    vecUnit = rs.VectorUnitize(vec)
+
+    vecI = rs.VectorScale(vecUnit,lenI)
+    vecJ = rs.VectorScale(vecUnit,-1*lenJ)
+
+    vecI = rs.VectorRotate(vecI,alpha,[0,0,1])
+    vecJ = rs.VectorRotate(vecJ,-1*beta,[0,0,1])
+    #pntB = Rhino.Geometry.Point3d(vecI+pntA) #this addition not allowed
+
     self.geom = geom
     return geom
 
@@ -82,20 +123,6 @@ class FlatEdge():
       return [angleI,angleJ]
 
 
-  @staticmethod
-  def drawFlatEdges(flatEdges):
-    net = []
-    #flatten list
-    flatEdges = FlatEdge.getFlatList(flatEdges)
-    for flatEdge in flatEdges:
-      #flatEdge.clearAllGeom()
-      lineGuid = flatEdge.drawLine()
-      net.append(lineGuid)
-      flatEdge.line_id = lineGuid
-
-    netGroupName = createGroup("net",net)
-
-    return netGroupName
 
   @staticmethod
   def getFlatList(flatEdges):
@@ -132,6 +159,14 @@ class FlatEdge():
     collection = []
     for flatEdge in flatEdges:
       collection.append(flatEdge.drawLine())
+    createGroup(groupName,collection)
+
+  @staticmethod
+  def drawTabs(flatEdges,groupName):
+    collection = []
+    for flatEdge in flatEdges:
+      if flatEdge.hasTab:
+        collection.append(flatEdge.drawTab())
     createGroup(groupName,collection)
 
 
