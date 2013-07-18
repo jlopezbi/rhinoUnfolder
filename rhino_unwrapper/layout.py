@@ -54,6 +54,7 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
       elif len(flatEdges[edgeIndex])==1:
         flatEdge.type = "cut"
         flatEdge.hasTab = True
+        flatEdge.tabAngles = FlatEdge.getTabAngles(mesh,basisInfo[0],edgeIndex)
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges

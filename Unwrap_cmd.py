@@ -15,6 +15,7 @@ def all_weight_functions():
 __commandname__ = "Unwrap"
 def RunCommand( is_interactive ):
   mesh = getMesh("Select mesh to unwrap")
+  mesh.Normals.ComputeNormals()
   userCuts = getUserCuts("Select edges to cut")
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
   if mesh and weightFunction:

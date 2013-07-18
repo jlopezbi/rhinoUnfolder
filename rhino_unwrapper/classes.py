@@ -8,8 +8,10 @@ class FlatEdge():
     self.geom = []
     self.type = None
     self.faceIdx = None
+
     self.hasTab = False
     self.tabAngles = []
+    self.tabWidth = .5 #could be standard, or based on face area
 
   
 
@@ -29,7 +31,9 @@ class FlatEdge():
     return line_id
 
   def drawTab(self):
-    pass
+    
+    self.geom = geom
+    return geom
 
   def clearAllGeom(self):
     '''
@@ -68,13 +72,13 @@ class FlatEdge():
       
       angleI = rs.VectorAngle(vecI,vecEdge)
       angleJ = rs.VectorAngle(vecJ,vecEdge)
-      #print angleI
 
-      color = (0,0,0,0)
-      drawVector(vecI,posVecI,color)
-      drawVector(vecJ,posVecCenter,color)
-      print
-      print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
+      # color = (0,0,0,0)
+      # drawVector(vecI,posVecI,color)
+      # drawVector(vecJ,posVecCenter,color)
+      # print #wtf: for some reason needed this line to print below
+      # print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
+
       return [angleI,angleJ]
 
 

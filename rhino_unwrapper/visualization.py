@@ -18,13 +18,20 @@ def displayIJEdge(mesh,edgeIdx):
   rs.AddTextDot('J',pntJ)
 
 
+
+
 def displayNormals(mesh):
   normLines = []
   for i in range(mesh.FaceNormals.Count):
-    p1 = mesh.Faces.GetFaceCenter(i)
-    p2 = p1 + mesh.FaceNormals.Item[i]
-    normLines.append(rs.AddLine(p1,p2))
-  createGroup("normLines",normLines)
+    pntCenter = mesh.Faces.GetFaceCenter(i) #Point3d
+    posVecCenter = Rhino.Geometry.Vector3d(pntCenter)
+    vecNormal = mesh.FaceNormals.Item[i] #Vector3f
+    vecNormal.Unitize()
+    lineGuid = drawVector(vecNormal,pntCenter,(0,0,0,0))
+    normLines.append(lineGuid)
+  name = createGroup('Normals',normLines)
+  return name
+
 
 def displayVector(vector,position,color):
   endPnt = vec
