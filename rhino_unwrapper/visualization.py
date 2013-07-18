@@ -10,6 +10,12 @@ def displayEdgeIdx(line,edgeIdx,color):
   return drawTextDot(point,str(edgeIdx),color)
   #rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
 
+def displayIJEdge(mesh,edgeIdx):
+  vertI,vertJ = getTVerts(edgeIdx,mesh)
+  pntI = mesh.TopologyVertices.Item[vertI]
+  pntJ = mesh.TopologyVertices.Item[vertJ]
+  rs.AddTextDot('I',pntI)
+  rs.AddTextDot('J',pntJ)
 
 
 def displayNormals(mesh):
@@ -19,6 +25,9 @@ def displayNormals(mesh):
     p2 = p1 + mesh.FaceNormals.Item[i]
     normLines.append(rs.AddLine(p1,p2))
   createGroup("normLines",normLines)
+
+def displayVector(vector,position,color):
+  endPnt = vec
 
 def displayFaceIdxs(mesh):
   for i in xrange(mesh.Faces.Count):
@@ -48,12 +57,35 @@ def setAttrColor(a,r,g,b):
   attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
   return attr
 
+def setAttrArrow(attr,strType):
+  if strType == 'StartArrowhead':
+    value =  Rhino.DocObjects.ObjectDecoration.StartArrowhead
+  elif strType == 'EndArrowhead':
+    value = Rhino.DocObjects.ObjectDecoration.EndArrowhead
+  elif strType == 'BothArrowhead':
+    value = Rhino.DocObjects.ObjectDecoration.BothArrowhead
+  else:
+    value = 0
+  attr.ObjectDecoration = value
+  return attr
 
-def drawLine(points,color):
+
+def drawLine(points,color,arrowType):
+  #points must be Point3d
   line = Rhino.Geometry.Line(points[0],points[1])
   attrCol = setAttrColor(color[0],color[1],color[2],color[3])
+  if arrowType:
+    attrCol = setAttrArrow(attrCol,arrowType)
+
   # returns a Guid (globally unique identifier)
   lineGuid = scriptcontext.doc.Objects.AddLine(line,attrCol)
+  return lineGuid
+
+def drawVector(vector,position,color):
+  pntStart = Rhino.Geometry.Point3d(position)
+  vecEnd = position + vector
+  pntEnd = Rhino.Geometry.Point3d(vecEnd)
+  lineGuid = drawLine([pntStart,pntEnd],color,'EndArrowhead')
   return lineGuid
 
 def drawTextDot(point,message,color):

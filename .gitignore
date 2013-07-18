@@ -13,3 +13,5 @@ pickMeshEdge.py
 rhino_unwrapper/test_getVectorForLine.py
 rhino_unwrapper/test_meshAdd.py
 rhino_unwrapper/test_dynamicDraw.py
+rhino_unwrapper/test_meshEdgeDirection.py
+rhino_unwrapper/test_getTabAngles.py

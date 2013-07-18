@@ -40,8 +40,9 @@ def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
   #assert(len(connectedFaces)==2),"getOtherFaceIdx(): did not get two connected Faces"
   assert(faceIdx in connectedFaces),"getOtherFaceIdx(): faceIdx not in faces associated with edge"
 
-  if edgeIdx in mesh.GetNakedEdges():
-    return 
+  nakedEdges = mesh.GetNakedEdges()
+  if nakedEdges !=None and edgeIdx in mesh.GetNakedEdges():
+      return 
 
   if len(connectedFaces) != 2:
     #This is a naked edge
@@ -75,6 +76,12 @@ def getTVerts(edgeIdx,mesh):
   vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
   return vertPair.I, vertPair.J
 
+def getPointsForEdge(mesh,edgeIdx):
+  tVertI,tVertJ = getTVerts(edgeIdx,mesh)
+  pntI = mesh.TopologyVertices.Item[tVertI]
+  pntJ = mesh.TopologyVertices.Item[tVertJ]
+  return [pntI,pntJ]
+
 def getMedianEdgeLen(mesh):
   edgeLens = getEdgeLengths(mesh)
   return getMedian(edgeLens)
@@ -86,6 +93,12 @@ def getEdgeLengths(mesh):
     edgeLen = edgeLine.Length
     edgeLens.append(edgeLen)
   return edgeLens
+
+def getEdgeVector(mesh,edgeIdx):
+  edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
+  #Vector3d
+  vec = edgeLine.Direction
+  return vec
 
 def getEdgeLen(edgIdx,mesh):
   edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)

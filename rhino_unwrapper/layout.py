@@ -19,7 +19,7 @@ def layoutMesh(foldList, mesh):
   return flatEdges
 
 def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
-  ''' Recurse through faces, moving along fold edges
+  ''' Recurse through faces, hopping along fold edges
     input:
       depth = recursion level
       basisInfo = (faceIdx,edgeIdx,tVertIdx) information required to make basis
@@ -40,13 +40,11 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
     if (edgeIndex in foldList):
       if (not alreadyBeenPlaced(edgeIndex,flatEdges)):
         flatEdge.type  = "fold"
-
-
         flatEdges[edgeIndex].append(flatEdge)
-
         newBasisInfo = getNewBasisInfo(basisInfo,edgeIndex,mesh)
         newToBasis = getBasisFlat(flatCoords)
 
+        #RECURSE
         flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges)
 
     else:
@@ -55,6 +53,7 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
         flatEdges[edgeIndex].append(flatEdge)
       elif len(flatEdges[edgeIndex])==1:
         flatEdge.type = "cut"
+        flatEdge.hasTab = True
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges
@@ -72,7 +71,7 @@ def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
 
 
 def assignNewPntsToEdge(xForm,edgeIdx,mesh):
-  #output: list of new coords, Point3f
+  #output: list of new coords, Point3f, always in order of I,J
   indexPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
   idxI = indexPair.I
   idxJ = indexPair.J

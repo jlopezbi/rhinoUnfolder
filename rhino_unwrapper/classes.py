@@ -8,6 +8,8 @@ class FlatEdge():
     self.geom = []
     self.type = None
     self.faceIdx = None
+    self.hasTab = False
+    self.tabAngles = []
 
   
 
@@ -17,12 +19,17 @@ class FlatEdge():
         color = (0,49,224,61) #green
       elif self.type == 'cut':
         color = (0,237,43,120) #red
+        if self.hasTab:
+          color = (0,255,0,255) #magenta
       elif self.type == 'naked':
         color = (0,55,156,196) #blue
       points = self.coordinates
-      line_id = drawLine(points,color)
+      line_id = drawLine(points,color,'None')
       self.line_id = line_id
     return line_id
+
+  def drawTab(self):
+    pass
 
   def clearAllGeom(self):
     '''
@@ -43,6 +50,32 @@ class FlatEdge():
     y = (pntA.Y+pntB.Y)/2.0
     z = (pntA.Z+pntB.Z)/2.0
     return Rhino.Geometry.Point3f(x,y,z)
+
+  @staticmethod
+  def getTabAngles(mesh,currFaceIdx,edgeIdx):
+    otherFace = getOtherFaceIdx(edgeIdx,currFaceIdx,mesh)
+    if otherFace:
+      faceCenter = mesh.Faces.GetFaceCenter(otherFace) #Point3d
+      posVecCenter = Rhino.Geometry.Vector3d(faceCenter) 
+
+      pntI,pntJ = getPointsForEdge(mesh,edgeIdx) #Point3d
+      vecEdge = getEdgeVector(mesh,edgeIdx) #Vector3d
+      posVecI = Rhino.Geometry.Vector3d(pntI)
+      posVecJ = Rhino.Geometry.Vector3d(pntJ)
+
+      vecI = Rhino.Geometry.Vector3d.Subtract(posVecCenter,posVecI)
+      vecJ = Rhino.Geometry.Vector3d.Subtract(posVecJ,posVecCenter)
+      
+      angleI = rs.VectorAngle(vecI,vecEdge)
+      angleJ = rs.VectorAngle(vecJ,vecEdge)
+      #print angleI
+
+      color = (0,0,0,0)
+      drawVector(vecI,posVecI,color)
+      drawVector(vecJ,posVecCenter,color)
+      print
+      print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
+      return [angleI,angleJ]
 
 
   @staticmethod
