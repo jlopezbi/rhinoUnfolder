@@ -1,7 +1,7 @@
 from visualization import *
 import math
 
-EDGE_GEOM_FUNCTIONS = {}
+#EDGE_GEOM_FUNCTIONS = {}
 
 # def drawTab(flatEdge,color):
 #   green = (0,49,224,61)
@@ -22,14 +22,16 @@ EDGE_GEOM_FUNCTIONS = {}
 # EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
 
 class FlatEdge():
-  def __init__(self,_edgeIdx,_coordinates):
+  def __init__(self,_edgeIdx,_coordinates,_tVertIdxs): 
     self.edgeIdx = _edgeIdx
-    self.coordinates = _coordinates #[[pntA,pntB],[pntA,pntB]]
+    self.coordinates = _coordinates
+    self.tVertIdxs = _tVertIdxs
     self.line_id = None
     self.geom = []
     self.type = None
-    self.faceIdx = None
+    self.faceIdxs = []
 
+    self.tabOnLeft = False
     self.hasTab = False
     self.tabAngles = []
     self.tabWidth = .2 #could be standard, or based on face area
@@ -47,7 +49,7 @@ class FlatEdge():
       elif self.type == 'naked':
         color = (0,55,156,196) #blue
       points = self.coordinates
-      line_id = drawLine(points,color,'None')
+      line_id = drawLine(points,color,'None') #EndArrowhead
       self.line_id = line_id
     return line_id
 
@@ -63,8 +65,14 @@ class FlatEdge():
 
     alpha  = self.tabAngles[0]
     beta = self.tabAngles[1]
+
     lenI = self.tabWidth/math.sin(alpha*math.pi/180.0)
     lenJ = self.tabWidth/math.sin(beta*math.pi/180.0)
+
+    if not self.tabOnLeft:
+      alpha = -1*alpha
+      beta = -1*beta
+      
     vec = vecD.Subtract(vecD,vecA)
     vecUnit = rs.VectorUnitize(vec)
     vecI = rs.VectorScale(vecUnit,lenI)
@@ -83,6 +91,8 @@ class FlatEdge():
 
     self.geom.append(polyGuid)
     return
+
+
 
   def clearAllGeom(self):
     '''
@@ -103,6 +113,66 @@ class FlatEdge():
     y = (pntA.Y+pntB.Y)/2.0
     z = (pntA.Z+pntB.Z)/2.0
     return Rhino.Geometry.Point3f(x,y,z)
+
+  def setTabSide(self,foldEdges,foldEdgeIdx):
+    '''
+    occurs during LAYOUT
+    '''
+    assert(len(foldEdges[foldEdgeIdx])==1)
+    foldEdge = foldEdges[foldEdgeIdx][0]
+    testPoint = self.getNeighborCoordForCutEdge(foldEdge)
+    if self.testPointIsLeft(testPoint):
+      self.tabOnLeft = True
+    else:
+      self.tabWidth = False
+
+  def testPointIsLeft(self,testPoint):
+    '''
+    use cross product to see if testPoint is to the left of 
+    the edgLine
+    returns False if co-linear. HOwever, if the mesh is triangulated
+    and has no zero-area faces this should not occur.
+    '''
+    pntA = self.coordinates[0]
+    pntB = self.coordinates[1]
+    vecLine = getVectorForPoints(pntA,pntB)
+    vecTest = Rhino.Geometry.Vector3d(testPoint)
+    cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine,vecTest)
+    maxVal = cross.MaximumCoordinate #(pos and neg)
+    return  maxVal > 0
+
+  def getNeighborCoordForCutEdge(self,foldEdge):
+    potentialCoords = foldEdge.coordinates
+    for point in potentialCoords:
+      if point not in self.coordinates:
+        return point
+    return
+
+  # def getNeighborCoordForCutEdge(self,mesh,flatEdges):
+  #   assert(self.type == 'cut'),"must be a cut edge"
+  #   faceIdx = self.faceIdxs[0]
+  #   tVert = self.tVertIdxs[0] #use I by defualt
+  #   edgeIdxs = getFaceEdges(faceIdx,mesh)
+  #   neighEdge = None
+  #   for edgeIdx in edgeIdxs:
+  #     if edgeIdx != self.edgeIdx:
+  #       neighEdge = edgeIdx
+  #   assert(type(neighEdge)==int),"neighEdge not assigned"
+
+  #   potentialFlatEdges = flatEdges[neighEdge]
+  #   neighFlatEdge = None
+  #   for flatEdge in potentialFlatEdges:
+  #     if faceIdx in flatEdge.edgeIdxs:
+  #       neighFlatEdge = flatEdge
+
+  #   potenitalCoords = neighFlatEdge.coordinates
+  #   for point in potenitalCoords:
+  #     if point not in self.coordinates:
+  #       return point
+  #   return
+
+    #connectedEdges = get
+
 
   @staticmethod
   def getTabAngles(mesh,currFaceIdx,edgeIdx):

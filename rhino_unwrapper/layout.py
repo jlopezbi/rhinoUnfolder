@@ -34,15 +34,19 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
 
   for edgeIndex in faceEdges:
     flatCoords = assignNewPntsToEdge(transformToFlat,edgeIndex,mesh)
-    flatEdge = FlatEdge(edgeIndex,flatCoords)
-    flatEdge.faceIdx = basisInfo[0]
+    tVertIdxs = getTVerts(edgeIndex,mesh)
+    flatEdge = FlatEdge(edgeIndex,flatCoords,tVertIdxs)
+    flatEdge.faceIdxs.append(basisInfo[0])
 
     if (edgeIndex in foldList):
       if (not alreadyBeenPlaced(edgeIndex,flatEdges)):
-        flatEdge.type  = "fold"
-        flatEdges[edgeIndex].append(flatEdge)
+        
         newBasisInfo = getNewBasisInfo(basisInfo,edgeIndex,mesh)
         newToBasis = getBasisFlat(flatCoords)
+
+        flatEdge.type  = "fold"
+        flatEdge.faceIdxs.append(newBasisInfo[0])
+        flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
         flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges)
@@ -55,6 +59,7 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
         flatEdge.type = "cut"
         flatEdge.hasTab = True
         flatEdge.tabAngles = FlatEdge.getTabAngles(mesh,basisInfo[0],edgeIndex)
+        #flatEdge.setTabSide(flatEdges,basisInfo[1])
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges

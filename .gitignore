@@ -17,3 +17,4 @@ test_meshAdd.py
 test_meshEdgeDirection.py
 test_normalsDirections.py
 test_sameOrientation.py
+test_rotateDirection.py

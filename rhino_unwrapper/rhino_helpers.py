@@ -72,9 +72,10 @@ def getFaceEdges(faceIdx,mesh):
   arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
   return convertArray(arrFaceEdges)
 
+
 def getTVerts(edgeIdx,mesh):
   vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
-  return vertPair.I, vertPair.J
+  return (vertPair.I, vertPair.J)
 
 def getPointsForEdge(mesh,edgeIdx):
   tVertI,tVertJ = getTVerts(edgeIdx,mesh)
@@ -100,9 +101,10 @@ def getEdgeVector(mesh,edgeIdx):
   vec = edgeLine.Direction
   return vec
 
-# def getVectorForPoints(pntA,pntB):
-#   vecA = Rhino.Geometry.Vector3d(pntA)
-#   vecB = Rhino.Geometry
+def getVectorForPoints(pntA,pntB):
+  vecA = Rhino.Geometry.Vector3d(pntA)
+  vecB = Rhino.Geometry.Vector3d(pntB)
+  return  Rhino.Geometry.Vector3d.Subtract(vecB,vecA)
 
 def getEdgeLen(edgIdx,mesh):
   edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
