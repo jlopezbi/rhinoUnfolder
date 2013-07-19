@@ -32,7 +32,7 @@ class FlatEdge():
 
     self.hasTab = False
     self.tabAngles = []
-    self.tabWidth = .5 #could be standard, or based on face area
+    self.tabWidth = .2 #could be standard, or based on face area
 
   
 
@@ -57,24 +57,32 @@ class FlatEdge():
     if len(self.tabAngles)<1:
       return
     pntA = self.coordinates[0]
-    pntB = self.coordinates[1]
+    pntD = self.coordinates[1]
+    vecA = Rhino.Geometry.Vector3d(pntA)
+    vecD = Rhino.Geometry.Vector3d(pntD)
 
     alpha  = self.tabAngles[0]
     beta = self.tabAngles[1]
-    lenI = self.tabWidth/math.sin(alpha)
-    lenJ = self.tabWidth/math.sin(beta)
-    vec = rs.VectorSubtract(self.coordinates[0],self.coordinates[1])
+    lenI = self.tabWidth/math.sin(alpha*math.pi/180.0)
+    lenJ = self.tabWidth/math.sin(beta*math.pi/180.0)
+    vec = vecD.Subtract(vecD,vecA)
     vecUnit = rs.VectorUnitize(vec)
-
     vecI = rs.VectorScale(vecUnit,lenI)
-    vecJ = rs.VectorScale(vecUnit,-1*lenJ)
+    vecJ = rs.VectorScale(vecUnit,-lenJ)
 
-    vecI = rs.VectorRotate(vecI,alpha,[0,0,1])
-    vecJ = rs.VectorRotate(vecJ,-1*beta,[0,0,1])
-    #pntB = Rhino.Geometry.Point3d(vecI+pntA) #this addition not allowed
+    vecI = rs.VectorRotate(vecI,alpha,[0,0,1]) 
+    vecJ = rs.VectorRotate(vecJ,-beta,[0,0,1])
+    vecB = vecA + vecI
+    vecC = vecD + vecJ
 
-    self.geom = geom
-    return geom
+    pntB = Rhino.Geometry.Point3d(vecB)
+    pntC = Rhino.Geometry.Point3d(vecC)
+
+    points = [pntA,pntB,pntC,pntD]
+    polyGuid = rs.AddPolyline(points)
+
+    self.geom.append(polyGuid)
+    return
 
   def clearAllGeom(self):
     '''
@@ -117,6 +125,10 @@ class FlatEdge():
       # color = (0,0,0,0)
       # drawVector(vecI,posVecI,color)
       # drawVector(vecJ,posVecCenter,color)
+      # strI = str(angleI)
+      # strJ = str(angleJ)
+      #rs.AddTextDot(strI,posVecI)
+      #rs.AddTextDot(strJ,posVecJ)
       # print #wtf: for some reason needed this line to print below
       # print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
 
