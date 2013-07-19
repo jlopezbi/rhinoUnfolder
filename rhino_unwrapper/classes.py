@@ -29,7 +29,7 @@ class FlatEdge():
     self.line_id = None
     self.geom = []
     self.type = None
-    self.faceIdxs = []
+    self.faceIdxs = [] #if fold edge: [fromFace,toFace]
 
     self.tabOnLeft = False
     self.hasTab = False
@@ -72,7 +72,7 @@ class FlatEdge():
     if not self.tabOnLeft:
       alpha = -1*alpha
       beta = -1*beta
-      
+
     vec = vecD.Subtract(vecD,vecA)
     vecUnit = rs.VectorUnitize(vec)
     vecI = rs.VectorScale(vecUnit,lenI)
@@ -122,9 +122,9 @@ class FlatEdge():
     foldEdge = foldEdges[foldEdgeIdx][0]
     testPoint = self.getNeighborCoordForCutEdge(foldEdge)
     if self.testPointIsLeft(testPoint):
-      self.tabOnLeft = True
+      self.tabOnLeft = False
     else:
-      self.tabWidth = False
+      self.tabOnLeft = True
 
   def testPointIsLeft(self,testPoint):
     '''
@@ -251,6 +251,20 @@ class FlatEdge():
         collection.append(flatEdge.drawTab())
     createGroup(groupName,collection)
 
+class FlatVert():
+  def __init__(self,_edgeIdx,_coordinate,_tVertIdx): 
+    self.edgeIdx = _edgeIdx
+    self.coordinates = _coordinates
+    self.tVertIdxs = _tVertIdxs
+    self.line_id = None
+    self.geom = []
+    self.type = None
+    self.faceIdxs = []
+
+    self.tabOnLeft = False
+    self.hasTab = False
+    self.tabAngles = []
+    self.tabWidth = .2 #could be standard, or based on face area
 
 
 
