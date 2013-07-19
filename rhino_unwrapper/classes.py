@@ -22,10 +22,14 @@ import math
 # EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
 
 class FlatEdge():
-  def __init__(self,_edgeIdx,_coordinates,_tVertIdxs): 
+  def __init__(self,_edgeIdx,_fromIdx,_toIdx,_fromSpec,_toSpec): 
     self.edgeIdx = _edgeIdx
-    self.coordinates = _coordinates
-    self.tVertIdxs = _tVertIdxs
+    self.fromIdx = _fromIdx # tvert idx I
+    self.toIdx = _toIdx #tVert idx J
+    self.fromSpec = _fromSpec # 0 or 1
+    self._toSpec = _toSpec # 0 or 1 tells which flatVert to get
+    
+    
     self.line_id = None
     self.geom = []
     self.type = None
@@ -36,10 +40,14 @@ class FlatEdge():
     self.tabAngles = []
     self.tabWidth = .2 #could be standard, or based on face area
 
-  
+  def getCoordinates(self,flatVerts):
+    pntI = flatVerts[self.fromIdx][self.fromSpec].point
+    pntJ = flatVerts[self.toIdx][self.toSpec].point
 
-  def drawLine(self):
-    if self.coordinates != None:
+    return [pntI,pntJ]
+
+  def drawLine(self,flatVerts):
+    if self.type != None:
       if self.type == 'fold':
         color = (0,49,224,61) #green
       elif self.type == 'cut':
@@ -48,7 +56,7 @@ class FlatEdge():
           color = (0,255,0,255) #magenta
       elif self.type == 'naked':
         color = (0,55,156,196) #blue
-      points = self.coordinates
+      points = self.getCoordinates(flatVerts)
       line_id = drawLine(points,color,'None') #EndArrowhead
       self.line_id = line_id
     return line_id
@@ -252,19 +260,14 @@ class FlatEdge():
     createGroup(groupName,collection)
 
 class FlatVert():
-  def __init__(self,_edgeIdx,_coordinate,_tVertIdx): 
-    self.edgeIdx = _edgeIdx
-    self.coordinates = _coordinates
-    self.tVertIdxs = _tVertIdxs
-    self.line_id = None
-    self.geom = []
-    self.type = None
-    self.faceIdxs = []
+  def __init__(self,_tVertIdx,_point,_faceIdx): 
+    self.tVertIdx = _tVertIdx
+    self.point = _point
+    self.faceIdx = _faceIdx
 
-    self.tabOnLeft = False
-    self.hasTab = False
-    self.tabAngles = []
-    self.tabWidth = .2 #could be standard, or based on face area
+    self.edgeIdx = None
+    self.geom = []
+
 
 
 

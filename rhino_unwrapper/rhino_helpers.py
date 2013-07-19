@@ -77,6 +77,10 @@ def getTVerts(edgeIdx,mesh):
   vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
   return (vertPair.I, vertPair.J)
 
+def getTVertsForFace(mesh,faceIdx):
+  arrTVerts = mesh.Faces.GetTopologicalVertices(faceIdx)
+  return convertArray(arrTVerts)
+
 def getPointsForEdge(mesh,edgeIdx):
   tVertI,tVertJ = getTVerts(edgeIdx,mesh)
   pntI = mesh.TopologyVertices.Item[tVertI]

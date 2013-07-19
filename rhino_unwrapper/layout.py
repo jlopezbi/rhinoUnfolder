@@ -18,7 +18,7 @@ def layoutMesh(foldList, mesh):
   flatEdges = layoutFace(0,basisInfo,foldList,mesh,toBasis,flatEdges)
   return flatEdges
 
-def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
+def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
   ''' Recurse through faces, hopping along fold edges
     input:
       depth = recursion level
@@ -29,7 +29,9 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
     out/in:
       flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
-  transformToFlat = getTransform(basisInfo,toBasis,mesh)
+  xForm = getTransform(basisInfo,toBasis,mesh)
+  assignFlatVerts(mesh,faceIdx,flatVerts,xForm)
+
   faceEdges = getFaceEdges(basisInfo[0],mesh)
 
   for edgeIndex in faceEdges:
@@ -49,7 +51,7 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
-        flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges)
+        flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
 
     else:
       if len(flatEdges[edgeIndex])==0:
@@ -64,8 +66,19 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges):
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges
 
-def alreadyBeenPlaced(testEdgeIdx,flatEdges):
-  return len(flatEdges[testEdgeIdx]) > 0
+def assignFlatVerts(mesh,faceIdx,flatVerts,xForm):
+  faceTVerts = getTVertsForFace(mesh,faceIdx)
+  for tVert in faceTVerts:
+    if not alreadyBeenPlaced(tVert,flatVerts):
+      point = mesh.TopologyVertices.Item[tVert]
+      point.Transform(xForm)
+      point.Z = 0.0
+      flatVert = FlatVert(tVert,point,faceIdx)
+      flatVerts[tVert].append(flatVert)
+
+
+def alreadyBeenPlaced(testIdx,flatElements):
+  return len(flatElements[testIdx]) > 0
 
 
 def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
