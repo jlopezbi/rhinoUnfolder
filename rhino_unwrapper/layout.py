@@ -17,7 +17,7 @@ def layoutMesh(foldList, mesh):
   toBasis = origin
 
   flatEdges,flatVerts = layoutFace(0,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
-  return flatEdges
+  return flatEdges,flatVerts
 
 def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
   ''' Recurse through faces, hopping along fold edges
@@ -63,7 +63,7 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
         flatEdge.type = "cut"
         flatEdge.hasTab = True
         flatEdge.tabAngles = FlatEdge.getTabAngles(mesh,basisInfo[0],edgeIndex)
-        flatEdge.setTabSide(flatEdges,basisInfo[1])
+        flatEdge.setTabSide(flatEdges,basisInfo[1],flatVerts)
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges, flatVerts

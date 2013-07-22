@@ -39,9 +39,13 @@ class FlatEdge():
     self.tabWidth = .2 #could be standard, or based on face area
 
   def getCoordinates(self,flatVerts):
-    pntI = flatVerts[self.fromIdx][self.fromSpec].point
-    pntJ = flatVerts[self.toIdx][self.toSpec].point
+    I = self.tVertIdxs[0]
+    specI = self.tVertSpecs[0]
+    J = self.tVertIdxs[1]
+    specJ = self.tVertSpecs[1]
 
+    pntI = flatVerts[I][specI].point
+    pntJ = flatVerts[J][specJ].point
     return [pntI,pntJ]
 
   def drawLine(self,flatVerts):
@@ -60,12 +64,13 @@ class FlatEdge():
     return line_id
 
 
-  def drawTab(self):
+  def drawTab(self,flatVerts):
     geom = []
     if len(self.tabAngles)<1:
       return
-    pntA = self.coordinates[0]
-    pntD = self.coordinates[1]
+    coordinates = self.getCoordinates(flatVerts)
+    pntA = coordinates[0]
+    pntD = coordinates[1]
     vecA = Rhino.Geometry.Vector3d(pntA)
     vecD = Rhino.Geometry.Vector3d(pntD)
 
@@ -112,72 +117,50 @@ class FlatEdge():
       for guid in self.geom:
         rs.DeleteObject(guid)
   
-  def getMidPoint(self):
-    pntA = self.coordinates[0]
-    pntB = self.coordinates[1]
+  def getMidPoint(self,flatVerts):
+    coordinates = self.getCoordinates(flatVerts)
+    pntA = coordinates[0]
+    pntB = coordinates[1]
     x = (pntA.X+pntB.X)/2.0
     y = (pntA.Y+pntB.Y)/2.0
     z = (pntA.Z+pntB.Z)/2.0
     return Rhino.Geometry.Point3f(x,y,z)
 
-  def setTabSide(self,foldEdges,foldEdgeIdx):
+  def setTabSide(self,foldEdges,foldEdgeIdx,flatVerts):
     '''
     occurs during LAYOUT
     '''
     assert(len(foldEdges[foldEdgeIdx])==1)
     foldEdge = foldEdges[foldEdgeIdx][0]
-    testPoint = self.getNeighborCoordForCutEdge(foldEdge)
-    if self.testPointIsLeft(testPoint):
+    testPoint = self.getNeighborCoordForCutEdge(foldEdge,flatVerts)
+    if self.testPointIsLeft(testPoint,flatVerts):
       self.tabOnLeft = False
     else:
       self.tabOnLeft = True
 
-  def testPointIsLeft(self,testPoint):
+  def testPointIsLeft(self,testPoint,flatVerts):
     '''
     use cross product to see if testPoint is to the left of 
     the edgLine
     returns False if co-linear. HOwever, if the mesh is triangulated
     and has no zero-area faces this should not occur.
     '''
-    pntA = self.coordinates[0]
-    pntB = self.coordinates[1]
+    coordinates = self.getCoordinates(flatVerts)
+    pntA = coordinates[0]
+    pntB = coordinates[1]
     vecLine = getVectorForPoints(pntA,pntB)
     vecTest = Rhino.Geometry.Vector3d(testPoint)
     cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine,vecTest)
     maxVal = cross.MaximumCoordinate #(pos and neg)
     return  maxVal > 0
 
-  def getNeighborCoordForCutEdge(self,foldEdge):
-    potentialCoords = foldEdge.coordinates
+  def getNeighborCoordForCutEdge(self,foldEdge,flatVerts):
+    potentialCoords = foldEdge.getCoordinates(flatVerts)
+    selfCoords = self.getCoordinates(flatVerts)
     for point in potentialCoords:
-      if point not in self.coordinates:
+      if point not in selfCoords:
         return point
     return
-
-  # def getNeighborCoordForCutEdge(self,mesh,flatEdges):
-  #   assert(self.type == 'cut'),"must be a cut edge"
-  #   faceIdx = self.faceIdxs[0]
-  #   tVert = self.tVertIdxs[0] #use I by defualt
-  #   edgeIdxs = getFaceEdges(faceIdx,mesh)
-  #   neighEdge = None
-  #   for edgeIdx in edgeIdxs:
-  #     if edgeIdx != self.edgeIdx:
-  #       neighEdge = edgeIdx
-  #   assert(type(neighEdge)==int),"neighEdge not assigned"
-
-  #   potentialFlatEdges = flatEdges[neighEdge]
-  #   neighFlatEdge = None
-  #   for flatEdge in potentialFlatEdges:
-  #     if faceIdx in flatEdge.edgeIdxs:
-  #       neighFlatEdge = flatEdge
-
-  #   potenitalCoords = neighFlatEdge.coordinates
-  #   for point in potenitalCoords:
-  #     if point not in self.coordinates:
-  #       return point
-  #   return
-
-    #connectedEdges = get
 
 
   @staticmethod
@@ -243,18 +226,18 @@ class FlatEdge():
       flatEdge.clearAllGeom()
 
   @staticmethod
-  def drawEdges(flatEdges,groupName):
+  def drawEdges(flatEdges,groupName,flatVerts):
     collection = []
     for flatEdge in flatEdges:
-      collection.append(flatEdge.drawLine())
+      collection.append(flatEdge.drawLine(flatVerts))
     createGroup(groupName,collection)
 
   @staticmethod
-  def drawTabs(flatEdges,groupName):
+  def drawTabs(flatEdges,groupName,flatVerts):
     collection = []
     for flatEdge in flatEdges:
       if flatEdge.hasTab:
-        collection.append(flatEdge.drawTab())
+        collection.append(flatEdge.drawTab(flatVerts))
     createGroup(groupName,collection)
 
 class FlatVert():
