@@ -80,7 +80,6 @@ def getTransform(basisInfo,toBasis,mesh):
 
 def getBasisFlat(flatEdge,flatVerts):
   pntI,pntJ = flatEdge.getCoordinates(flatVerts)
-
   o = pntI
   x = Rhino.Geometry.Vector3d(pntJ-pntI)
   x.Unitize()

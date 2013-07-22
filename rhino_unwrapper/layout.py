@@ -16,10 +16,10 @@ def layoutMesh(foldList, mesh):
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  flatEdges,flatVerts = layoutFace(0,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
+  flatEdges,flatVerts = layoutFace([],basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
   return flatEdges,flatVerts
 
-def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
+def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
   ''' Recurse through faces, hopping along fold edges
     input:
       depth = recursion level
@@ -31,7 +31,7 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
       flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
-  specifiers = assignFlatVerts(mesh,basisInfo[0],flatVerts,xForm)
+  specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,xForm)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
 
@@ -53,7 +53,7 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
-        flatEdges,flatVerts = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
+        flatEdges,flatVerts = layoutFace(tVertIdxs,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
 
     else:
       if len(flatEdges[edgeIndex])==0:
@@ -83,7 +83,7 @@ def getTVertSpecs(tVertIdxs,specifiers):
 
 
 
-def assignFlatVerts(mesh,faceIdx,flatVerts,xForm):
+def assignFlatVerts(mesh,hopEdge,faceIdx,flatVerts,xForm):
   '''
   add valid flatVerts to flatVerts list and also return
   a dict of specifiers in case this face has a secondary flatVert
@@ -91,19 +91,26 @@ def assignFlatVerts(mesh,faceIdx,flatVerts,xForm):
 
   faceTVerts = getTVertsForFace(mesh,faceIdx)
   specifiers = {}
+  #newLayedOut = []
   for tVert in faceTVerts:
     specifiers[tVert] = 0
     if len(flatVerts[tVert])==0:
       point = transformPoint(mesh,tVert,xForm)
+      rs.AddPoint(point)
       flatVert = FlatVert(tVert,point,faceIdx)
       flatVerts[tVert].append(flatVert)
+      #newLayedOut.append(tVert)
+    
     elif len(flatVerts[tVert])==1:
-      other = flatVerts[tVert][0]
-      point = transformPoint(mesh,tVert,xForm)
-      if not other.hasSamePoint(point):
+      if tVert not in hopEdge:
+        point = transformPoint(mesh,tVert,xForm)
+        rs.AddCircle(point,1)
         flatVert = FlatVert(tVert,point,faceIdx)
         flatVerts[tVert].append(flatVert)
+        #newLayedOut.append(tVert)
         specifiers[tVert] = 1
+    
+
     
   return specifiers
 
