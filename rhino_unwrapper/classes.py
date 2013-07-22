@@ -22,12 +22,10 @@ import math
 # EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
 
 class FlatEdge():
-  def __init__(self,_edgeIdx,_fromIdx,_toIdx,_fromSpec,_toSpec): 
+  def __init__(self,_edgeIdx,_tVertIdxs,_tVertSpecs): 
     self.edgeIdx = _edgeIdx
-    self.fromIdx = _fromIdx # tvert idx I
-    self.toIdx = _toIdx #tVert idx J
-    self.fromSpec = _fromSpec # 0 or 1
-    self._toSpec = _toSpec # 0 or 1 tells which flatVert to get
+    self.tVertIdxs = _tVertIdxs
+    self.tVertSpecs = _tVertSpecs
     
     
     self.line_id = None
@@ -267,6 +265,9 @@ class FlatVert():
 
     self.edgeIdx = None
     self.geom = []
+
+  def hasSamePoint(self,point):
+    return approxEqual(self.point.X,point.X) and approxEqual(self.point.Y,point.Y)
 
 
 

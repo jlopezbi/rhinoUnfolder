@@ -2,6 +2,7 @@ import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
+import math
 
 
 
@@ -75,7 +76,7 @@ def getFaceEdges(faceIdx,mesh):
 
 def getTVerts(edgeIdx,mesh):
   vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
-  return (vertPair.I, vertPair.J)
+  return [vertPair.I, vertPair.J]
 
 def getTVertsForFace(mesh,faceIdx):
   arrTVerts = mesh.Faces.GetTopologicalVertices(faceIdx)
@@ -138,3 +139,6 @@ def getMedian(edgeLens):
     return avg
   else:
     return edgeLens[int(nEdges/2)]
+
+def approxEqual(A,B,tolerance=10**-4):
+  return math.fabs(A-B)<tolerance

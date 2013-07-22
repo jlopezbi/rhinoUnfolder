@@ -1,5 +1,5 @@
 from transformations import *
-from classes import FlatEdge
+from classes import FlatEdge, FlatVert
 
 def initBasisInfo(mesh, origin):
   faceIdx = 0
@@ -10,12 +10,13 @@ def initBasisInfo(mesh, origin):
 
 def layoutMesh(foldList, mesh):
   flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
+  flatVerts = [list() for _ in xrange(mesh.TopologyVertices.Count)]
 
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  flatEdges = layoutFace(0,basisInfo,foldList,mesh,toBasis,flatEdges)
+  flatEdges,flatVerts = layoutFace(0,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
   return flatEdges
 
 def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
@@ -30,28 +31,29 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
       flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
-  assignFlatVerts(mesh,faceIdx,flatVerts,xForm)
+  specifiers = assignFlatVerts(mesh,basisInfo[0],flatVerts,xForm)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
 
   for edgeIndex in faceEdges:
-    flatCoords = assignNewPntsToEdge(transformToFlat,edgeIndex,mesh)
+    #flatCoords = assignNewPntsToEdge(transformToFlat,edgeIndex,mesh)
     tVertIdxs = getTVerts(edgeIndex,mesh)
-    flatEdge = FlatEdge(edgeIndex,flatCoords,tVertIdxs)
+    tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
+    flatEdge = FlatEdge(edgeIndex,tVertIdxs,tVertSpecs)
     flatEdge.faceIdxs.append(basisInfo[0])
 
     if (edgeIndex in foldList):
       if (not alreadyBeenPlaced(edgeIndex,flatEdges)):
         
         newBasisInfo = getNewBasisInfo(basisInfo,edgeIndex,mesh)
-        newToBasis = getBasisFlat(flatCoords)
+        newToBasis = getBasisFlat(flatEdge,flatVerts)
 
         flatEdge.type  = "fold"
         flatEdge.faceIdxs.append(newBasisInfo[0])
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
-        flatEdges = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
+        flatEdges,flatVerts = layoutFace(depth+1,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
 
     else:
       if len(flatEdges[edgeIndex])==0:
@@ -64,21 +66,60 @@ def layoutFace(depth,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
         flatEdge.setTabSide(flatEdges,basisInfo[1])
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
-  return flatEdges
+  return flatEdges, flatVerts
+
+def assignFlatEdges(mesh,faceIdx,foldList,flatVerts):
+  pass
+
+def getTVertSpecs(tVertIdxs,specifiers):
+  '''
+  assume correct order of tVerts
+  '''
+  tVertSpecs = []
+  for tVert in tVertIdxs:
+    tVertSpecs.append(specifiers[tVert])
+  assert(len(tVertSpecs)==2)
+  return tVertSpecs
+
+
 
 def assignFlatVerts(mesh,faceIdx,flatVerts,xForm):
+  '''
+  add valid flatVerts to flatVerts list and also return
+  a dict of specifiers in case this face has a secondary flatVert
+  '''
+
   faceTVerts = getTVertsForFace(mesh,faceIdx)
+  specifiers = {}
   for tVert in faceTVerts:
-    if not alreadyBeenPlaced(tVert,flatVerts):
-      point = mesh.TopologyVertices.Item[tVert]
-      point.Transform(xForm)
-      point.Z = 0.0
+    specifiers[tVert] = 0
+    if len(flatVerts[tVert])==0:
+      point = transformPoint(mesh,tVert,xForm)
       flatVert = FlatVert(tVert,point,faceIdx)
       flatVerts[tVert].append(flatVert)
+    elif len(flatVerts[tVert])==1:
+      other = flatVerts[tVert][0]
+      point = transformPoint(mesh,tVert,xForm)
+      if not other.hasSamePoint(point):
+        flatVert = FlatVert(tVert,point,faceIdx)
+        flatVerts[tVert].append(flatVert)
+        specifiers[tVert] = 1
+    
+  return specifiers
+
+def transformPoint(mesh,tVert,xForm):
+  point = mesh.TopologyVertices.Item[tVert]
+  point.Transform(xForm)
+  point.Z = 0.0
+  return point
+
 
 
 def alreadyBeenPlaced(testIdx,flatElements):
   return len(flatElements[testIdx]) > 0
+
+
+
 
 
 def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
@@ -88,6 +129,7 @@ def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
   newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(testEdgeIdx).I #convention: useI
   return newFaceIdx,newEdgeIdx,newTVertIdx
 
+#def assignTVerts():
 
 def assignNewPntsToEdge(xForm,edgeIdx,mesh):
   #output: list of new coords, Point3f, always in order of I,J
