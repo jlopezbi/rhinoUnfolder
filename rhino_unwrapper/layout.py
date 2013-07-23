@@ -19,6 +19,77 @@ def layoutMesh(foldList, mesh):
   flatEdges,flatVerts = layoutFace([],basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
   return flatEdges,flatVerts
 
+
+
+'''
+def netPointForMeshPoint(net, mesh, point):
+  if point = netGetPoint(net, point): #this is not allowed in python. whats it called?
+    return point
+  else:
+    netPoint = netCoordinates(net, point)
+    return netAddPoint(netPoint, point)
+
+
+def meshEdgeForNetEdge(net, edge):
+  pass
+
+def edgeAlreadyPlaced(net, edge):
+  pass
+
+def netAddEdge(net, edge):   
+  for point in edge:
+    netCoordinates(point, transform)
+
+
+def edgeAlreadyPlaced(edge):
+  pass
+
+def isFoldEdge(foldList, edge):
+  return edge in foldList
+
+def isNakedEdge(mesh, edge):
+  len(getFacesForEdge(mesh,edge)) < 2
+
+def isCutEdge(mesh, foldList, edge):
+  !isNakedEdge(mesh, edge) or !isFoldEdge(foldList, edge)
+
+def place(mesh, newEdge):
+  if isCutEdge(mesh, foldList, newEdge) or !edgeAlreadyPlaced(newEdge):
+    netAddEdge(newEdge)
+
+def neighboringFace(mesh, face, edge):
+  connectedFaces = getFacesForEdge(mesh,edge)
+  return (connectedFaces - face)[0]
+
+def layout(mesh, foldList, face):
+  for edge in face:
+    place(mesh, foldList, edge)
+    if foldEdge:
+      neighbor = neighbordingFace(mesh, face, edge)
+      layout(mesh, foldList, neighbor)
+
+
+
+
+
+
+
+  # layoutFacePoints(face)
+
+  # for edge in edgesForFace(face):
+  #   if foldEdge:
+  #     addsEdge to flatEdges (as fold)
+  #     layout(newFace)
+  #   else:
+  #     addEdge to flatEdges (as cut or naked)
+
+  # addEdge(edge,)
+
+'''
+
+
+
+
 def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
   ''' Recurse through faces, hopping along fold edges
     input:
@@ -31,12 +102,11 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
       flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
-  specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,xForm)
+  specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,basisInfo,toBasis)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
 
   for edgeIndex in faceEdges:
-    #flatCoords = assignNewPntsToEdge(transformToFlat,edgeIndex,mesh)
     tVertIdxs = getTVerts(edgeIndex,mesh)
     tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
     flatEdge = FlatEdge(edgeIndex,tVertIdxs,tVertSpecs)
@@ -89,26 +159,27 @@ def assignFlatVerts(mesh,hopEdge,faceIdx,flatVerts,xForm):
   a dict of specifiers in case this face has a secondary flatVert
   '''
 
-  faceTVerts = getTVertsForFace(mesh,faceIdx)
+  faceTVerts = list(set(getTVertsForFace(mesh,faceIdx)))
   specifiers = {}
   #newLayedOut = []
   for tVert in faceTVerts:
     specifiers[tVert] = 0
-    if len(flatVerts[tVert])==0:
+    nLayedOut = len(flatVerts[tVert])
+    if nLayedOut==0:
       point = transformPoint(mesh,tVert,xForm)
       rs.AddPoint(point)
       flatVert = FlatVert(tVert,point,faceIdx)
       flatVerts[tVert].append(flatVert)
       #newLayedOut.append(tVert)
     
-    elif len(flatVerts[tVert])==1:
+    elif nLayedOut>0:
       if tVert not in hopEdge:
         point = transformPoint(mesh,tVert,xForm)
-        rs.AddCircle(point,1)
+        rs.AddCircle(point,.1)
         flatVert = FlatVert(tVert,point,faceIdx)
         flatVerts[tVert].append(flatVert)
         #newLayedOut.append(tVert)
-        specifiers[tVert] = 1
+        specifiers[tVert] = nLayedOut #zero indexed
     
 
     

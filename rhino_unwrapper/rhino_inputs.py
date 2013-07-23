@@ -45,18 +45,34 @@ def getUserCuts(message=None):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
   ge.SetCommandPrompt(message)
-  ge.GetMultiple(0,0)
+
+  boolOption = Rhino.Input.Custom.OptionToggle(False, "Off", "On")
+  dblOption = Rhino.Input.Custom.OptionDouble(35, 0, 180)
+
+  ge.AddOptionDouble("maxAngle", dblOption)
+  ge.AddOptionToggle("chainSelect", boolOption)
+  
+  #ge.GetMultiple(0,0)
+  ge.Get()
 
   if ge.CommandResult() != Rhino.Commands.Result.Success:
     print("no mesh edges selected as cuts for unwrapping")
     return
+  
 
   objRefs = [ge.Object(i) for i in range(ge.ObjectCount)]
   edgeIdxs = [GetEdgeIdx(objref) for objref in objRefs] 
   mesh = objRefs[0].Mesh()
 
-  return edgeIdxs
+  addedEdges = []
+  if boolOption.CurrentValue:
+    angleTolerance = dblOption.CurrentValue
+    for edge in edgeIdxs:
+      addedEdges.extend(getChain(mesh,edge,angleTolerance))
+  edgeIdxs.extend(addedEdges)
 
+  return edgeIdxs
+#or do a while loop with options - select single edge - select edge
 
 def GetEdgeIdx(objref):
   # Rhino.DocObjects.ObjRef .GeometryComponentIndex to Rhino.Geometry.ComponentIndex

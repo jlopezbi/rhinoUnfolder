@@ -69,24 +69,109 @@ def getCenterPointLine(line):
   point = Rhino.Geometry.Point3d(cenX,cenY,cenZ)
   return point
 
-def getFaceEdges(faceIdx,mesh):
-  arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
-  return convertArray(arrFaceEdges)
 
 
-def getTVerts(edgeIdx,mesh):
-  vertPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
+def getTVertsForVert(mesh,tVert):
+  arrTVerts = mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
+  listVerts = convertArray(arrTVerts)
+  if tVert in listVerts:
+    listVerts = listVerts.remove(tVert)
+  return listVerts
+
+def getEdgesForVert(mesh,tVert):
+  #not implimented in rhinoCommon! ::::(
+  #rather inefficient
+  neighVerts = getTVertsForVert(mesh,tVert)
+  facesVert = set(getFacesforVert(mesh,tVert))
+  edges = []
+  for neighVert in neighVerts:
+
+    edge = getEdgeForTVertPair(mesh,tVert,neighVert,facesVert)
+    if edge:
+      edges.append(edge)
+  return edges
+
+def getEdgeForTVertPair(mesh,tVertA,tVertB,facesVertA=None):
+  if facesVertA == None:
+    facesVertA = getFacesforVert(mesh,tVertA)
+  facesVertB = set(getFacesforVert(mesh,tVertB))
+  facePair = list(facesVertA.intersection(facesVertB))
+  if len(facePair)==2:
+    edgesA = set(getFaceEdges(facePair[0],mesh))
+    edgesB = set(getFaceEdges(facePair[1],mesh))
+    edge = edgesA.intersection(edgesB)
+    return list(edge)[0]
+  elif len(facePair)==1:
+    #naked edge
+    edges = getFaceEdges(facePair[0],mesh)
+    for edge in edges:
+      tVerts = getTVertsForEdge(mesh,edge)
+      if tVertB in tVerts and tVertA in tVerts:
+        return edge
+  return
+
+
+def getFacesforVert(mesh,tVert):
+  arrfaces = mesh.TopologyVertices.ConnectedFaces(tVert)
+  return convertArray(arrfaces)
+
+''' EDGE INFO'''
+def getTVertsForEdge(mesh,edge):
+  vertPair = mesh.TopologyEdges.GetTopologyVertices(edge)
   return [vertPair.I, vertPair.J]
+  
+def getChain(mesh,edge,angleTolerance):
+  chain = []
+  tVerts = getTVertsForEdge(mesh,edge)
+  tVert = tVerts[0]
+  for tVert in tVerts:
+    subChain = getTangentEdge(mesh,edge,tVert,angleTolerance,[])
+    chain.extend(subChain)
+  return chain
 
-def getTVertsForFace(mesh,faceIdx):
-  arrTVerts = mesh.Faces.GetTopologicalVertices(faceIdx)
-  return convertArray(arrTVerts)
+def getTangentEdge(mesh,edge,tVert,angleTolerance,chain):
+  '''
+  return edge that is closest in angle, or none if none
+  of the edges are within angleTolerance
+  '''
+  edges = getEdgesForVert(mesh,tVert)
+  edges.remove(edge)
+  winEdge = (None,angleTolerance)
+  for neighEdge in edges:
+    angle  = compareEdgeAngle(mesh,edge,tVert,neighEdge)
+    if angle<angleTolerance and angle<winEdge[1]:
+      winEdge = (neighEdge,angle)
+
+  newEdge = winEdge[0]
+  if newEdge == None:
+    return chain
+  else:
+    chain.append(newEdge)
+    nextTVert = getOtherTVert(mesh,newEdge,tVert)
+    return getTangentEdge(mesh,newEdge,nextTVert,angleTolerance,chain)
+
+def getOtherTVert(mesh,edge,tVert):
+  tVerts = getTVertsForEdge(mesh,edge)
+  tVerts.remove(tVert)
+  return tVerts[0]
 
 def getPointsForEdge(mesh,edgeIdx):
   tVertI,tVertJ = getTVerts(edgeIdx,mesh)
   pntI = mesh.TopologyVertices.Item[tVertI]
   pntJ = mesh.TopologyVertices.Item[tVertJ]
   return [pntI,pntJ]
+
+'''FACE INFO'''
+def getTVertsForFace(mesh,faceIdx):
+  '''
+  list of 4 values, if two are duplicates face is a triangle
+  '''
+  arrTVerts = mesh.Faces.GetTopologicalVertices(faceIdx)
+  return convertArray(arrTVerts)
+
+def getFaceEdges(faceIdx,mesh):
+  arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
+  return convertArray(arrFaceEdges)
 
 def getMedianEdgeLen(mesh):
   edgeLens = getEdgeLengths(mesh)
@@ -105,6 +190,30 @@ def getEdgeVector(mesh,edgeIdx):
   #Vector3d
   vec = edgeLine.Direction
   return vec
+
+def getOrientedVector(mesh,edgeIdx,tVert,isEnd):
+  '''
+  tVert is the end point of this vector
+  '''
+  tVerts = getTVertsForEdge(mesh,edgeIdx)
+  assert(tVert in tVerts)
+  tVerts.remove(tVert)
+  otherVert = tVerts[0]
+  if isEnd:
+    pntB = mesh.TopologyVertices.Item[tVert]
+    pntA = mesh.TopologyVertices.Item[otherVert]
+  else:
+    pntA = mesh.TopologyVertices.Item[tVert]
+    pntB = mesh.TopologyVertices.Item[otherVert]  
+  vecPnt = pntB-pntA
+  vec = Rhino.Geometry.Vector3d(vecPnt)
+  return vec
+
+def compareEdgeAngle(mesh,edge,tVert,neighEdge):
+  vecBase = getOrientedVector(mesh,edge,tVert,True)
+  vecCompare = getOrientedVector(mesh,neighEdge,tVert,False)
+  angle = Rhino.Geometry.Vector3d.VectorAngle(vecBase,vecCompare)
+  return angle
 
 def getVectorForPoints(pntA,pntB):
   vecA = Rhino.Geometry.Vector3d(pntA)

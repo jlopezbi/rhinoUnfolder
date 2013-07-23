@@ -46,11 +46,10 @@ def displayMeshEdges(mesh,color,edgeIdxs,groupName):
   drawnEdges = []
   if edgeIdxs:
     for edgeIdx in edgeIdxs:
-      tVertI,tVertJ = getTVerts(edgeIdx,mesh)
+      tVertI,tVertJ = getTVertsForEdge(mesh,edgeIdx)
       point3fI = mesh.TopologyVertices.Item[tVertI]
       point3fJ = mesh.TopologyVertices.Item[tVertJ]
-      line = Rhino.Geometry.Line(point3fI,point3fJ)
-      edgeLine = drawLine(line,edgeIdx,color,displayIdx=False)
+      edgeLine = drawLine([point3fI,point3fJ],color,'None')
       drawnEdges.append(edgeLine)
 
   name = createGroup(groupName,drawnEdges)
