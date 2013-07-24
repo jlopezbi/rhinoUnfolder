@@ -42,14 +42,30 @@ def getNewEdge(message,flatEdges):
 
 def getUserCuts():
   cuts = []
-  edgeIdx,isChain,angleTolerance,mesh = getMeshEdge("select cut edge on mesh")
-  if edgeIdx == None:
-    return None
-  elif edgeIdx != -1:
-    if isChain:
-      cuts.extend(getChain(mesh,edgeIdx,angleTolerance))
-    else:
-      cuts.append(edgeIdx)
+  #edgeIdx,isChain,angleTolerance,mesh = None,None,None,None
+  while True:
+    edgeIdx,isChain,angleTolerance,mesh = getMeshEdge("select cut edge on mesh")
+    print(' ')
+    print("edgeIdx: "),
+    print edgeIdx
+    if edgeIdx == None:
+      print("esc: edgeIDx is NONE")
+      cuts = None
+      break
+
+    elif edgeIdx >= 0:
+      print("selected: valid edgeIdx")
+      if edgeIdx not in cuts:
+        if isChain:
+          cuts.extend(getChain(mesh,edgeIdx,angleTolerance))
+        else:
+          cuts.append(edgeIdx)
+          
+    elif edgeIdx == -1:
+      print("enter:")
+      break
+
+
   return cuts
 
 
@@ -67,6 +83,7 @@ def getMeshEdge(message=None):
   
   ge.Get()
   edgeIdx = None
+  mesh = None
   while True:
     getE = ge.Get()
     
@@ -74,7 +91,6 @@ def getMeshEdge(message=None):
       objRef = ge.Object(0)
       edgeIdx = GetEdgeIdx(objRef)
       mesh = objRef.Mesh()
-      
       
     elif getE == Rhino.Input.GetResult.Option:
       continue
@@ -87,6 +103,8 @@ def getMeshEdge(message=None):
       edgeIdx = -1
       break
     break
+  scriptcontext.doc.Objects.UnselectAll()
+  ge.Dispose()
 
   return (edgeIdx,boolOption.CurrentValue,dblOption.CurrentValue,mesh)
 #or do a while loop with options - select single edge - select edge
