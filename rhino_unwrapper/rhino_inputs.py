@@ -40,11 +40,24 @@ def getNewEdge(message,flatEdges):
 
     return flatEdge,flatEdge.type
 
+def getUserCuts():
+  cuts = []
+  edgeIdx,isChain,angleTolerance,mesh = getMeshEdge("select cut edge on mesh")
+  if edgeIdx == None:
+    return None
+  elif edgeIdx != -1:
+    if isChain:
+      cuts.extend(getChain(mesh,edgeIdx,angleTolerance))
+    else:
+      cuts.append(edgeIdx)
+  return cuts
 
-def getUserCuts(message=None):
+
+def getMeshEdge(message=None):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
   ge.SetCommandPrompt(message)
+  ge.AcceptNothing(True)
 
   boolOption = Rhino.Input.Custom.OptionToggle(False, "Off", "On")
   dblOption = Rhino.Input.Custom.OptionDouble(35, 0, 180)
@@ -53,30 +66,31 @@ def getUserCuts(message=None):
   ge.AddOptionToggle("chainSelect", boolOption)
   
   ge.Get()
-  edgeIdxs = []
+  edgeIdx = None
   while True:
     getE = ge.Get()
-    if ge.CommandResult() != Rhino.Commands.Result.Success:
-      print("no mesh edges selected as cuts for unwrapping")
-      return
     
     if getE == Rhino.Input.GetResult.Object:
       objRef = ge.Object(0)
       edgeIdx = GetEdgeIdx(objRef)
-      edgeIdxs.append(edgeIdx)
       mesh = objRef.Mesh()
       
-      addedEdges = []
-      if boolOption.CurrentValue:
-        angleTolerance = dblOption.CurrentValue
-        edgeIdxs.extend(getChain(mesh,edgeIdx,angleTolerance))
       
     elif getE == Rhino.Input.GetResult.Option:
       continue
+    elif getE == Rhino.Input.GetResult.Cancel:
+      print("hit ESC in getMeshEdge()")
+      edgeIdx = None
+      break
+    elif getE == Rhino.Input.GetResult.Nothing:
+      print("hit ENTER in getMeshEdge()")
+      edgeIdx = -1
+      break
     break
 
-  return edgeIdxs
+  return (edgeIdx,boolOption.CurrentValue,dblOption.CurrentValue,mesh)
 #or do a while loop with options - select single edge - select edge
+
 
 def GetEdgeIdx(objref):
   # Rhino.DocObjects.ObjRef .GeometryComponentIndex to Rhino.Geometry.ComponentIndex

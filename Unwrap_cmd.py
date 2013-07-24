@@ -16,7 +16,8 @@ def RunCommand( is_interactive ):
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
-  userCuts = getUserCuts("Select edges to cut")
+  userCuts = getUserCuts()
+  if userCuts == None: return
   print("usercuts:"),
   print userCuts
   displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
