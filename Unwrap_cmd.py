@@ -16,6 +16,9 @@ def RunCommand( is_interactive ):
   mesh = getMesh("Select mesh to unwrap")
   mesh.Normals.ComputeNormals()
   userCuts = getUserCuts("Select edges to cut")
+  print("usercuts:"),
+  print userCuts
+  displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
   if mesh and weightFunction:
     flatEdges,foldList = unwrap(mesh, userCuts, weightFunction)

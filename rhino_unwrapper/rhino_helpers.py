@@ -121,12 +121,17 @@ def getTVertsForEdge(mesh,edge):
   return [vertPair.I, vertPair.J]
   
 def getChain(mesh,edge,angleTolerance):
+  '''
+  gets chains extending from both ends of a given edge,
+  using angleTolerance as stopping criterion
+  '''
   chain = []
   tVerts = getTVertsForEdge(mesh,edge)
   tVert = tVerts[0]
   for tVert in tVerts:
     subChain = getTangentEdge(mesh,edge,tVert,angleTolerance,[])
     chain.extend(subChain)
+  chain.append(edge)
   return chain
 
 def getTangentEdge(mesh,edge,tVert,angleTolerance,chain):

@@ -3,7 +3,7 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
 from classes import FlatEdge
-
+from rhino_helpers import getChain
 
 def getNewEdge(message,flatEdges):
   ge = Rhino.Input.Custom.GetObject()
@@ -54,22 +54,27 @@ def getUserCuts(message=None):
   
   #ge.GetMultiple(0,0)
   ge.Get()
-
-  if ge.CommandResult() != Rhino.Commands.Result.Success:
-    print("no mesh edges selected as cuts for unwrapping")
-    return
-  
-
-  objRefs = [ge.Object(i) for i in range(ge.ObjectCount)]
-  edgeIdxs = [GetEdgeIdx(objref) for objref in objRefs] 
-  mesh = objRefs[0].Mesh()
-
-  addedEdges = []
-  if boolOption.CurrentValue:
-    angleTolerance = dblOption.CurrentValue
-    for edge in edgeIdxs:
-      addedEdges.extend(getChain(mesh,edge,angleTolerance))
-  edgeIdxs.extend(addedEdges)
+  edgeIdxs = []
+  while True:
+    getE = ge.Get()
+    if ge.CommandResult() != Rhino.Commands.Result.Success:
+      print("no mesh edges selected as cuts for unwrapping")
+      return
+    
+    if getE == Rhino.Input.GetResult.Object:
+      objRef = ge.Object(0)
+      edgeIdx = GetEdgeIdx(objRef)
+      edgeIdxs.append(edgeIdx)
+      mesh = objRef.Mesh()
+      
+      addedEdges = []
+      if boolOption.CurrentValue:
+        angleTolerance = dblOption.CurrentValue
+        edgeIdxs.extend(getChain(mesh,edgeIdx,angleTolerance))
+      
+    elif getE == Rhino.Input.GetResult.Option:
+      continue
+    break
 
   return edgeIdxs
 #or do a while loop with options - select single edge - select edge
