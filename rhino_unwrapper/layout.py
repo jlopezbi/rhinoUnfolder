@@ -102,12 +102,12 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
       flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
-  specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,basisInfo,toBasis)
+  specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,xForm)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
 
   for edgeIndex in faceEdges:
-    tVertIdxs = getTVerts(edgeIndex,mesh)
+    tVertIdxs = getTVertsForEdge(mesh,edgeIndex)
     tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
     flatEdge = FlatEdge(edgeIndex,tVertIdxs,tVertSpecs)
     flatEdge.faceIdxs.append(basisInfo[0])

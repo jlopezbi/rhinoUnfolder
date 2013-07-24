@@ -161,7 +161,7 @@ def getOtherTVert(mesh,edge,tVert):
   return tVerts[0]
 
 def getPointsForEdge(mesh,edgeIdx):
-  tVertI,tVertJ = getTVerts(edgeIdx,mesh)
+  tVertI,tVertJ = getTVertsForEdge(mesh,edgeIdx)
   pntI = mesh.TopologyVertices.Item[tVertI]
   pntJ = mesh.TopologyVertices.Item[tVertJ]
   return [pntI,pntJ]

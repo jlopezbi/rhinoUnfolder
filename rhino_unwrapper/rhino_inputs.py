@@ -52,7 +52,6 @@ def getUserCuts(message=None):
   ge.AddOptionDouble("maxAngle", dblOption)
   ge.AddOptionToggle("chainSelect", boolOption)
   
-  #ge.GetMultiple(0,0)
   ge.Get()
   edgeIdxs = []
   while True:
