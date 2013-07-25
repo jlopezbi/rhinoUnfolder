@@ -127,7 +127,6 @@ def getChain(mesh,edge,angleTolerance):
   '''
   chain = []
   tVerts = getTVertsForEdge(mesh,edge)
-  tVert = tVerts[0]
   for tVert in tVerts:
     subChain = getTangentEdge(mesh,edge,tVert,angleTolerance,[])
     chain.extend(subChain)

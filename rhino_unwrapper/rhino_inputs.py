@@ -2,6 +2,7 @@ import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
+import math
 from classes import FlatEdge
 from rhino_helpers import getChain
 from visualization import displayMeshEdges
@@ -44,8 +45,10 @@ def getNewEdge(message,flatEdges):
 def getUserCuts(disaply=True):
   cuts = []
   color = (0,255,0,255)
+  isChain = False
+  angleTolerance = math.radians(30) #inital defautl value
   while True:
-    edgeIdx,isChain,angleTolerance,mesh = getMeshEdge("select cut edge on mesh")
+    edgeIdx,isChain,angleTolerance,mesh = getMeshEdge("select cut edge on mesh",isChain,angleTolerance)
 
     if edgeIdx == None:
       #print("esc: edgeIDx is NONE")
@@ -69,14 +72,14 @@ def getUserCuts(disaply=True):
   return cuts
 
 
-def getMeshEdge(message=None):
+def getMeshEdge(message,isChain,angle):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
   ge.SetCommandPrompt(message)
   ge.AcceptNothing(True)
 
-  boolOption = Rhino.Input.Custom.OptionToggle(False, "Off", "On")
-  dblOption = Rhino.Input.Custom.OptionDouble(35, 0, 180)
+  boolOption = Rhino.Input.Custom.OptionToggle(isChain, "Off", "On")
+  dblOption = Rhino.Input.Custom.OptionDouble(math.degrees(angle), 0, 180)
 
   ge.AddOptionDouble("maxAngle", dblOption)
   ge.AddOptionToggle("chainSelect", boolOption)
@@ -106,7 +109,10 @@ def getMeshEdge(message=None):
   scriptcontext.doc.Objects.UnselectAll()
   ge.Dispose()
 
-  return (edgeIdx,boolOption.CurrentValue,dblOption.CurrentValue,mesh)
+  isChain = boolOption.CurrentValue
+  angle = math.radians(dblOption.CurrentValue)
+
+  return (edgeIdx,isChain,angle,mesh)
 #or do a while loop with options - select single edge - select edge
 
 
