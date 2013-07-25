@@ -180,6 +180,10 @@ def assignFlatVerts(mesh,hopEdge,faceIdx,flatVerts,xForm):
         flatVerts[tVert].append(flatVert)
         #newLayedOut.append(tVert)
         specifiers[tVert] = nLayedOut #zero indexed
+      else:
+        #maybe its just the last one added??
+        #appears to break down in some other case :((
+        specifiers[tVert] = nLayedOut-1
     
 
     
