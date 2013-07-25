@@ -4,6 +4,7 @@ import scriptcontext
 import System.Drawing
 from classes import FlatEdge
 from rhino_helpers import getChain
+from visualization import displayMeshEdges
 
 def getNewEdge(message,flatEdges):
   ge = Rhino.Input.Custom.GetObject()
@@ -40,26 +41,25 @@ def getNewEdge(message,flatEdges):
 
     return flatEdge,flatEdge.type
 
-def getUserCuts():
+def getUserCuts(disaply=True):
   cuts = []
-  #edgeIdx,isChain,angleTolerance,mesh = None,None,None,None
+  color = (0,255,0,255)
   while True:
     edgeIdx,isChain,angleTolerance,mesh = getMeshEdge("select cut edge on mesh")
-    print(' ')
-    print("edgeIdx: "),
-    print edgeIdx
+
     if edgeIdx == None:
-      print("esc: edgeIDx is NONE")
+      #print("esc: edgeIDx is NONE")
       cuts = None
       break
 
     elif edgeIdx >= 0:
-      print("selected: valid edgeIdx")
+      #print("selected: valid edgeIdx")
       if edgeIdx not in cuts:
         if isChain:
           cuts.extend(getChain(mesh,edgeIdx,angleTolerance))
         else:
           cuts.append(edgeIdx)
+      displayMeshEdges(mesh,color,cuts,"cuts")
           
     elif edgeIdx == -1:
       print("enter:")
