@@ -16,7 +16,7 @@ def layoutMesh(foldList, mesh):
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  flatEdges,flatVerts = layoutFace([],basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
+  flatEdges,flatVerts = layoutFace(None,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
   return flatEdges,flatVerts
 
 
@@ -108,8 +108,8 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
 
   for edgeIndex in faceEdges:
     tVertIdxs = getTVertsForEdge(mesh,edgeIndex)
-    tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
-    flatEdge = FlatEdge(edgeIndex,tVertIdxs,tVertSpecs)
+    #tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
+    flatEdge = FlatEdge(edgeIndex,tVertIdxs,specifiers)
     flatEdge.faceIdxs.append(basisInfo[0])
 
     if (edgeIndex in foldList):
@@ -123,7 +123,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
-        flatEdges,flatVerts = layoutFace(tVertIdxs,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
+        flatEdges,flatVerts = layoutFace(flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
 
     else:
       if len(flatEdges[edgeIndex])==0:
@@ -153,41 +153,38 @@ def getTVertSpecs(tVertIdxs,specifiers):
 
 
 
-def assignFlatVerts(mesh,hopEdge,faceIdx,flatVerts,xForm):
+def assignFlatVerts(mesh,hopEdge,face,flatVerts,xForm):
   '''
   add valid flatVerts to flatVerts list and also return
-  a dict of specifiers in case this face has a secondary flatVert
+  a dict of specifiers 
   '''
 
-  faceTVerts = list(set(getTVertsForFace(mesh,faceIdx)))
+  faceTVerts = getTVertsForFace(mesh,face)
   specifiers = {}
-  #newLayedOut = []
+  if hopEdge == None:
+    hopVerts = []
+  else:
+    hopVerts = hopEdge.tVertSpecs.keys()
   for tVert in faceTVerts:
-    specifiers[tVert] = 0
-    nLayedOut = len(flatVerts[tVert])
-    if nLayedOut==0:
+    if tVert not in hopVerts:
       point = transformPoint(mesh,tVert,xForm)
-      rs.AddPoint(point)
-      flatVert = FlatVert(tVert,point,faceIdx)
+      flatVert = FlatVert(tVert,point,face)
       flatVerts[tVert].append(flatVert)
-      #newLayedOut.append(tVert)
-    
-    elif nLayedOut>0:
-      if tVert not in hopEdge:
-        point = transformPoint(mesh,tVert,xForm)
-        rs.AddCircle(point,.1)
-        flatVert = FlatVert(tVert,point,faceIdx)
-        flatVerts[tVert].append(flatVert)
-        #newLayedOut.append(tVert)
-        specifiers[tVert] = nLayedOut #zero indexed
-      else:
-        #maybe its just the last one added??
-        #appears to break down in some other case :((
-        specifiers[tVert] = nLayedOut-1
-    
-
-    
+      specifiers[tVert] = len(flatVerts[tVert])-1
+    else:
+      specifiers[tVert] = specifyHopVert(tVert,hopEdge)
   return specifiers
+
+def specifyHopVert(tVert,hopEdge):
+  if hopEdge == None:
+    return 0
+  tVerts = hopEdge.tVertSpecs.keys()
+  assert(tVert in tVerts)
+  return hopEdge.tVertSpecs[tVert]
+  
+
+
+
 
 def transformPoint(mesh,tVert,xForm):
   point = mesh.TopologyVertices.Item[tVert]

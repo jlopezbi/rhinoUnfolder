@@ -20,12 +20,23 @@ import math
 #   lineGuid = drawLine(flatEdge.coordinates,blue)
 #   return lineGuid
 # EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
+class FlatVert():
+  def __init__(self,_tVertIdx,_point,_faceIdx): 
+    self.tVertIdx = _tVertIdx
+    self.point = _point
+    self.faceIdx = _faceIdx
+
+    self.edgeIdx = None
+    self.geom = []
+
+  def hasSamePoint(self,point):
+    return approxEqual(self.point.X,point.X) and approxEqual(self.point.Y,point.Y)
 
 class FlatEdge():
   def __init__(self,_edgeIdx,_tVertIdxs,_tVertSpecs): 
     self.edgeIdx = _edgeIdx
-    self.tVertIdxs = _tVertIdxs
-    self.tVertSpecs = _tVertSpecs
+    self.tVertIdxs = _tVertIdxs #list ordered I,J
+    self.tVertSpecs = _tVertSpecs #dict
     
     
     self.line_id = None
@@ -40,13 +51,16 @@ class FlatEdge():
 
   def getCoordinates(self,flatVerts):
     I = self.tVertIdxs[0]
-    specI = self.tVertSpecs[0]
+    specI = self.tVertSpecs[I]
     J = self.tVertIdxs[1]
-    specJ = self.tVertSpecs[1]
+    specJ = self.tVertSpecs[J]
 
     pntI = flatVerts[I][specI].point
     pntJ = flatVerts[J][specJ].point
     return [pntI,pntJ]
+  
+  def getTVerts(self,mesh):
+    return getTVertsForEdge(mesh,self.edgeIdx)
 
   def drawLine(self,flatVerts):
     if self.type != None:
@@ -240,17 +254,11 @@ class FlatEdge():
         collection.append(flatEdge.drawTab(flatVerts))
     createGroup(groupName,collection)
 
-class FlatVert():
-  def __init__(self,_tVertIdx,_point,_faceIdx): 
-    self.tVertIdx = _tVertIdx
-    self.point = _point
-    self.faceIdx = _faceIdx
+class FlatFace():
+  def __init__(self,_flatVerts):
+    self.flatVerts = _flatVerts # a dict with tVert keys, pointing to flatVerts columns
 
-    self.edgeIdx = None
-    self.geom = []
 
-  def hasSamePoint(self,point):
-    return approxEqual(self.point.X,point.X) and approxEqual(self.point.Y,point.Y)
 
 
 
