@@ -42,7 +42,9 @@ class FlatEdge():
     self.line_id = None
     self.geom = []
     self.type = None
-    self.faceIdxs = [] #if fold edge: [fromFace,toFace]
+    #self.faceIdxs = [] #if fold edge: [fromFace,toFace]
+    self.faceIdx = None
+    self.toFaceIdx = None
 
     self.tabOnLeft = False
     self.hasTab = False
@@ -50,17 +52,23 @@ class FlatEdge():
     self.tabWidth = .2 #could be standard, or based on face area
 
   def getCoordinates(self,flatVerts):
+    flatVertI,flatVertJ = self.getFlatVerts(flatVerts)
+    pntI = flatVertI.point
+    pntJ = flatVertJ.point
+    return [pntI,pntJ]
+  
+  def getTVerts(self,mesh):
+    return getTVertsForEdge(mesh,self.edgeIdx)
+
+  def getFlatVerts(self,flatVerts):
     I = self.tVertIdxs[0]
     specI = self.tVertSpecs[I]
     J = self.tVertIdxs[1]
     specJ = self.tVertSpecs[J]
 
-    pntI = flatVerts[I][specI].point
-    pntJ = flatVerts[J][specJ].point
-    return [pntI,pntJ]
-  
-  def getTVerts(self,mesh):
-    return getTVertsForEdge(mesh,self.edgeIdx)
+    flatVertI = flatVerts[I][specI]
+    flatVertJ = flatVerts[J][specJ]
+    return (flatVertI,flatVertJ)
 
   def drawLine(self,flatVerts):
     if self.type != None:
@@ -240,7 +248,7 @@ class FlatEdge():
       flatEdge.clearAllGeom()
 
   @staticmethod
-  def drawEdges(flatEdges,groupName,flatVerts):
+  def drawEdges(flatVerts,flatEdges,groupName):
     collection = []
     for flatEdge in flatEdges:
       collection.append(flatEdge.drawLine(flatVerts))

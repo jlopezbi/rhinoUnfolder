@@ -255,3 +255,6 @@ def getMedian(edgeLens):
 
 def approxEqual(A,B,tolerance=10**-4):
   return math.fabs(A-B)<tolerance
+
+def getFlatList(collection):
+    return [element for subCollection in collection for element in subCollection]

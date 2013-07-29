@@ -110,7 +110,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
     tVertIdxs = getTVertsForEdge(mesh,edgeIndex)
     #tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
     flatEdge = FlatEdge(edgeIndex,tVertIdxs,specifiers)
-    flatEdge.faceIdxs.append(basisInfo[0])
+    flatEdge.faceIdx = basisInfo[0]
 
     if (edgeIndex in foldList):
       if (not alreadyBeenPlaced(edgeIndex,flatEdges)):
@@ -119,7 +119,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
         newToBasis = getBasisFlat(flatEdge,flatVerts)
 
         flatEdge.type  = "fold"
-        flatEdge.faceIdxs.append(newBasisInfo[0])
+        #flatEdge.faceIdxs.append(newBasisInfo[0])
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
