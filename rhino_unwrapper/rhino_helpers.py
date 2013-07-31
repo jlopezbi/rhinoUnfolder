@@ -154,6 +154,15 @@ def getTangentEdge(mesh,edge,tVert,angleTolerance,chain):
     nextTVert = getOtherTVert(mesh,newEdge,tVert)
     return getTangentEdge(mesh,newEdge,nextTVert,angleTolerance,chain)
 
+def getDistanceToEdge(mesh,edge,point):
+  '''
+  edge = Topology edgeIdx in mesh
+  point = Point3d to get distance to edge
+  '''
+  edgeLine = mesh.TopologyEdges.EdgeLine(edge)
+  return edgeLine.DistanceTo(point,True)
+
+
 def getOtherTVert(mesh,edge,tVert):
   tVerts = getTVertsForEdge(mesh,edge)
   tVerts.remove(tVert)

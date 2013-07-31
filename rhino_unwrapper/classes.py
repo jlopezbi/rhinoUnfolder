@@ -87,12 +87,13 @@ class FlatEdge():
 
 
   def drawTab(self,flatVerts):
-    geom = []
     if len(self.tabAngles)<1:
-      return
-    coordinates = self.getCoordinates(flatVerts)
-    pntA = coordinates[0]
-    pntD = coordinates[1]
+      self.drawTriTab(flatVerts)
+    else:
+      self.drawQuadTab(flatVerts)
+      
+  def drawQuadTab(self,flatVerts):
+    pntA,pntD = self.getCoordinates(flatVerts)
     vecA = Rhino.Geometry.Vector3d(pntA)
     vecD = Rhino.Geometry.Vector3d(pntD)
 
@@ -123,7 +124,16 @@ class FlatEdge():
     polyGuid = rs.AddPolyline(points)
 
     self.geom.append(polyGuid)
-    return
+
+  def drawTriTab(self,flatVerts):
+    pntA,pntC = self.getCoordinates(flatVerts)
+    pntB = self.tabFaceCenter
+
+    points = [pntA,pntB,pntC]
+    polyGuid = rs.AddPolyline(points)
+    self.geom.append(polyGuid)
+
+
 
 
 
@@ -184,17 +194,19 @@ class FlatEdge():
         return point
     return
 
-
-  #@staticmethod
-  def getTabAngles(self,mesh,currFaceIdx):
-    edgeIdx = self.edgeIdx
-    otherFace = getOtherFaceIdx(edgeIdx,currFaceIdx,mesh)
+  def getTabAngles(self,mesh,currFaceIdx,xForm):
+    edge = self.edgeIdx
+    otherFace = getOtherFaceIdx(edge,currFaceIdx,mesh)
     if otherFace:
       faceCenter = mesh.Faces.GetFaceCenter(otherFace) #Point3d
+      if getDistanceToEdge(mesh,edge,faceCenter)<=self.tabWidth:
+        faceCenter.Transform(xForm)
+        self.tabFaceCenter = faceCenter
+        return
       posVecCenter = Rhino.Geometry.Vector3d(faceCenter) 
 
-      pntI,pntJ = getPointsForEdge(mesh,edgeIdx) #Point3d
-      vecEdge = getEdgeVector(mesh,edgeIdx) #Vector3d
+      pntI,pntJ = getPointsForEdge(mesh,edge) #Point3d
+      vecEdge = getEdgeVector(mesh,edge) #Vector3d
       posVecI = Rhino.Geometry.Vector3d(pntI)
       posVecJ = Rhino.Geometry.Vector3d(pntJ)
 
@@ -203,6 +215,8 @@ class FlatEdge():
       
       angleI = rs.VectorAngle(vecI,vecEdge)
       angleJ = rs.VectorAngle(vecJ,vecEdge)
+
+      self.tabAngles = [angleI,angleJ]
 
       # color = (0,0,0,0)
       # drawVector(vecI,posVecI,color)
@@ -214,7 +228,7 @@ class FlatEdge():
       # print #wtf: for some reason needed this line to print below
       # print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
 
-      return [angleI,angleJ]
+      #return [angleI,angleJ]
 
 
 
