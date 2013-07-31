@@ -185,8 +185,9 @@ class FlatEdge():
     return
 
 
-  @staticmethod
-  def getTabAngles(mesh,currFaceIdx,edgeIdx):
+  #@staticmethod
+  def getTabAngles(self,mesh,currFaceIdx):
+    edgeIdx = self.edgeIdx
     otherFace = getOtherFaceIdx(edgeIdx,currFaceIdx,mesh)
     if otherFace:
       faceCenter = mesh.Faces.GetFaceCenter(otherFace) #Point3d
