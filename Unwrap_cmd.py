@@ -18,8 +18,6 @@ def RunCommand( is_interactive ):
   mesh.Normals.ComputeNormals()
   userCuts = getUserCuts()
   if userCuts == None: return
-  print("usercuts:"),
-  print userCuts
   #displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
   if mesh and weightFunction:

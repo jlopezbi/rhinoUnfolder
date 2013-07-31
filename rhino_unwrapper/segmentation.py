@@ -58,13 +58,6 @@ def translateSegmentVerts(tVerts,xForm):
     point = flatVert.point
     point.Transform(xForm)
 
-# def getVertsInSegment(flatVerts,faceList):
-#   verts = []
-#   allVerts = getFlatList(flatVerts)
-#   for flatVert in allVerts:
-#     if flatVert.faceIdx in faceList:
-#       verts.append(flatVert)
-#   return verts
 
 def translateSegmentCoords(edgesInSegment,xForm):
   getAssociatedFlatVerts(edgesInSegment,flat)
@@ -73,13 +66,6 @@ def translateSegmentCoords(edgesInSegment,xForm):
     points[0].Transform(xForm)
     points[1].Transform(xForm)
 
-# def getEdgesInSegment(flatEdges,faceList):
-#   edges = []
-#   flatEdges = FlatEdge.getFlatList(flatEdges)
-#   for flatEdge in flatEdges:
-#     if flatEdge.faceIdx in faceList:
-#       edges.append(flatEdge)
-#   return edges
 
 def getElementsInSegment(elements,faceList):
   collection = []
@@ -88,8 +74,6 @@ def getElementsInSegment(elements,faceList):
     if element.faceIdx in faceList:
       collection.append(element)
   return collection
-
-
 
 
 
