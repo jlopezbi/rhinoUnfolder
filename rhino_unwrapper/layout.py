@@ -9,14 +9,16 @@ def initBasisInfo(mesh, origin):
   return initBasisInfo
 
 def layoutMesh(foldList, mesh):
-  flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
   flatVerts = [list() for _ in xrange(mesh.TopologyVertices.Count)]
+  flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
+  flatFaces = [list() for _ in xrange(mesh.Faces.Count)]
+
 
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  flatEdges,flatVerts = layoutFace(None,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts)
+  flatEdges,flatVerts = layoutFace(None,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces)
   return flatEdges,flatVerts
 
 
@@ -90,7 +92,7 @@ def layout(mesh, foldList, face):
 
 
 
-def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
+def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces):
   ''' Recurse through faces, hopping along fold edges
     input:
       depth = recursion level
@@ -109,7 +111,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
   for edgeIndex in faceEdges:
     tVertIdxs = getTVertsForEdge(mesh,edgeIndex)
     #tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
-    flatEdge = FlatEdge(edgeIndex,tVertIdxs,specifiers)
+    flatEdge = FlatEdge(edgeIndex,tVertIdxs,specifiers) 
     flatEdge.faceIdx = basisInfo[0]
 
     if (edgeIndex in foldList):
@@ -123,7 +125,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
-        flatEdges,flatVerts = layoutFace(flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatEdges,flatVerts)
+        flatEdges,flatVerts = layoutFace(flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatVerts,flatEdges,flatFaces)
 
     else:
       if len(flatEdges[edgeIndex])==0:
@@ -133,7 +135,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatEdges,flatVerts):
         flatEdge.type = "cut"
         flatEdge.hasTab = True
         flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
-        flatEdge.setTabSide(flatEdges,basisInfo[1],flatVerts)
+        #flatEdge.setTabSide(flatVerts,flatEdges,basisInfo[1],flatVerts)
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges, flatVerts

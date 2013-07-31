@@ -36,7 +36,7 @@ class FlatEdge():
   def __init__(self,_edgeIdx,_tVertIdxs,_tVertSpecs): 
     self.edgeIdx = _edgeIdx
     self.tVertIdxs = _tVertIdxs #list ordered I,J
-    self.tVertSpecs = _tVertSpecs #dict
+    self.tVertSpecs = {k: _tVertSpecs[k] for k in _tVertIdxs} #remove extraneous info
     
     
     self.line_id = None
@@ -158,13 +158,12 @@ class FlatEdge():
     z = (pntA.Z+pntB.Z)/2.0
     return Rhino.Geometry.Point3f(x,y,z)
 
-  def setTabSide(self,foldEdges,foldEdgeIdx,flatVerts):
+  def setTabSide(self,flatVerts,flatEdges,cutEdge):
     '''
     occurs during LAYOUT
     '''
-    assert(len(foldEdges[foldEdgeIdx])==1)
-    foldEdge = foldEdges[foldEdgeIdx][0]
-    testPoint = self.getNeighborCoordForCutEdge(foldEdge,flatVerts)
+  
+    testPoint = self.getNeighborCoordForCutEdge(cutEdge,flatVerts)
     if self.testPointIsLeft(testPoint,flatVerts):
       self.tabOnLeft = False
     else:
