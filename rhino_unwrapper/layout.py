@@ -1,5 +1,5 @@
 from transformations import *
-from classes import FlatEdge, FlatVert
+from classes import FlatVert, FlatEdge, FlatFace
 
 def initBasisInfo(mesh, origin):
   faceIdx = 0
@@ -23,75 +23,6 @@ def layoutMesh(foldList, mesh):
 
 
 
-'''
-def netPointForMeshPoint(net, mesh, point):
-  if point = netGetPoint(net, point): #this is not allowed in python. whats it called?
-    return point
-  else:
-    netPoint = netCoordinates(net, point)
-    return netAddPoint(netPoint, point)
-
-
-def meshEdgeForNetEdge(net, edge):
-  pass
-
-def edgeAlreadyPlaced(net, edge):
-  pass
-
-def netAddEdge(net, edge):   
-  for point in edge:
-    netCoordinates(point, transform)
-
-
-def edgeAlreadyPlaced(edge):
-  pass
-
-def isFoldEdge(foldList, edge):
-  return edge in foldList
-
-def isNakedEdge(mesh, edge):
-  len(getFacesForEdge(mesh,edge)) < 2
-
-def isCutEdge(mesh, foldList, edge):
-  !isNakedEdge(mesh, edge) or !isFoldEdge(foldList, edge)
-
-def place(mesh, newEdge):
-  if isCutEdge(mesh, foldList, newEdge) or !edgeAlreadyPlaced(newEdge):
-    netAddEdge(newEdge)
-
-def neighboringFace(mesh, face, edge):
-  connectedFaces = getFacesForEdge(mesh,edge)
-  return (connectedFaces - face)[0]
-
-def layout(mesh, foldList, face):
-  for edge in face:
-    place(mesh, foldList, edge)
-    if foldEdge:
-      neighbor = neighbordingFace(mesh, face, edge)
-      layout(mesh, foldList, neighbor)
-
-
-
-
-
-
-
-  # layoutFacePoints(face)
-
-  # for edge in edgesForFace(face):
-  #   if foldEdge:
-  #     addsEdge to flatEdges (as fold)
-  #     layout(newFace)
-  #   else:
-  #     addEdge to flatEdges (as cut or naked)
-
-  # addEdge(edge,)
-
-'''
-
-
-
-
 def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces):
   ''' Recurse through faces, hopping along fold edges
     input:
@@ -105,9 +36,9 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatF
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
   specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,xForm)
+  flatFaces[basisInfo[0]] = FlatFace(specifiers)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
-
   for edgeIndex in faceEdges:
     tVertIdxs = getTVertsForEdge(mesh,edgeIndex)
     #tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
@@ -135,7 +66,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatF
         flatEdge.type = "cut"
         flatEdge.hasTab = True
         flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
-        #flatEdge.setTabSide(flatVerts,flatEdges,basisInfo[1],flatVerts)
+        flatEdge.setTabSide(flatVerts,flatFaces)
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
   return flatEdges, flatVerts

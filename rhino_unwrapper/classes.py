@@ -20,6 +20,7 @@ import math
 #   lineGuid = drawLine(flatEdge.coordinates,blue)
 #   return lineGuid
 # EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
+
 class FlatVert():
   def __init__(self,_tVertIdx,_point,_faceIdx): 
     self.tVertIdx = _tVertIdx
@@ -158,12 +159,12 @@ class FlatEdge():
     z = (pntA.Z+pntB.Z)/2.0
     return Rhino.Geometry.Point3f(x,y,z)
 
-  def setTabSide(self,flatVerts,flatEdges,cutEdge):
+  def setTabSide(self,flatVerts,flatFaces):
     '''
     occurs during LAYOUT
     '''
   
-    testPoint = self.getNeighborCoordForCutEdge(cutEdge,flatVerts)
+    testPoint = self.getNeighborFlatVert(flatVerts,flatFaces).point
     if self.testPointIsLeft(testPoint,flatVerts):
       self.tabOnLeft = False
     else:
@@ -176,22 +177,27 @@ class FlatEdge():
     returns False if co-linear. HOwever, if the mesh is triangulated
     and has no zero-area faces this should not occur.
     '''
-    coordinates = self.getCoordinates(flatVerts)
-    pntA = coordinates[0]
-    pntB = coordinates[1]
+    pntA,pntB = self.getCoordinates(flatVerts)
     vecLine = getVectorForPoints(pntA,pntB)
-    vecTest = Rhino.Geometry.Vector3d(testPoint)
+    vecTest = getVectorForPoints(pntA,testPoint)#this may be too skewed
     cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine,vecTest)
-    maxVal = cross.MaximumCoordinate #(pos and neg)
-    return  maxVal > 0
+    z = cross.Z #(pos and neg)
+    print "z of cross:",
+    print z
+    return  z > 0 
 
-  def getNeighborCoordForCutEdge(self,foldEdge,flatVerts):
-    potentialCoords = foldEdge.getCoordinates(flatVerts)
-    selfCoords = self.getCoordinates(flatVerts)
-    for point in potentialCoords:
-      if point not in selfCoords:
-        return point
-    return
+
+  def getNeighborFlatVert(self,flatVerts,flatFaces):
+    '''
+    gets one of the flatVerts associated with this flatEdge's face,
+    but that is not a part of this flatEdge
+    '''
+    tVertsEdge = set(self.tVertIdxs)
+    flatFace = flatFaces[self.faceIdx]
+    tVertsFace = set(flatFace.vertices.keys())
+    neighbors = list(tVertsFace-tVertsEdge)
+    tVert = neighbors[0] #arbitrarily return first tVert
+    return flatVerts[tVert][flatFace.vertices[tVert]]
 
   def getTabAngles(self,mesh,currFaceIdx,xForm):
     edge = self.edgeIdx
@@ -277,8 +283,22 @@ class FlatEdge():
     createGroup(groupName,collection)
 
 class FlatFace():
-  def __init__(self,_flatVerts):
-    self.flatVerts = _flatVerts # a dict with tVert keys, pointing to flatVerts columns
+  def __init__(self,_vertices):
+    self.vertices = _vertices # a dict with tVert keys, pointing to flatVerts columns
+
+  def getFlatVerts(self,flatVerts):
+    tVerts = self.vertices.keys()
+    collection = []
+    for vert in tVerts:
+      col = self.vertices[vert]
+      collection.append(flatVerts[vert][col])
+    return collection
+
+  def getFlatVertForTVert(self,tVert,flatVerts):
+    assert(tVert in self.vertices.keys())
+    return flatVerts[tVert][self.vertices[tVert]]
+
+
 
 
 

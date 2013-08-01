@@ -177,10 +177,11 @@ def getPointsForEdge(mesh,edgeIdx):
 '''FACE INFO'''
 def getTVertsForFace(mesh,faceIdx):
   '''
-  list of 4 values, if two are duplicates face is a triangle
+  list of 4 values if quad, 3 values if triangle
   '''
   arrTVerts = mesh.Faces.GetTopologicalVertices(faceIdx)
-  return convertArray(arrTVerts)
+  tVerts = convertArray(arrTVerts)
+  return uniqueList(tVerts)
 
 def getFaceEdges(faceIdx,mesh):
   arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
@@ -229,8 +230,8 @@ def compareEdgeAngle(mesh,edge,tVert,neighEdge):
   return angle
 
 def getVectorForPoints(pntA,pntB):
-  vecA = Rhino.Geometry.Vector3d(pntA)
-  vecB = Rhino.Geometry.Vector3d(pntB)
+  vecA = Rhino.Geometry.Vector3d(pntA) #From
+  vecB = Rhino.Geometry.Vector3d(pntB) #To
   return  Rhino.Geometry.Vector3d.Subtract(vecB,vecA)
 
 def getEdgeLen(edgIdx,mesh):
@@ -267,3 +268,19 @@ def approxEqual(A,B,tolerance=10**-4):
 
 def getFlatList(collection):
     return [element for subCollection in collection for element in subCollection]
+
+def uniqueList(seq, idfun=None): 
+   # order preserving
+   if idfun is None:
+       def idfun(x): return x
+   seen = {}
+   result = []
+   for item in seq:
+       marker = idfun(item)
+       # in old Python versions:
+       # if seen.has_key(marker)
+       # but in new ones:
+       if marker in seen: continue
+       seen[marker] = 1
+       result.append(item)
+   return result
