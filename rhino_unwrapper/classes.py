@@ -135,9 +135,6 @@ class FlatEdge():
     self.geom.append(polyGuid)
 
 
-
-
-
   def clearAllGeom(self):
     '''
     note: clear self.geom and self.line_id ?
@@ -182,8 +179,6 @@ class FlatEdge():
     vecTest = getVectorForPoints(pntA,testPoint)#this may be too skewed
     cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine,vecTest)
     z = cross.Z #(pos and neg)
-    print "z of cross:",
-    print z
     return  z > 0 
 
 
@@ -202,7 +197,8 @@ class FlatEdge():
   def getTabAngles(self,mesh,currFaceIdx,xForm):
     edge = self.edgeIdx
     otherFace = getOtherFaceIdx(edge,currFaceIdx,mesh)
-    if otherFace:
+
+    if otherFace != None:
       faceCenter = mesh.Faces.GetFaceCenter(otherFace) #Point3d
       if getDistanceToEdge(mesh,edge,faceCenter)<=self.tabWidth:
         faceCenter.Transform(xForm)
