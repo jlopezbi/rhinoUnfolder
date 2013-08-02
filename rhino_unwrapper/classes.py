@@ -22,10 +22,10 @@ import math
 # EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
 
 class FlatVert():
-  def __init__(self,_tVertIdx,_point,_faceIdx): 
+  def __init__(self,_tVertIdx,_point): 
     self.tVertIdx = _tVertIdx
     self.point = _point
-    self.faceIdx = _faceIdx
+    self.faceIdx = None
 
     self.edgeIdx = None
     self.geom = []
@@ -293,6 +293,10 @@ class FlatFace():
   def getFlatVertForTVert(self,tVert,flatVerts):
     assert(tVert in self.vertices.keys())
     return flatVerts[tVert][self.vertices[tVert]]
+
+  def reAssignVerts(self,newVerts):
+    pass
+
 
 
 

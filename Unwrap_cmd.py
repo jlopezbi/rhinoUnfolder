@@ -21,7 +21,7 @@ def RunCommand( is_interactive ):
   #displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
   if mesh and weightFunction:
-    flatEdges,flatVerts,foldList = unwrap(mesh, userCuts, weightFunction)
+    flatVerts,flatEdges,flatFaces,foldList = unwrap(mesh, userCuts, weightFunction)
 
   while True:
     flatEdgeCut,strType = getNewEdge("select new edge on net or mesh",flatEdges)
@@ -30,7 +30,7 @@ def RunCommand( is_interactive ):
       basePoint = flatEdgeCut.getMidPoint(flatVerts)
       xForm = getUserTranslate("Pick point to translate segment to",basePoint)
       if xForm:
-        segmentNet(mesh,foldList,flatVerts,flatEdges,flatEdgeCut,xForm)
+        segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm)
     elif strType == 'cut':
       break
     # elif strType == 'invalid':

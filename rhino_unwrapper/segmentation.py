@@ -6,7 +6,7 @@ from classes import FlatEdge,FlatVert
 consider generalizing layout or something. Also maybe create a different module
 that both layout and segmentation use.
 '''
-def segmentNet(mesh,foldList,flatVerts,flatEdges,flatEdgeCut,xForm):
+def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
   cutEdgeIdx = flatEdgeCut.edgeIdx
 
   if(cutEdgeIdx in foldList):
@@ -15,7 +15,7 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatEdgeCut,xForm):
     flatEdgeCut.drawLine(flatVerts)
 
     newFace = getOtherFaceIdx(cutEdgeIdx,flatEdgeCut.faceIdx,mesh)
-    newSpecs = copyFlatVerts(flatEdgeCut,flatVerts,newFace)
+    newSpecs = copyFlatVerts(flatEdgeCut,flatVerts)
     
 
     newFlatEdge = FlatEdge(flatEdgeCut.edgeIdx,flatEdgeCut.tVertIdxs,newSpecs)
@@ -29,18 +29,19 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatEdgeCut,xForm):
     segLists = orderListsByLen(segA,segB)
     smallSeg = segLists[0]
     edgesInSeg = getElementsInSegment(flatEdges,smallSeg)
-    vertsInSeg = getElementsInSegment(flatVerts,smallSeg)
+    #vertsInSeg = getElementsInSegment(flatVerts,smallSeg)
+    vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)
     FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
     translateSegmentVerts(vertsInSeg,xForm)
     FlatEdge.drawEdges(flatVerts,edgesInSeg,'seg1')
 
-def copyFlatVerts(flatEdge,flatVerts,face):
+def copyFlatVerts(flatEdge,flatVerts):
   flatI,flatJ = flatEdge.getFlatVerts(flatVerts)
   I = flatEdge.tVertIdxs[0]
   J = flatEdge.tVertIdxs[1]
 
-  newFlatI = FlatVert(I,flatI.point,face)
-  newFlatJ = FlatVert(J,flatJ.point,face)
+  newFlatI = FlatVert(I,flatI.point)
+  newFlatJ = FlatVert(J,flatJ.point)
  
   flatVerts[I].append(newFlatI) #make copies
   flatVerts[J].append(newFlatJ)
@@ -66,6 +67,14 @@ def translateSegmentCoords(edgesInSegment,xForm):
     points[0].Transform(xForm)
     points[1].Transform(xForm)
 
+def getFlatVertsInSegment(flatVerts,flatFaces,segment):
+  collection = set()
+  for face in segment:
+    flatFace = flatFaces[face]
+    verts = flatFace.getFlatVerts(flatVerts)
+    for vert in verts:
+      collection.add(vert)
+  return list(collection)
 
 def getElementsInSegment(elements,faceList):
   collection = []

@@ -18,8 +18,8 @@ def layoutMesh(foldList, mesh):
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  flatEdges,flatVerts = layoutFace(None,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces)
-  return flatEdges,flatVerts
+  flatEdges,flatVerts,flatFaces = layoutFace(None,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces)
+  return flatVerts,flatEdges,flatFaces
 
 
 
@@ -56,7 +56,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatF
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
-        flatEdges,flatVerts = layoutFace(flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatVerts,flatEdges,flatFaces)
+        flatEdges,flatVerts,flatFaces = layoutFace(flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatVerts,flatEdges,flatFaces)
 
     else:
       if len(flatEdges[edgeIndex])==0:
@@ -69,7 +69,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatF
         flatEdge.setTabSide(flatVerts,flatFaces)
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
-  return flatEdges, flatVerts
+  return flatEdges, flatVerts,flatFaces
 
 def assignFlatEdges(mesh,faceIdx,foldList,flatVerts):
   pass
@@ -98,14 +98,17 @@ def assignFlatVerts(mesh,hopEdge,face,flatVerts,xForm):
     hopVerts = []
   else:
     hopVerts = hopEdge.tVertSpecs.keys()
+  seen = []
   for tVert in faceTVerts:
-    if tVert not in hopVerts:
-      point = transformPoint(mesh,tVert,xForm)
-      flatVert = FlatVert(tVert,point,face)
-      flatVerts[tVert].append(flatVert)
-      specifiers[tVert] = len(flatVerts[tVert])-1
-    else:
-      specifiers[tVert] = specifyHopVert(tVert,hopEdge)
+    if tVert not in seen: #avoid duplicates (triangle faces)
+      seen.append(tVert)
+      if tVert not in hopVerts:
+        point = transformPoint(mesh,tVert,xForm)
+        flatVert = FlatVert(tVert,point)
+        flatVerts[tVert].append(flatVert)
+        specifiers[tVert] = len(flatVerts[tVert])-1
+      else:
+        specifiers[tVert] = specifyHopVert(tVert,hopEdge)
   return specifiers
 
 def specifyHopVert(tVert,hopEdge):
