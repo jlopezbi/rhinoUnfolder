@@ -10,30 +10,65 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
   cutEdgeIdx = flatEdgeCut.edgeIdx
 
   if(cutEdgeIdx in foldList):
-    flatEdgeCut.clearAllGeom()
-    flatEdgeCut.type = 'cut'
-    flatEdgeCut.drawLine(flatVerts)
-
-    newFace = getOtherFaceIdx(cutEdgeIdx,flatEdgeCut.faceIdx,mesh)
-    newSpecs = copyFlatVerts(flatEdgeCut,flatVerts)
-    
-
-    newFlatEdge = FlatEdge(flatEdgeCut.edgeIdx,flatEdgeCut.tVertIdxs,newSpecs)
-    newFlatEdge.type = 'cut'
-    newFlatEdge.faceIdx = newFace
-    newFlatEdge.drawLine(flatVerts)
-    flatEdges[cutEdgeIdx].append(newFlatEdge) #copy flatEdge
-
     foldList.remove(cutEdgeIdx)
-    segA,segB = getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
-    segLists = orderListsByLen(segA,segB)
-    smallSeg = segLists[0]
+    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx)
+    resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg)
+    
+    newSpecs = copyFlatVerts(flatEdgeCut,flatVerts)
+     
+    newFlatEdge = createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs) #right now unnecesary drawing of edge
+
+    flatFaces[newFlatEdge.faceIdx].reAssignVerts(newSpecs)
+
+    print "smallseg face vertices: ",
+    print flatFaces[newFlatEdge.faceIdx].vertices
+    print "bigseg face vertices: ",
+    print flatFaces[flatEdgeCut.faceIdx].vertices
+
+    print "smallseg ",
+    print smallSeg
+    print "bigseg ",
+    print bigSeg
+
     edgesInSeg = getElementsInSegment(flatEdges,smallSeg)
     #vertsInSeg = getElementsInSegment(flatVerts,smallSeg)
     vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)
     FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
     translateSegmentVerts(vertsInSeg,xForm)
     FlatEdge.drawEdges(flatVerts,edgesInSeg,'seg1')
+    
+    flatEdgeCut.clearAllGeom()
+    flatEdgeCut.drawLine(flatVerts)
+
+    print "flatEdgeCut: ",
+    print flatEdgeCut.tVertSpecs
+    print "newFlatEdge ",
+    print newFlatEdge.tVertSpecs
+
+def resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg):
+  cutEdgeIdx = flatEdgeCut.edgeIdx
+
+  flatEdgeCut.clearAllGeom()
+  flatEdgeCut.type = 'cut'
+  flatEdgeCut.drawLine(flatVerts)
+  if flatEdgeCut.faceIdx in smallSeg:
+    flatEdgeCut.faceIdx = getOtherFaceIdx(flatEdgeCut.edgeIdx,flatEdgeCut.faceIdx,mesh)
+
+def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
+  cutEdgeIdx = flatEdgeCut.edgeIdx
+  newFlatEdge = FlatEdge(cutEdgeIdx,flatEdgeCut.tVertIdxs,newSpecs)
+  newFlatEdge.type = 'cut'
+  #must have reset edge for following line to work
+  newFlatEdge.faceIdx = getOtherFaceIdx(flatEdgeCut.edgeIdx,flatEdgeCut.faceIdx,mesh)
+  newFlatEdge.drawLine(flatVerts)
+  flatEdges[cutEdgeIdx].append(newFlatEdge) #copy flatEdge
+  return newFlatEdge
+
+
+def findSegments(mesh,foldList,cutEdgeIdx):
+  segA,segB = getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
+  segLists = orderListsByLen(segA,segB)
+  return segLists
 
 def copyFlatVerts(flatEdge,flatVerts):
   flatI,flatJ = flatEdge.getFlatVerts(flatVerts)
@@ -53,9 +88,8 @@ def copyFlatVerts(flatEdge,flatVerts):
   return newSpecs
 
 
-
-def translateSegmentVerts(tVerts,xForm):
-  for flatVert in tVerts:
+def translateSegmentVerts(verts,xForm):
+  for flatVert in verts:
     point = flatVert.point
     point.Transform(xForm)
 
@@ -68,13 +102,20 @@ def translateSegmentCoords(edgesInSegment,xForm):
     points[1].Transform(xForm)
 
 def getFlatVertsInSegment(flatVerts,flatFaces,segment):
-  collection = set()
+  collection = set() #use set to avoid duplicates
   for face in segment:
     flatFace = flatFaces[face]
-    verts = flatFace.getFlatVerts(flatVerts)
+    verts = flatFace.vertices.items() #list of tuples (key,value)
     for vert in verts:
       collection.add(vert)
-  return list(collection)
+  #get list of actual flatVerts
+  fVerts = []
+  for item in collection:
+    row = item[0]
+    col = item[1]
+    fVerts.append(flatVerts[row][col])
+
+  return fVerts
 
 def getElementsInSegment(elements,faceList):
   collection = []
@@ -117,7 +158,7 @@ def getSegmentsFromCut(mesh,foldList,cutEdgeIdx):
     segA = createSegment(mesh,faceList[0],foldList,segA)
     segB = createSegment(mesh,faceList[1],foldList,segB)
 
-  return segA,segB
+  return list(segA),list(segB)
 
 def createSegment(mesh,faceIdx,foldList,segment):
   '''

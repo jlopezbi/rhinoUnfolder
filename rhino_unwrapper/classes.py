@@ -294,8 +294,11 @@ class FlatFace():
     assert(tVert in self.vertices.keys())
     return flatVerts[tVert][self.vertices[tVert]]
 
-  def reAssignVerts(self,newVerts):
-    pass
+  def reAssignVerts(self,newVertSpecs):
+    tVerts = newVertSpecs.keys()
+    for tVert in tVerts:
+      assert(tVert in self.vertices.keys()), "newTVert not in face!"
+      self.vertices[tVert] = newVertSpecs[tVert]
 
 
 
