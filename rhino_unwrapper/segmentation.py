@@ -34,16 +34,16 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
     #vertsInSeg = getElementsInSegment(flatVerts,smallSeg)
     vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)
     FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
-    translateSegmentVerts(vertsInSeg,xForm)
+    translateSegmentVerts(vertsInSeg,xForm,flatVerts)
     FlatEdge.drawEdges(flatVerts,edgesInSeg,'seg1')
     
     flatEdgeCut.clearAllGeom()
     flatEdgeCut.drawLine(flatVerts)
 
     print "flatEdgeCut: ",
-    print flatEdgeCut.tVertSpecs
+    print flatEdgeCut.getFlatVerts(flatVerts)
     print "newFlatEdge ",
-    print newFlatEdge.tVertSpecs
+    print newFlatEdge.getFlatVerts(flatVerts)
 
 def resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg):
   cutEdgeIdx = flatEdgeCut.edgeIdx
@@ -74,9 +74,11 @@ def copyFlatVerts(flatEdge,flatVerts):
   flatI,flatJ = flatEdge.getFlatVerts(flatVerts)
   I = flatEdge.tVertIdxs[0]
   J = flatEdge.tVertIdxs[1]
+  pointI = Rhino.Geometry.Point3d(flatI.point)
+  pointJ = Rhino.Geometry.Point3d(flatJ.point)
 
-  newFlatI = FlatVert(I,flatI.point)
-  newFlatJ = FlatVert(J,flatJ.point)
+  newFlatI = FlatVert(I,pointI)
+  newFlatJ = FlatVert(J,pointJ)
  
   flatVerts[I].append(newFlatI) #make copies
   flatVerts[J].append(newFlatJ)
@@ -88,8 +90,13 @@ def copyFlatVerts(flatEdge,flatVerts):
   return newSpecs
 
 
-def translateSegmentVerts(verts,xForm):
-  for flatVert in verts:
+def translateSegmentVerts(verts,xForm,flatVerts):
+  for flatVertSpec in verts:
+    row = flatVertSpec[0]
+    col = flatVertSpec[1]
+    flatVert = flatVerts[row][col]
+    # print "transformPnt: ",
+    # print flatVertSpec
     point = flatVert.point
     point.Transform(xForm)
 
@@ -108,14 +115,14 @@ def getFlatVertsInSegment(flatVerts,flatFaces,segment):
     verts = flatFace.vertices.items() #list of tuples (key,value)
     for vert in verts:
       collection.add(vert)
-  #get list of actual flatVerts
-  fVerts = []
-  for item in collection:
-    row = item[0]
-    col = item[1]
-    fVerts.append(flatVerts[row][col])
+  # #get list of actual flatVerts
+  # fVerts = []
+  # for item in collection:
+  #   row = item[0]
+  #   col = item[1]
+  #   fVerts.append(flatVerts[row][col])
 
-  return fVerts
+  return list(collection)
 
 def getElementsInSegment(elements,faceList):
   collection = []
