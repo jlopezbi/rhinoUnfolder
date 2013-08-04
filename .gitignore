@@ -10,14 +10,5 @@ showEdgeIdxs_cmd.py
 rhino_unwrapper/UnionFind.py
 rhino_unwrapper/UnionFind1.py
 pickMeshEdge.py
-test_dynamicDraw.py
-test_getTabAngles.py
-test_getVectorForLine.py
-test_meshAdd.py
-test_meshEdgeDirection.py
-test_normalsDirections.py
-test_sameOrientation.py
-test_rotateDirection.py
-test_getUserCuts.py
 hawkinsLayout.py
-test_getNeighborTVert.py
+tests/

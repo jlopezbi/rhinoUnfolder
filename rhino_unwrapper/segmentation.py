@@ -20,17 +20,8 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
 
     flatFaces[newFlatEdge.faceIdx].reAssignVerts(newSpecs)
 
-    print "smallseg face vertices: ",
-    print flatFaces[newFlatEdge.faceIdx].vertices
-    print "bigseg face vertices: ",
-    print flatFaces[flatEdgeCut.faceIdx].vertices
 
-    print "smallseg ",
-    print smallSeg
-    print "bigseg ",
-    print bigSeg
-
-    edgesInSeg = getElementsInSegment(flatEdges,smallSeg)
+    edgesInSeg = getEdgesInSegment(flatEdges,newFlatEdge,smallSeg)
     #vertsInSeg = getElementsInSegment(flatVerts,smallSeg)
     vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)
     FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
@@ -40,10 +31,6 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
     flatEdgeCut.clearAllGeom()
     flatEdgeCut.drawLine(flatVerts)
 
-    print "flatEdgeCut: ",
-    print flatEdgeCut.getFlatVerts(flatVerts)
-    print "newFlatEdge ",
-    print newFlatEdge.getFlatVerts(flatVerts)
 
 def resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg):
   cutEdgeIdx = flatEdgeCut.edgeIdx
@@ -124,9 +111,9 @@ def getFlatVertsInSegment(flatVerts,flatFaces,segment):
 
   return list(collection)
 
-def getElementsInSegment(elements,faceList):
+def getEdgesInSegment(flatEdges,newFlatEdge,faceList):
   collection = []
-  allElements = getFlatList(elements)
+  allElements = getFlatList(flatEdges)
   for element in allElements:
     if element.faceIdx in faceList:
       collection.append(element)
