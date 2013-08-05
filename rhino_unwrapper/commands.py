@@ -19,7 +19,7 @@ def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
   netGroupName = "net0"
   flatEdgesSimple = FlatEdge.getFlatList(flatEdges)
   FlatEdge.drawEdges(flatVerts,flatEdgesSimple,netGroupName)
-  FlatEdge.drawTabs(flatEdgesSimple,netGroupName,flatVerts)
+  FlatEdge.drawTabs(flatVerts,flatEdgesSimple,netGroupName,)
   
   return flatVerts,flatEdges,flatFaces,foldList  
 

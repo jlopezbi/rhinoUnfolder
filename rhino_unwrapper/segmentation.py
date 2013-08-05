@@ -22,28 +22,18 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
   
     resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,smallSeg)
     resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs)
-
-    print "SmallFace %d: " %newFlatEdge.faceIdx,
-    print flatFaces[newFlatEdge.faceIdx].vertices
-
-    print "BigFace %d: " %flatEdgeCut.faceIdx,
-    print flatFaces[flatEdgeCut.faceIdx].vertices
-
     
    
     edgesInSeg = getEdgesInSegment(flatEdges,newFlatEdge,smallSeg)
     vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)
-    print "vertsInSeg: ",
-    print vertsInSeg
+  
     FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
     translateSegmentVerts(vertsInSeg,xForm,flatVerts)
     FlatEdge.drawEdges(flatVerts,edgesInSeg,'seg1')
-    
+    FlatEdge.drawTabs(flatVerts,edgesInSeg,'seg1')    
     flatEdgeCut.clearAllGeom()
     flatEdgeCut.drawLine(flatVerts)
 
-    # print "flatEdgeCut end: ",
-    # print flatEdgeCut.tVertSpecs
 
 def modifyEdges(mesh,flatEdges,flatFaces,flatEdgeCut,newFlatEdge,newSpecs):
   modifiedEdges = getModEdges(mesh,flatEdges,flatFaces,newFlatEdge,newSpecs)
@@ -135,10 +125,6 @@ def getFlatVertsInSegment(flatVerts,flatFaces,segment):
     flatFace = flatFaces[face]
     verts = flatFace.vertices.items() #list of tuples (key,value)
     for vert in verts:
-      if vert == (45,0):
-        print "AAAAAAAAAAAAA"
-        print "culprit face: ",
-        print face
       collection.add(vert)
   return list(collection)
 

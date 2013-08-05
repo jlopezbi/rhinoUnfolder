@@ -277,7 +277,7 @@ class FlatEdge():
     createGroup(groupName,collection)
 
   @staticmethod
-  def drawTabs(flatEdges,groupName,flatVerts):
+  def drawTabs(flatVerts,flatEdges,groupName):
     collection = []
     for flatEdge in flatEdges:
       if flatEdge.hasTab:
