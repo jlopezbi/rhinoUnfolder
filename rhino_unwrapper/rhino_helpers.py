@@ -69,7 +69,7 @@ def getCenterPointLine(line):
   point = Rhino.Geometry.Point3d(cenX,cenY,cenZ)
   return point
 
-
+'''VERT INFO'''
 
 def getTVertsForVert(mesh,tVert):
   arrTVerts = mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
@@ -162,6 +162,11 @@ def getDistanceToEdge(mesh,edge,point):
   edgeLine = mesh.TopologyEdges.EdgeLine(edge)
   return edgeLine.DistanceTo(point,True)
 
+def getEdgeVector(mesh,edgeIdx):
+  edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
+  #Vector3d
+  vec = edgeLine.Direction
+  return vec
 
 def getOtherTVert(mesh,edge,tVert):
   tVerts = getTVertsForEdge(mesh,edge)
@@ -173,6 +178,16 @@ def getPointsForEdge(mesh,edgeIdx):
   pntI = mesh.TopologyVertices.Item[tVertI]
   pntJ = mesh.TopologyVertices.Item[tVertJ]
   return [pntI,pntJ]
+
+def getEdgeLen(edgIdx,mesh):
+  edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
+  return edgeLine.Length
+
+def compareEdgeAngle(mesh,edge,tVert,neighEdge):
+  vecBase = getOrientedVector(mesh,edge,tVert,True)
+  vecCompare = getOrientedVector(mesh,neighEdge,tVert,False)
+  angle = Rhino.Geometry.Vector3d.VectorAngle(vecBase,vecCompare)
+  return angle
 
 '''FACE INFO'''
 def getTVertsForFace(mesh,faceIdx):
@@ -199,11 +214,6 @@ def getEdgeLengths(mesh):
     edgeLens.append(edgeLen)
   return edgeLens
 
-def getEdgeVector(mesh,edgeIdx):
-  edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
-  #Vector3d
-  vec = edgeLine.Direction
-  return vec
 
 def getOrientedVector(mesh,edgeIdx,tVert,isEnd):
   '''
@@ -223,20 +233,13 @@ def getOrientedVector(mesh,edgeIdx,tVert,isEnd):
   vec = Rhino.Geometry.Vector3d(vecPnt)
   return vec
 
-def compareEdgeAngle(mesh,edge,tVert,neighEdge):
-  vecBase = getOrientedVector(mesh,edge,tVert,True)
-  vecCompare = getOrientedVector(mesh,neighEdge,tVert,False)
-  angle = Rhino.Geometry.Vector3d.VectorAngle(vecBase,vecCompare)
-  return angle
+
 
 def getVectorForPoints(pntA,pntB):
   vecA = Rhino.Geometry.Vector3d(pntA) #From
   vecB = Rhino.Geometry.Vector3d(pntB) #To
   return  Rhino.Geometry.Vector3d.Subtract(vecB,vecA)
 
-def getEdgeLen(edgIdx,mesh):
-  edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
-  return edgeLine.Length
 
 def getMidPoint(curve_id):
   '''get the midpoint of a curve
@@ -284,3 +287,4 @@ def uniqueList(seq, idfun=None):
        seen[marker] = 1
        result.append(item)
    return result
+

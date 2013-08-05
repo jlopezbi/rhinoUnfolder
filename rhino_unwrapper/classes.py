@@ -52,6 +52,12 @@ class FlatEdge():
     self.tabAngles = []
     self.tabWidth = .2 #could be standard, or based on face area
 
+  def update(self,newVertSpecs):
+    newVerts = newVertSpecs.keys()
+    for vert in self.tVertIdxs:
+      if vert in newVerts:
+        self.tVertSpecs[vert] = newVertSpecs[vert]
+
   def getCoordinates(self,flatVerts):
     flatVertI,flatVertJ = self.getFlatVerts(flatVerts)
     pntI = flatVertI.point
@@ -297,8 +303,8 @@ class FlatFace():
   def reAssignVerts(self,newVertSpecs):
     tVerts = newVertSpecs.keys()
     for tVert in tVerts:
-      assert(tVert in self.vertices.keys()), "newTVert not in face!"
-      self.vertices[tVert] = newVertSpecs[tVert]
+      if tVert in self.vertices.keys():
+        self.vertices[tVert] = newVertSpecs[tVert]
 
 
 

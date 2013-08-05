@@ -2,7 +2,7 @@ from rhino_helpers import *
 from layout import * 
 from classes import FlatEdge,FlatVert
 
-'''# this code is very similar to layoutFace() in layout.py
+'''# the code for finding segments is very similar to layoutFace() in layout.py
 consider generalizing layout or something. Also maybe create a different module
 that both layout and segmentation use.
 '''
@@ -12,18 +12,29 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
   if(cutEdgeIdx in foldList):
     foldList.remove(cutEdgeIdx)
     smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx)
+  
+
     resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg)
     
     newSpecs = copyFlatVerts(flatEdgeCut,flatVerts)
      
-    newFlatEdge = createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs) #right now unnecesary drawing of edge
+    newFlatEdge = createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs)
+  
+    resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,smallSeg)
+    resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs)
 
-    flatFaces[newFlatEdge.faceIdx].reAssignVerts(newSpecs)
+    print "SmallFace %d: " %newFlatEdge.faceIdx,
+    print flatFaces[newFlatEdge.faceIdx].vertices
 
+    print "BigFace %d: " %flatEdgeCut.faceIdx,
+    print flatFaces[flatEdgeCut.faceIdx].vertices
 
+    
+   
     edgesInSeg = getEdgesInSegment(flatEdges,newFlatEdge,smallSeg)
-    #vertsInSeg = getElementsInSegment(flatVerts,smallSeg)
     vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)
+    print "vertsInSeg: ",
+    print vertsInSeg
     FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
     translateSegmentVerts(vertsInSeg,xForm,flatVerts)
     FlatEdge.drawEdges(flatVerts,edgesInSeg,'seg1')
@@ -31,15 +42,39 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
     flatEdgeCut.clearAllGeom()
     flatEdgeCut.drawLine(flatVerts)
 
+    # print "flatEdgeCut end: ",
+    # print flatEdgeCut.tVertSpecs
+
+def modifyEdges(mesh,flatEdges,flatFaces,flatEdgeCut,newFlatEdge,newSpecs):
+  modifiedEdges = getModEdges(mesh,flatEdges,flatFaces,newFlatEdge,newSpecs)
+  for flatEdge in modifiedEdges:
+    flatEdge.update(newSpecs)
+
+def resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,segment):
+  tVerts = newFlatEdge.tVertIdxs
+  for vert in tVerts:
+    edges = getEdgesForVert(mesh,vert) #in original mesh
+    for edge in edges:
+      potEdges = flatEdges[edge]
+      for flatEdge in potEdges:
+        if flatEdge.faceIdx in segment:
+          flatEdge.update(newSpecs)
+
+
 
 def resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg):
   cutEdgeIdx = flatEdgeCut.edgeIdx
-
-  flatEdgeCut.clearAllGeom()
   flatEdgeCut.type = 'cut'
-  flatEdgeCut.drawLine(flatVerts)
   if flatEdgeCut.faceIdx in smallSeg:
     flatEdgeCut.faceIdx = getOtherFaceIdx(flatEdgeCut.edgeIdx,flatEdgeCut.faceIdx,mesh)
+
+def resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs):
+  tVerts = newFlatEdge.tVertIdxs
+  for vert in tVerts:
+    faces = getFacesforVert(mesh,vert)
+    for face in faces:
+      if face in smallSeg:
+        flatFaces[face].reAssignVerts(newSpecs)
 
 def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
   cutEdgeIdx = flatEdgeCut.edgeIdx
@@ -47,7 +82,6 @@ def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
   newFlatEdge.type = 'cut'
   #must have reset edge for following line to work
   newFlatEdge.faceIdx = getOtherFaceIdx(flatEdgeCut.edgeIdx,flatEdgeCut.faceIdx,mesh)
-  newFlatEdge.drawLine(flatVerts)
   flatEdges[cutEdgeIdx].append(newFlatEdge) #copy flatEdge
   return newFlatEdge
 
@@ -101,14 +135,11 @@ def getFlatVertsInSegment(flatVerts,flatFaces,segment):
     flatFace = flatFaces[face]
     verts = flatFace.vertices.items() #list of tuples (key,value)
     for vert in verts:
+      if vert == (45,0):
+        print "AAAAAAAAAAAAA"
+        print "culprit face: ",
+        print face
       collection.add(vert)
-  # #get list of actual flatVerts
-  # fVerts = []
-  # for item in collection:
-  #   row = item[0]
-  #   col = item[1]
-  #   fVerts.append(flatVerts[row][col])
-
   return list(collection)
 
 def getEdgesInSegment(flatEdges,newFlatEdge,faceList):
