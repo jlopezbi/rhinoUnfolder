@@ -1,6 +1,8 @@
 from rhino_helpers import *
 
-
+def displayTVertIdx(mesh,vert,color=(0,255,0,255)):
+  point = mesh.TopologyVertices.Item[vert]
+  drawTextDot(point,str(vert),color)
 
 def displayEdgeIdx(line,edgeIdx,color):
   cenX = (line.FromX+line.ToX)/2
@@ -41,6 +43,9 @@ def displayFaceIdxs(mesh):
     centerPnt = mesh.Faces.GetFaceCenter(i)
     rs.AddTextDot(str(i),centerPnt)
 
+def displayFaceIdx(mesh,face):
+  centerPnt = mesh.Faces.GetFaceCenter(face)
+  rs.AddTextDot(str(face),centerPnt)
 
 def displayMeshEdges(mesh,color,edgeIdxs,groupName):
   drawnEdges = []

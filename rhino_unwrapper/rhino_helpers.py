@@ -5,7 +5,6 @@ import System.Drawing
 import math
 
 
-
 '''Rhino_helpers'''
 def createGroup(groupName,objects):
   name = rs.AddGroup(groupName)
@@ -100,6 +99,9 @@ def getEdgeForTVertPair(mesh,tVertA,tVertB,facesVertA=None):
     edgesA = set(getFaceEdges(facePair[0],mesh))
     edgesB = set(getFaceEdges(facePair[1],mesh))
     edge = edgesA.intersection(edgesB)
+    if len(edge)==0:
+      print "probably encountered naked edge in chain selection"
+      return
     return list(edge)[0]
   elif len(facePair)==1:
     #naked edge
