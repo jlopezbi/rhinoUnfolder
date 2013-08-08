@@ -39,7 +39,7 @@ class FlatEdge():
     self.tVertIdxs = _tVertIdxs #list ordered I,J
     self.tVertSpecs = {k: _tVertSpecs[k] for k in _tVertIdxs} #remove extraneous info
     
-    
+    self.line = None
     self.line_id = None
     self.geom = []
     self.type = None
@@ -77,7 +77,7 @@ class FlatEdge():
     flatVertJ = flatVerts[J][specJ]
     return (flatVertI,flatVertJ)
 
-  def drawLine(self,flatVerts):
+  def drawEdgeLine(self,flatVerts):
     if self.type != None:
       if self.type == 'fold':
         color = (0,49,224,61) #green
@@ -88,10 +88,15 @@ class FlatEdge():
       elif self.type == 'naked':
         color = (0,55,156,196) #blue
       points = self.getCoordinates(flatVerts)
-      line_id = drawLine(points,color,'None') #EndArrowhead
+      line_id,line = drawLine(points,color,'None') #EndArrowhead
       self.line_id = line_id
+      self.line = line
     return line_id
 
+  def translateEdgeLine(self,xForm):
+    if self.line != None:
+      self.line.Transform(xForm)
+      scriptcontext.doc.Objects.Replace(self.line_id,self.line)
 
   def drawTab(self,flatVerts):
     if len(self.tabAngles)<1:
@@ -146,12 +151,12 @@ class FlatEdge():
     note: clear self.geom and self.line_id ?
     '''
     if self.line_id !=None:
-      rs.DeleteObject(self.line_id)
+      scriptcontext.doc.Objects.Delete(self.line_id,True)
       self.line_id = None
 
     if len(self.geom)>0:
       for guid in self.geom:
-        rs.DeleteObject(guid)
+        scriptcontext.doc.Objects.Delete(guid,True)
   
   def getMidPoint(self,flatVerts):
     coordinates = self.getCoordinates(flatVerts)
@@ -273,7 +278,7 @@ class FlatEdge():
   def drawEdges(flatVerts,flatEdges,groupName):
     collection = []
     for flatEdge in flatEdges:
-      collection.append(flatEdge.drawLine(flatVerts))
+      collection.append(flatEdge.drawEdgeLine(flatVerts))
     createGroup(groupName,collection)
 
   @staticmethod
