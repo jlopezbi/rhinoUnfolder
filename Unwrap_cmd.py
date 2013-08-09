@@ -21,16 +21,17 @@ def RunCommand():
   #displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
   if mesh and weightFunction:
-    flatVerts,flatEdges,flatFaces,foldList = unwrap(mesh, userCuts, weightFunction)
+    net,foldList = unwrap(mesh, userCuts, weightFunction)
 
   while True:
-    flatEdgeCut,strType = getNewEdge("select new edge on net or mesh",flatEdges)
+    flatEdge,strType = getNewEdge("select new edge on net or mesh",net.flatEdges)
     #print( str(type(flatEdgeCut)))
     if strType == 'fold':
-      basePoint = flatEdgeCut.getMidPoint(flatVerts)
+      basePoint = flatEdge.getMidPoint(net.flatVerts)
       xForm = getUserTranslate("Pick point to translate segment to",basePoint)
       if xForm:
-        segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm)
+        #net.segment(flatEdge,xForm)
+        segmentNet(mesh,foldList,net.flatVerts,net.flatEdges,net.flatFaces,flatEdge,xForm)
     elif strType == 'cut':
       break
     # elif strType == 'invalid':

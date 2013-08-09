@@ -95,25 +95,13 @@ def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
 
 
 def findSegments(mesh,foldList,cutEdgeIdx,flatFaces):
-  s = Stopwatch()
-  s.Start()
+ 
 
-  segA,segB = getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
 
-  s.Stop()
-  timeSpan = s.Elapsed
-  print "RescursiveMethod: %f"%timeSpan.Milliseconds
-  s.Reset()
-
-  s.Start()
   removePointer(mesh,cutEdgeIdx,flatFaces)
-  segments = segmentIsland(flatFaces,[])
-  s.Stop()
-  timeSpan = s.Elapsed
-  print "IterativeMethod: %f"%timeSpan.Milliseconds
-  s.Reset()
-
-
+  group,leader = segmentIsland(flatFaces,[])
+  segA = group[group.keys()[0]]
+  segB = group[group.keys()[1]]
   
   segLists = orderListsByLen(segA,segB)
 
@@ -259,6 +247,9 @@ def somethingElse(mesh,groups,leaders,flatFaces,flatEdgeCut):
   else:
     print "faces A,B [with flatEdge %d] in seperate islands" %flatEdgeCut.edgeIdx
     return
+
+#def getIsland(flatFaces,flatEdgeCut):
+
 
 def segmentIsland(flatFaces,island):
   sets = UnionFind(True)
