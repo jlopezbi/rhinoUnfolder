@@ -1,38 +1,56 @@
 from rhino_helpers import *
 from layout import * 
 from classes import FlatEdge,FlatVert
+from System.Diagnostics import Stopwatch
+from UnionFind import UnionFind
+
+
 
 '''# the code for finding segments is very similar to layoutFace() in layout.py
 consider generalizing layout or something. Also maybe create a different module
 that both layout and segmentation use.
 '''
 def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
+
   cutEdgeIdx = flatEdgeCut.edgeIdx
 
   if(cutEdgeIdx in foldList):
-    foldList.remove(cutEdgeIdx)
-    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx)
-  
 
-    resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg)
-    
-    newSpecs = copyFlatVerts(flatEdgeCut,flatVerts)
-     
-    newFlatEdge = createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs)
   
-    resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,smallSeg)
-    resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs)
+    foldList.remove(cutEdgeIdx)
+    segments = getSegmentsIterative(flatFaces)
+    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx) #SLOWWWW
     
+
+    resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg)    
+    newSpecs = copyFlatVerts(flatEdgeCut,flatVerts)     
+
+
+    newFlatEdge = createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs)
+    newFlatEdge.drawEdgeLine(flatVerts)  
+    resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,smallSeg)
+    resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs) 
+  
    
     edgesInSeg = getEdgesInSegment(flatEdges,newFlatEdge,smallSeg)
-    vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)
-  
-    FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
+    vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)  
+    translateLines(edgesInSeg,xForm)
+    #FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
     translateSegmentVerts(vertsInSeg,xForm,flatVerts)
-    FlatEdge.drawEdges(flatVerts,edgesInSeg,'seg1')
-    FlatEdge.drawTabs(flatVerts,edgesInSeg,'seg1')    
+    
+  
+
+    
+    #FlatEdge.translateGeom(edgesInSeg,xForm)
+    #FlatEdge.drawEdges(flatVerts,edgesInSeg,'seg1')
+    #FlatEdge.drawTabs(flatVerts,edgesInSeg,'seg1')    
     flatEdgeCut.clearAllGeom()
-    flatEdgeCut.drawLine(flatVerts)
+    flatEdgeCut.drawEdgeLine(flatVerts)
+    
+
+def translateLines(edgesInSeg,xForm):
+  for flatEdge in edgesInSeg:
+    flatEdge.translateEdgeLine(xForm)
 
 
 def modifyEdges(mesh,flatEdges,flatFaces,flatEdgeCut,newFlatEdge,newSpecs):
@@ -77,8 +95,19 @@ def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
 
 
 def findSegments(mesh,foldList,cutEdgeIdx):
+  s = Stopwatch()
+  s.Start()
   segA,segB = getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
+
+  s.Stop()
+  timeSpan = s.Elapsed
+  print "A: %f"%timeSpan.Milliseconds
+  s.Reset()
+
+  
   segLists = orderListsByLen(segA,segB)
+
+  
   return segLists
 
 def copyFlatVerts(flatEdge,flatVerts):
@@ -105,11 +134,7 @@ def translateSegmentVerts(verts,xForm,flatVerts):
   for flatVertSpec in verts:
     row = flatVertSpec[0]
     col = flatVertSpec[1]
-    flatVert = flatVerts[row][col]
-    # print "transformPnt: ",
-    # print flatVertSpec
-    point = flatVert.point
-    point.Transform(xForm)
+    flatVerts[row][col].point.Transform(xForm)
 
 
 def translateSegmentCoords(edgesInSegment,xForm):
@@ -179,11 +204,36 @@ def createSegment(mesh,faceIdx,foldList,segment):
   edgesForFace = getFaceEdges(faceIdx,mesh)
 
   for edgeIdx in edgesForFace:
-    newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
     if(edgeIdx in foldList):
+      newFaceIdx = getOtherFaceIdx(edgeIdx,faceIdx,mesh)
       if newFaceIdx not in segment:
         segment = createSegment(mesh,newFaceIdx,foldList,segment)
-    # else:
-    #   return segment
+    
   return segment
+
+def getSegmentsIterative(flatFaces):
+  sets = UnionFind()
+  for i, face in enumerate(flatFaces):
+    if i not in sets.leader.keys():
+      sets.makeSet([i])
+    neighbor = face.fromFace  
+    if neighbor != None:
+      if neighbor not in sets.leader.keys():
+        sets.makeSet(neighbor)
+      sets.union(face,neighbor)
+  return sets.group
+
+def removePointer(mesh,cutEdgeIdx,flatFaces):
+  A,B = getFacesForEdge(mesh,flatEdgeCut)
+  if A == None or B==None:
+    return
+  A = facePair
+  for face in facePair:
+    otherFace = facePair.remove(face)
+    #if face.fromFace ==
+
+
+
+
+
 

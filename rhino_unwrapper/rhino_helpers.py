@@ -22,7 +22,7 @@ def convertArray(array):
 def getFacesForEdge(mesh, edgeIndex):
   '''
   returns an array of indices of the faces connected to a given edge
-  if the array has only one face this inidicates it is a naked edge
+  if the array has only one face this indicates it is a naked edge
   should be changed to get any number of faces, and return None if couldnt find 
   any faces
   '''

@@ -90,7 +90,12 @@ def drawLine(points,color,arrowType):
 
   # returns a Guid (globally unique identifier)
   lineGuid = scriptcontext.doc.Objects.AddLine(line,attrCol)
-  return lineGuid
+  return lineGuid,line
+
+def translateLine(self,xForm):
+  if self.line !=None:
+    self.line.Transform(xForm)
+    scriptcontext.doc.Objects.Replace(self.line_id,self.line)
 
 def drawVector(vector,position,color):
   pntStart = Rhino.Geometry.Point3d(position)

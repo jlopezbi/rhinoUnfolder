@@ -12,7 +12,7 @@ def all_weight_functions():
   return [m for m in getmembers(weight_functions, isfunction)]
 
 __commandname__ = "Unwrap"
-def RunCommand( is_interactive ):
+def RunCommand():
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
@@ -48,4 +48,4 @@ def RunCommand( is_interactive ):
 
 
 if __name__=="__main__":
-  RunCommand(True)
+  RunCommand()

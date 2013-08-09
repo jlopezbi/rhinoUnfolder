@@ -11,19 +11,19 @@ def initBasisInfo(mesh, origin):
 def layoutMesh(foldList, mesh):
   flatVerts = [list() for _ in xrange(mesh.TopologyVertices.Count)]
   flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
-  flatFaces = [list() for _ in xrange(mesh.Faces.Count)]
+  flatFaces = {}
 
 
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  flatEdges,flatVerts,flatFaces = layoutFace(None,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces)
+  flatEdges,flatVerts,flatFaces = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces)
   return flatVerts,flatEdges,flatFaces
 
 
 
-def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces):
+def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces):
   ''' Recurse through faces, hopping along fold edges
     input:
       depth = recursion level
@@ -36,7 +36,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatF
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
   specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,xForm)
-  flatFaces[basisInfo[0]] = FlatFace(specifiers)
+  flatFaces[basisInfo[0]] = FlatFace(specifiers,fromFace)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
   for edgeIndex in faceEdges:
@@ -56,7 +56,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatF
         flatEdges[edgeIndex].append(flatEdge)
 
         #RECURSE
-        flatEdges,flatVerts,flatFaces = layoutFace(flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatVerts,flatEdges,flatFaces)
+        flatEdges,flatVerts,flatFaces = layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatVerts,flatEdges,flatFaces)
 
     else:
       if len(flatEdges[edgeIndex])==0:
@@ -69,7 +69,7 @@ def layoutFace(hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatF
         flatEdge.setTabSide(flatVerts,flatFaces)
         flatEdges[edgeIndex].append(flatEdge)
         flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
-  return flatEdges, flatVerts,flatFaces
+  return flatEdges, flatVerts, flatFaces
 
 def assignFlatEdges(mesh,faceIdx,foldList,flatVerts):
   pass

@@ -290,8 +290,9 @@ class FlatEdge():
     createGroup(groupName,collection)
 
 class FlatFace():
-  def __init__(self,_vertices):
+  def __init__(self,_vertices,_fromFace):
     self.vertices = _vertices # a dict with tVert keys, pointing to flatVerts columns
+    self.fromFace = _fromFace
 
   def getFlatVerts(self,flatVerts):
     tVerts = self.vertices.keys()
