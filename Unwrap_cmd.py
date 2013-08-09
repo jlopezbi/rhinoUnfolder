@@ -16,7 +16,7 @@ def RunCommand():
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
-  userCuts = getUserCuts()
+  userCuts = getUserCuts(True)
   if userCuts == None: return
   #displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
   weightFunction = getOption(all_weight_functions(), "WeightFunction")

@@ -18,8 +18,8 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
 
   
     foldList.remove(cutEdgeIdx)
-    segments = getSegmentsIterative(flatFaces)
-    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx) #SLOWWWW
+    #segments = findSegments(mesh,foldList,cutEdgeIdx,flatFaces)
+    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx,flatFaces) #SLOWWWW
     
 
     resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg)    
@@ -94,15 +94,25 @@ def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
   return newFlatEdge
 
 
-def findSegments(mesh,foldList,cutEdgeIdx):
+def findSegments(mesh,foldList,cutEdgeIdx,flatFaces):
   s = Stopwatch()
   s.Start()
+
   segA,segB = getSegmentsFromCut(mesh,foldList,cutEdgeIdx)
 
   s.Stop()
   timeSpan = s.Elapsed
-  print "A: %f"%timeSpan.Milliseconds
+  print "RescursiveMethod: %f"%timeSpan.Milliseconds
   s.Reset()
+
+  s.Start()
+  removePointer(mesh,cutEdgeIdx,flatFaces)
+  segments = segmentIsland(flatFaces,[])
+  s.Stop()
+  timeSpan = s.Elapsed
+  print "IterativeMethod: %f"%timeSpan.Milliseconds
+  s.Reset()
+
 
   
   segLists = orderListsByLen(segA,segB)
@@ -211,26 +221,73 @@ def createSegment(mesh,faceIdx,foldList,segment):
     
   return segment
 
-def getSegmentsIterative(flatFaces):
-  sets = UnionFind()
-  for i, face in enumerate(flatFaces):
-    if i not in sets.leader.keys():
-      sets.makeSet([i])
-    neighbor = face.fromFace  
+
+
+def somethingElse(mesh,groups,leaders,flatFaces,flatEdgeCut):
+  '''
+  input:
+    mesh = Rhion.Geometry.Mesh() instance
+    groups = dictionary with leader faces pointing to set of faceIdxs
+    leaders = dictionary faceIdx points to leader face for the set its in
+    flatFaces = list of FlatFace objects
+    flatEdgeCut = flatEdge that was selected to be a new cut
+  returns fields .group and .leader from UnionFind class
+  '''
+  
+  if groups!=None and leaders!=None and flatEdgeCut!=None:
+    faceA,faceB = removePointer(mesh,flatEdgeCut.edgeIdx,flatFaces)
+    leaderA = leaders[faceA]
+    leaderB = leaders[faceB]
+    faces = groups.pop[leaderA]
+  else:
+    leaderA = None
+    leaderB = None
+    faces = range(mesh.Faces.Count)
+
+  if leaderA==leaderB:
+    island = UnionFind(True)
+
+    for face in faces:
+      islandMembers = island.leader.keys()
+      if face not in islandMembers:
+        island.makeSet([face])
+      neighbor = flatFaces[face].fromFace  
+      if neighbor != None and neighbor not in islandMembers:
+          island.makeSet([neighbor])
+      island.union(face,neighbor)
+    return island.group, island.leader
+  else:
+    print "faces A,B [with flatEdge %d] in seperate islands" %flatEdgeCut.edgeIdx
+    return
+
+def segmentIsland(flatFaces,island):
+  sets = UnionFind(True)
+  if len(island)==0:
+    island = range(len(flatFaces))
+  for face in island:
+    if face not in sets.leader.keys():
+      sets.makeSet([face])
+    neighbor = flatFaces[face].fromFace  
     if neighbor != None:
       if neighbor not in sets.leader.keys():
-        sets.makeSet(neighbor)
+        sets.makeSet([neighbor])
       sets.union(face,neighbor)
-  return sets.group
+  return sets.group, sets.leader
 
 def removePointer(mesh,cutEdgeIdx,flatFaces):
-  A,B = getFacesForEdge(mesh,flatEdgeCut)
+  A,B = getFacesForEdge(mesh,cutEdgeIdx)
   if A == None or B==None:
     return
-  A = facePair
-  for face in facePair:
-    otherFace = facePair.remove(face)
-    #if face.fromFace ==
+
+  if flatFaces[A].fromFace == B:
+    flatFaces[A].fromFace = None
+  elif flatFaces[B].fromFace == A:
+    flatFaces[B].fromFace = None
+  else:
+    print "faces %d and %d, associated with edge %d were not connected" %(A,B,cutEdgeIdx)
+    return
+  return (A,B)
+
 
 
 

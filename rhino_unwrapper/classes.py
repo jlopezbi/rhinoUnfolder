@@ -1,25 +1,7 @@
 from visualization import *
 import math
 
-#EDGE_GEOM_FUNCTIONS = {}
 
-# def drawTab(flatEdge,color):
-#   green = (0,49,224,61)
-#   lineGuid = drawLine(flatEdge.coordinates,green)
-#   return lineGuid
-# EDGE_GEOM_FUNCTIONS['fold'] = drawFoldEdge
-
-# def drawCutEdge(flatEdge):
-#   red = (0,237,43,120)
-#   lineGuid = drawLine(flatEdge.coordinates,red)
-#   return lineGuid
-# EDGE_GEOM_FUNCTIONS['cut'] = drawCutEdge
-
-# def drawNakedEdge(flatEdge):
-#   blue = (0,55,156,196)
-#   lineGuid = drawLine(flatEdge.coordinates,blue)
-#   return lineGuid
-# EDGE_GEOM_FUNCTIONS['naked'] = drawNakedEdge
 
 class FlatVert():
   def __init__(self,_tVertIdx,_point): 
@@ -294,6 +276,7 @@ class FlatFace():
     self.vertices = _vertices # a dict with tVert keys, pointing to flatVerts columns
     self.fromFace = _fromFace
 
+
   def getFlatVerts(self,flatVerts):
     tVerts = self.vertices.keys()
     collection = []
@@ -312,11 +295,28 @@ class FlatFace():
       if tVert in self.vertices.keys():
         self.vertices[tVert] = newVertSpecs[tVert]
 
+class Net():
+  def __init__(self,_flatVerts,_flatEdges,_flatFaces):
+    self.flatVerts = _flatVerts
+    self.flatEdges = _flatEdges
+    self.flatFaces = _flatFaces
 
 
+    self.groups = {}
+    self.leaders = {}
 
 
+  def segmentNet(self,flatEdgeCut,xForm):
+    assert(flatEdgeCut.type == 'fold')
+    group,leader = segmentIsland(flatEdgeCut)
+    self.updateIslands(group,leader)
+    smallerSeg = self.getSmallerIsland()
+    self.translate(smallerSeg)
 
 
+  def updateNet(self,newGroups,newLeaders):
+    self.replaceGroup(newGroups)
+    self.resetLeaders(newLeaders)
 
-
+  def replaceGroup(self,newGroups):
+    pass

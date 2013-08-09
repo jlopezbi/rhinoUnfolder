@@ -19,21 +19,7 @@ def convertArray(array):
     pyList.append(array.GetValue(i))
   return pyList
 
-def getFacesForEdge(mesh, edgeIndex):
-  '''
-  returns an array of indices of the faces connected to a given edge
-  if the array has only one face this indicates it is a naked edge
-  should be changed to get any number of faces, and return None if couldnt find 
-  any faces
-  '''
-  arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
 
-  faceIdxs = []
-  faceIdxs.append(arrConnFaces.GetValue(0))
-  if arrConnFaces.Length == 2:
-    faceIdxs.append(arrConnFaces.GetValue(1))
-
-  return faceIdxs
 
 def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
   connectedFaces = getFacesForEdge(mesh,edgeIdx)
@@ -121,6 +107,20 @@ def getFacesforVert(mesh,tVert):
 def getTVertsForEdge(mesh,edge):
   vertPair = mesh.TopologyEdges.GetTopologyVertices(edge)
   return [vertPair.I, vertPair.J]
+
+def getFacesForEdge(mesh, edgeIndex):
+  '''
+  returns an array of indices of the faces connected to a given edge
+  if the array has only one face this indicates it is a naked edge
+  '''
+  arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
+
+  faceIdxs = []
+  faceIdxs.append(arrConnFaces.GetValue(0))
+  if arrConnFaces.Length == 2:
+    faceIdxs.append(arrConnFaces.GetValue(1))
+
+  return faceIdxs
   
 def getChain(mesh,edge,angleTolerance):
   '''

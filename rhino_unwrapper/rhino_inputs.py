@@ -62,7 +62,8 @@ def getUserCuts(disaply=True):
           cuts.extend(getChain(mesh,edgeIdx,angleTolerance))
         else:
           cuts.append(edgeIdx)
-      displayMeshEdges(mesh,color,cuts,"cuts")
+      if display:
+        displayMeshEdges(mesh,color,cuts,"cuts")
           
     elif edgeIdx == -1:
       print("enter:")
