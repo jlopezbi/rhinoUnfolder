@@ -32,6 +32,19 @@ class Net():
   def replaceGroup(self,newGroups):
     pass
 
+  '''SELECTION'''
+  def getFlatEdgeForLine(self,value):
+    #assert guid?
+    for flatEdge in self.flatEdges:
+      if flatEdge.line_id == value:
+        return flatEdge
+    return
+    
+  def getFlatEdge(flatEdges,strField,value):
+    flatEdges = FlatEdge.getFlatList(flatEdges)
+    strField = strField.upper()
+    
+
   '''DRAWING'''
   def drawEdges(self,netGroupName):
     collection = []

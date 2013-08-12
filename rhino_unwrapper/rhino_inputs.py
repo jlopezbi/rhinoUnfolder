@@ -7,7 +7,7 @@ from classes import FlatEdge
 from rhino_helpers import getChain
 from visualization import displayMeshEdges
 
-def getNewEdge(message,flatEdges):
+def getNewEdge(message,net,dataMap):
   ge = Rhino.Input.Custom.GetObject()
   # | is a bitwise or. documentation says can combine filters with 'bitwize combination'
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge | Rhino.DocObjects.ObjectType.Curve
@@ -26,7 +26,7 @@ def getNewEdge(message,flatEdges):
   if curve:
     print("selected a curve:")
     curve_id = objRef.ObjectId
-    flatEdge = FlatEdge.getFlatEdge(flatEdges,'line_id',curve_id)
+    flatEdge = net.getFlatEdgeForLine(curve_id)
     if flatEdge:
       print(" corresponding to mesh edge " +str(flatEdge.edgeIdx))
 
@@ -38,7 +38,7 @@ def getNewEdge(message,flatEdges):
   elif mesh:
     edgeIdx = GetEdgeIdx(objRef)
     #print("selected mesh edge "+str(edgeIdx))
-    flatEdge = flatEdges[edgeIdx][0]
+    flatEdge = None #in this case there could be multiple flat edges
 
     return flatEdge,flatEdge.type
 

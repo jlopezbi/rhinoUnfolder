@@ -33,15 +33,17 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
       flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
-  netVerts = assignFlatVerts(mesh,dataMap,net,hopEdge,basisInfo[0],xForm)
+  netVerts,mapping = assignFlatVerts(mesh,dataMap,net,hopEdge,basisInfo[0],xForm)
   net.flatFaces[basisInfo[0]] = FlatFace(netVerts,fromFace)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
   for edge in faceEdges:
-    netI,netJ = dataMap.getRecentNetVertsForEdge(mesh,edge)
+    meshI,meshJ = getTVertsForEdge(mesh,edge)
+    netI = mapping[meshI]
+    netJ = mapping[meshJ]
     flatEdge = FlatEdge(edge,netI,netJ) 
     flatEdge.fromFace = basisInfo[0]
-
+    
     if edge in foldList:
       if not alreadyBeenPlaced(edge,dataMap.meshEdges):
         
@@ -54,6 +56,7 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
         dataMap.updateEdgeMap(edge,netEdge)
 
         #RECURSE
+        recurse = True
         net,dataMap = layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,net,dataMap)
 
     else:
@@ -68,6 +71,7 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
         flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
         flatEdge.setTabSide(net)
         netEdge = net.addEdge(flatEdge)
+        dataMap.updateEdgeMap(edge,netEdge)
         sibling = dataMap.getSiblingNetEdge(edge,netEdge)
         net.flatEdges[sibling].type = "cut" #make sure to set both edges to cut 
   return net,dataMap
@@ -83,12 +87,16 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
   faceTVerts = getTVertsForFace(mesh,face)
   netVerts = []
   hopMeshVerts = []
+  mapping = {}
+
 
   if hopEdge!=None:
     netI,netJ = [hopEdge.I,hopEdge.J]
     hopNetVerts = [netI,netJ]
     hopMeshVerts = [net.flatVerts[netI].tVertIdx,net.flatVerts[netJ].tVertIdx]
     netVerts.extend(hopNetVerts)
+    mapping[hopMeshVerts[0]] = netI
+    mapping[hopMeshVerts[1]] = netJ
 
   seen = []
   for tVert in faceTVerts:
@@ -98,15 +106,16 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
         point = transformPoint(mesh,tVert,xForm)
         flatVert = FlatVert(tVert,point)
         netVert = net.addVert(flatVert)
-        rs.AddTextDot(str(netVert),point)
+        #rs.AddTextDot(str(netVert),point)
         dataMap.meshVerts[tVert].append(netVert)
         netVerts.append(netVert)
+        mapping[tVert]=netVert
       else:
         pass
-  return netVerts
+  return netVerts,mapping
 
 
-def getNetEdges(mesh,edge,vertRelations):
+def getNetEdges(mesh,edge,netVerts,dataMap):
   I,J = getTVertsForEdge(mesh,edge)
   vertI = dataMap.get
 

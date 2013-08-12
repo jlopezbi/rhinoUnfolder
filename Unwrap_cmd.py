@@ -27,7 +27,7 @@ def RunCommand():
     dataMap,net,foldList = unwrap(mesh, userCuts, weightFunction)
 
   while True:
-    flatEdge,strType = getNewEdge("select new edge on net or mesh",net.flatEdges)
+    flatEdge,strType = getNewEdge("select new edge on net or mesh",net,dataMap)
     #print( str(type(flatEdgeCut)))
     if strType == 'fold':
       basePoint = flatEdge.getMidPoint(net.flatVerts)

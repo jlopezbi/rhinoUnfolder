@@ -35,3 +35,5 @@ class Map(object):
   def getRecentNetVert(self,tVert):
     return self.meshVerts[tVert][-1] #get last item in list
 
+
+

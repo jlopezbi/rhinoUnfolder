@@ -249,26 +249,7 @@ class FlatEdge():
 
 
 
-  @staticmethod
-  def getFlatEdge(flatEdges,strField,value):
-    flatEdges = FlatEdge.getFlatList(flatEdges)
-    strField = strField.upper()
-    if strField == 'EDGEIDX':
-      assert(type(value)==int)
-      for flatEdge in flatEdges:
-        if flatEdge.edgeIdx == value:
-          return flatEdge
-    elif strField == 'LINE_ID':
-      #assert guid?
-      for flatEdge in flatEdges:
-        if flatEdge.line_id == value:
-          return flatEdge
-    elif strField =='TYPE':
-      assert(type(value)==str)
-      for flatEdge in flatEdges:
-        if flatEdge.type == value:
-          return flatEdge
-    return 
+
 
   @staticmethod
   def clearEdges(flatEdges):
