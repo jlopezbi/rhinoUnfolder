@@ -1,5 +1,7 @@
 from transformations import *
 from classes import FlatVert, FlatEdge, FlatFace
+from Net import Net
+from Map import Map
 
 def initBasisInfo(mesh, origin):
   faceIdx = 0
@@ -9,21 +11,17 @@ def initBasisInfo(mesh, origin):
   return initBasisInfo
 
 def layoutMesh(foldList, mesh):
-  flatVerts = [list() for _ in xrange(mesh.TopologyVertices.Count)]
-  flatEdges = [list() for _ in xrange(mesh.TopologyEdges.Count)]
-  flatFaces = {}
-
-
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  flatEdges,flatVerts,flatFaces = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces)
-  return flatVerts,flatEdges,flatFaces
+  net = Net()
+  dataMap = Map(mesh)
+  net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap)
+  return net,dataMap
 
 
-
-def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEdges,flatFaces):
+def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
   ''' Recurse through faces, hopping along fold edges
     input:
       depth = recursion level
@@ -35,106 +33,92 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,flatVerts,flatEd
       flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
-  specifiers = assignFlatVerts(mesh,hopEdge,basisInfo[0],flatVerts,xForm)
-  flatFaces[basisInfo[0]] = FlatFace(specifiers,fromFace)
+  netVerts = assignFlatVerts(mesh,dataMap,net,hopEdge,basisInfo[0],xForm)
+  net.flatFaces[basisInfo[0]] = FlatFace(netVerts,fromFace)
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
-  for edgeIndex in faceEdges:
-    tVertIdxs = getTVertsForEdge(mesh,edgeIndex)
-    #tVertSpecs = getTVertSpecs(tVertIdxs,specifiers)
-    flatEdge = FlatEdge(edgeIndex,tVertIdxs,specifiers) 
-    flatEdge.faceIdx = basisInfo[0]
+  for edge in faceEdges:
+    netI,netJ = dataMap.getRecentNetVertsForEdge(mesh,edge)
+    flatEdge = FlatEdge(edge,netI,netJ) 
+    flatEdge.fromFace = basisInfo[0]
 
-    if (edgeIndex in foldList):
-      if (not alreadyBeenPlaced(edgeIndex,flatEdges)):
+    if edge in foldList:
+      if not alreadyBeenPlaced(edge,dataMap.meshEdges):
         
-        newBasisInfo = getNewBasisInfo(basisInfo,edgeIndex,mesh)
-        newToBasis = getBasisFlat(flatEdge,flatVerts)
+        newBasisInfo = getNewBasisInfo(basisInfo,edge,mesh)
+        newToBasis = getBasisFlat(flatEdge,net.flatVerts)
 
         flatEdge.type  = "fold"
-        #flatEdge.faceIdxs.append(newBasisInfo[0])
-        flatEdges[edgeIndex].append(flatEdge)
+        flatEdge.toFace = newToBasis[0]
+        netEdge = net.addEdge(flatEdge)
+        dataMap.updateEdgeMap(edge,netEdge)
 
         #RECURSE
-        flatEdges,flatVerts,flatFaces = layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,flatVerts,flatEdges,flatFaces)
+        net,dataMap = layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,net,dataMap)
 
     else:
-      if len(flatEdges[edgeIndex])==0:
+      if len(dataMap.meshEdges[edge])==0:
         flatEdge.type  = "naked"
-        flatEdges[edgeIndex].append(flatEdge)
-      elif len(flatEdges[edgeIndex])==1:
+        netEdge = net.addEdge(flatEdge)
+        dataMap.updateEdgeMap(edge,netEdge)
+
+      elif len(dataMap.meshEdges[edge])==1:
         flatEdge.type = "cut"
         flatEdge.hasTab = True
         flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
-        flatEdge.setTabSide(flatVerts,flatFaces)
-        flatEdges[edgeIndex].append(flatEdge)
-        flatEdges[edgeIndex][0].type = "cut" #make sure to set both edges to cut 
-  return flatEdges, flatVerts, flatFaces
-
-def assignFlatEdges(mesh,faceIdx,foldList,flatVerts):
-  pass
-
-def getTVertSpecs(tVertIdxs,specifiers):
-  '''
-  assume correct order of tVerts
-  '''
-  tVertSpecs = []
-  for tVert in tVertIdxs:
-    tVertSpecs.append(specifiers[tVert])
-  assert(len(tVertSpecs)==2)
-  return tVertSpecs
+        flatEdge.setTabSide(net)
+        netEdge = net.addEdge(flatEdge)
+        sibling = dataMap.getSiblingNetEdge(edge,netEdge)
+        net.flatEdges[sibling].type = "cut" #make sure to set both edges to cut 
+  return net,dataMap
 
 
 
-def assignFlatVerts(mesh,hopEdge,face,flatVerts,xForm):
+def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
   '''
   add valid flatVerts to flatVerts list and also return
-  a dict of specifiers 
+  a list of netVerts 
   '''
 
   faceTVerts = getTVertsForFace(mesh,face)
-  specifiers = {}
-  if hopEdge == None:
-    hopVerts = []
-  else:
-    hopVerts = hopEdge.tVertSpecs.keys()
+  netVerts = []
+  hopMeshVerts = []
+
+  if hopEdge!=None:
+    netI,netJ = [hopEdge.I,hopEdge.J]
+    hopNetVerts = [netI,netJ]
+    hopMeshVerts = [net.flatVerts[netI].tVertIdx,net.flatVerts[netJ].tVertIdx]
+    netVerts.extend(hopNetVerts)
+
   seen = []
   for tVert in faceTVerts:
     if tVert not in seen: #avoid duplicates (triangle faces)
       seen.append(tVert)
-      if tVert not in hopVerts:
+      if tVert not in hopMeshVerts:
         point = transformPoint(mesh,tVert,xForm)
         flatVert = FlatVert(tVert,point)
-        flatVerts[tVert].append(flatVert)
-        specifiers[tVert] = len(flatVerts[tVert])-1
+        netVert = net.addVert(flatVert)
+        rs.AddTextDot(str(netVert),point)
+        dataMap.meshVerts[tVert].append(netVert)
+        netVerts.append(netVert)
       else:
-        specifiers[tVert] = specifyHopVert(tVert,hopEdge)
-  return specifiers
-
-def specifyHopVert(tVert,hopEdge):
-  if hopEdge == None:
-    return 0
-  tVerts = hopEdge.tVertSpecs.keys()
-  assert(tVert in tVerts)
-  return hopEdge.tVertSpecs[tVert]
-  
+        pass
+  return netVerts
 
 
+def getNetEdges(mesh,edge,vertRelations):
+  I,J = getTVertsForEdge(mesh,edge)
+  vertI = dataMap.get
 
 
 def transformPoint(mesh,tVert,xForm):
-  point = mesh.TopologyVertices.Item[tVert]
+  point = Rhino.Geometry.Point3d(mesh.TopologyVertices.Item[tVert])
   point.Transform(xForm)
   point.Z = 0.0
   return point
 
-
-
-def alreadyBeenPlaced(testIdx,flatElements):
-  return len(flatElements[testIdx]) > 0
-
-
-
+def alreadyBeenPlaced(edge,meshEdges):
+  return len(meshEdges[edge])>0
 
 
 def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
@@ -144,20 +128,3 @@ def getNewBasisInfo(oldBasisInfo,testEdgeIdx, mesh):
   newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(testEdgeIdx).I #convention: useI
   return newFaceIdx,newEdgeIdx,newTVertIdx
 
-#def assignTVerts():
-
-def assignNewPntsToEdge(xForm,edgeIdx,mesh):
-  #output: list of new coords, Point3f, always in order of I,J
-  indexPair = mesh.TopologyEdges.GetTopologyVertices(edgeIdx)
-  idxI = indexPair.I
-  idxJ = indexPair.J
-  pI = mesh.TopologyVertices.Item[idxI] #these are point3f
-  pJ = mesh.TopologyVertices.Item[idxJ]
-  pI.Transform(xForm)
-  pJ.Transform(xForm)
-  #try out just setting z componenet to zero by defualt
-  pI.Z = 0.0
-  pJ.Z = 0.0
-  #assert(pI.Z == 0), "pI.Z!=0"
-  #assert(pJ.Z == 0), "pJ.Z!=0"
-  return [pI,pJ]

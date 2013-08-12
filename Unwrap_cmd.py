@@ -12,25 +12,28 @@ def all_weight_functions():
   return [m for m in getmembers(weight_functions, isfunction)]
 
 __commandname__ = "Unwrap"
+
 def RunCommand():
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
+
   userCuts = getUserCuts(True)
   if userCuts == None: return
-  #displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
+
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
+
   if mesh and weightFunction:
-    net,foldList = unwrap(mesh, userCuts, weightFunction)
+    dataMap,net,foldList = unwrap(mesh, userCuts, weightFunction)
 
   while True:
     flatEdge,strType = getNewEdge("select new edge on net or mesh",net.flatEdges)
     #print( str(type(flatEdgeCut)))
     if strType == 'fold':
       basePoint = flatEdge.getMidPoint(net.flatVerts)
-      xForm = getUserTranslate("Pick point to translate segment to",basePoint)
+      xForm,point = getUserTranslate("Pick point to translate segment to",basePoint)
       if xForm:
-        #net.segment(flatEdge,xForm)
+        #net.segment(flatEdge,xForm,point)
         segmentNet(mesh,foldList,net.flatVerts,net.flatEdges,net.flatFaces,flatEdge,xForm)
     elif strType == 'cut':
       break

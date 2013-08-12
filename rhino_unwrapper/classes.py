@@ -8,7 +8,8 @@ class FlatVert():
   def __init__(self,_tVertIdx,_point): 
     self.tVertIdx = _tVertIdx
     self.point = _point
-    self.faceIdx = None
+    self.fromFace = None
+    #self.toFace = None
 
     self.edgeIdx = None
     self.geom = []
@@ -17,10 +18,10 @@ class FlatVert():
     return approxEqual(self.point.X,point.X) and approxEqual(self.point.Y,point.Y)
 
 class FlatEdge():
-  def __init__(self,_edgeIdx,_tVertIdxs,_tVertSpecs): 
+  def __init__(self,_edgeIdx,vertI,vertJ): 
     self.edgeIdx = _edgeIdx
-    self.tVertIdxs = _tVertIdxs #list ordered I,J
-    self.tVertSpecs = {k: _tVertSpecs[k] for k in _tVertIdxs} #remove extraneous info
+    self.I = vertI
+    self.J = vertJ
     
     self.line = None
     self.line_id = None
@@ -42,23 +43,12 @@ class FlatEdge():
         self.tVertSpecs[vert] = newVertSpecs[vert]
 
   def getCoordinates(self,flatVerts):
-    flatVertI,flatVertJ = self.getFlatVerts(flatVerts)
-    pntI = flatVertI.point
-    pntJ = flatVertJ.point
+    pntI = flatVerts[self.I].point
+    pntJ = flatVerts[self.J].point
     return [pntI,pntJ]
   
   def getTVerts(self,mesh):
     return getTVertsForEdge(mesh,self.edgeIdx)
-
-  def getFlatVerts(self,flatVerts):
-    I = self.tVertIdxs[0]
-    specI = self.tVertSpecs[I]
-    J = self.tVertIdxs[1]
-    specJ = self.tVertSpecs[J]
-
-    flatVertI = flatVerts[I][specI]
-    flatVertJ = flatVerts[J][specJ]
-    return (flatVertI,flatVertJ)
 
   def drawEdgeLine(self,flatVerts):
     if self.type != None:
@@ -150,13 +140,42 @@ class FlatEdge():
     z = (pntA.Z+pntB.Z)/2.0
     return Rhino.Geometry.Point3f(x,y,z)
 
-  def setTabSide(self,flatVerts,flatFaces):
+  def getFaceFromPoint(self,net,point):
+    assert(self.type =='fold')
+    faceA = self.fromFace
+    faceB = self.toFace
+    leftA = self.testFacesIsLeft(net,faceA)
+    leftB = self.testFacesIsLeft(net,faceB)
+    assert(leftA!=leftB),"both faces found to be on same side of edge"
+    leftPoint = self.testPointIsLeft(point,flatVerts)
+    if leftA==leftPoint:
+      return faceA
+    elif leftB==leftPoint:
+      return faceB
+    return 
+
+  def testFacesIsLeft(self,net,face):
+    '''find which side the face is on relative to this edge
+    ouput: 1 for left, -1 for right, 0 for error
+    '''
+
+    testPoint = net.flatVerts[self.getNeighborFlatVert(net,face)].point
+    if not testPoint:
+      return 0
+    if self.testPointIsLeft(testPoint,net.flatVerts):
+      return 1 
+    else:
+      return -1
+  
+
+
+  def setTabSide(self,net):
     '''
     occurs during LAYOUT
     '''
   
-    testPoint = self.getNeighborFlatVert(flatVerts,flatFaces).point
-    if self.testPointIsLeft(testPoint,flatVerts):
+    testPoint = net.flatVerts[self.getNeighborFlatVert(net)].point
+    if self.testPointIsLeft(testPoint,net.flatVerts):
       self.tabOnLeft = False
     else:
       self.tabOnLeft = True
@@ -176,17 +195,20 @@ class FlatEdge():
     return  z > 0 
 
 
-  def getNeighborFlatVert(self,flatVerts,flatFaces):
+  def getNeighborFlatVert(self,net,face=None):
     '''
-    gets one of the flatVerts associated with this flatEdge's face,
-    but that is not a part of this flatEdge
+    gets one of the flatVerts associated with the given
+    face, but that is not a part of this flatEdge.
+    if face==None uses the fromFace associated with this edge
     '''
-    tVertsEdge = set(self.tVertIdxs)
-    flatFace = flatFaces[self.faceIdx]
-    tVertsFace = set(flatFace.vertices.keys())
+
+    if face==None:
+      face = self.fromFace
+    tVertsEdge = set([self.I,self.J])
+    flatFace = net.flatFaces[face]
+    tVertsFace = set(flatFace.vertices)
     neighbors = list(tVertsFace-tVertsEdge)
-    tVert = neighbors[0] #arbitrarily return first tVert
-    return flatVerts[tVert][flatFace.vertices[tVert]]
+    return neighbors[0] #arbitrarily return first tVert
 
   def getTabAngles(self,mesh,currFaceIdx,xForm):
     edge = self.edgeIdx
@@ -226,10 +248,6 @@ class FlatEdge():
       #return [angleI,angleJ]
 
 
-
-  @staticmethod
-  def getFlatList(flatEdges):
-    return [flatEdge for edgePair in flatEdges for flatEdge in edgePair]
 
   @staticmethod
   def getFlatEdge(flatEdges,strField,value):
@@ -273,8 +291,9 @@ class FlatEdge():
     createGroup(groupName,collection)
 
 class FlatFace():
+  #does not store meshFace because position in dict determines this
   def __init__(self,_vertices,_fromFace):
-    self.vertices = _vertices # a dict with tVert keys, pointing to flatVerts columns
+    self.vertices = _vertices # a list of netVerts
     self.fromFace = _fromFace
 
 

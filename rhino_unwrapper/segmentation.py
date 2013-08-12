@@ -5,11 +5,6 @@ from System.Diagnostics import Stopwatch
 from UnionFind import UnionFind
 
 
-
-'''# the code for finding segments is very similar to layoutFace() in layout.py
-consider generalizing layout or something. Also maybe create a different module
-that both layout and segmentation use.
-'''
 def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
 
   cutEdgeIdx = flatEdgeCut.edgeIdx
@@ -18,8 +13,8 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
 
   
     foldList.remove(cutEdgeIdx)
-    #segments = findSegments(mesh,foldList,cutEdgeIdx,flatFaces)
-    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx,flatFaces) #SLOWWWW
+
+    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx,flatFaces)
     
 
     resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg)    
@@ -46,12 +41,65 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
     #FlatEdge.drawTabs(flatVerts,edgesInSeg,'seg1')    
     flatEdgeCut.clearAllGeom()
     flatEdgeCut.drawEdgeLine(flatVerts)
+
+'''New Faster methods'''
+
+def findSegments(mesh,foldList,cutEdgeIdx,flatFaces):
+
+  faceA,faceB = removePointer(mesh,cutEdgeIdx,flatFaces)
+  group,leader = segmentIsland(flatFaces,[])
+  segA = group[group.keys()[0]]
+  segB = group[group.keys()[1]]
+  
+  segLists = orderListsByLen(segA,segB)
+
+  
+  return segA,segB
+
+def segmentIsland(flatFaces,island):
+  sets = UnionFind(True)
+  if len(island)==0:
+    island = range(len(flatFaces))
+  for face in island:
+    if face not in sets.leader.keys():
+      sets.makeSet([face])
+    neighbor = flatFaces[face].fromFace  
+    if neighbor != None:
+      if neighbor not in sets.leader.keys():
+        sets.makeSet([neighbor])
+      sets.union(face,neighbor)
+  return sets.group, sets.leader
+
+def orderListsByLen(listA,listB):
+  '''
+  return list where first element is the shorter list. or listA if equal
+  '''
+  smallList = listA
+  bigList = listB
+  if len(listA)>len(listB):
+    bigList = listA
+    smallList = listB
+  return [smallList,bigList]
+
+def removePointer(mesh,cutEdgeIdx,flatFaces):
+  A,B = getFacesForEdge(mesh,cutEdgeIdx)
+  if A == None or B==None:
+    return
+
+  if flatFaces[A].fromFace == B:
+    flatFaces[A].fromFace = None
+  elif flatFaces[B].fromFace == A:
+    flatFaces[B].fromFace = None
+  else:
+    print "faces %d and %d, associated with edge %d were not connected" %(A,B,cutEdgeIdx)
+    return
+  return (A,B)
+
     
 
 def translateLines(edgesInSeg,xForm):
   for flatEdge in edgesInSeg:
     flatEdge.translateEdgeLine(xForm)
-
 
 def modifyEdges(mesh,flatEdges,flatFaces,flatEdgeCut,newFlatEdge,newSpecs):
   modifiedEdges = getModEdges(mesh,flatEdges,flatFaces,newFlatEdge,newSpecs)
@@ -67,8 +115,6 @@ def resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,segment):
       for flatEdge in potEdges:
         if flatEdge.faceIdx in segment:
           flatEdge.update(newSpecs)
-
-
 
 def resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg):
   cutEdgeIdx = flatEdgeCut.edgeIdx
@@ -93,21 +139,6 @@ def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
   flatEdges[cutEdgeIdx].append(newFlatEdge) #copy flatEdge
   return newFlatEdge
 
-
-def findSegments(mesh,foldList,cutEdgeIdx,flatFaces):
- 
-
-
-  removePointer(mesh,cutEdgeIdx,flatFaces)
-  group,leader = segmentIsland(flatFaces,[])
-  segA = group[group.keys()[0]]
-  segB = group[group.keys()[1]]
-  
-  segLists = orderListsByLen(segA,segB)
-
-  
-  return segLists
-
 def copyFlatVerts(flatEdge,flatVerts):
   flatI,flatJ = flatEdge.getFlatVerts(flatVerts)
   I = flatEdge.tVertIdxs[0]
@@ -127,13 +158,11 @@ def copyFlatVerts(flatEdge,flatVerts):
 
   return newSpecs
 
-
 def translateSegmentVerts(verts,xForm,flatVerts):
   for flatVertSpec in verts:
     row = flatVertSpec[0]
     col = flatVertSpec[1]
     flatVerts[row][col].point.Transform(xForm)
-
 
 def translateSegmentCoords(edgesInSegment,xForm):
   getAssociatedFlatVerts(edgesInSegment,flat)
@@ -158,27 +187,9 @@ def getEdgesInSegment(flatEdges,newFlatEdge,faceList):
     if element.faceIdx in faceList:
       collection.append(element)
   return collection
-
-
-
-def resetFlatEdge(flatEdges,cutEdgeIdx,xForm):
-  flatEdge = FlatEdge.getFlatEdgePair(flatEdges,'edgeIdx',cutEdgeIdx)[0]
-  flatEdge.clearAllGeom()
   
 
-
-def orderListsByLen(listA,listB):
-  '''
-  return list where first element is the shorter list. or listA if equal
-  '''
-  smallList = listA
-  bigList = listB
-  if len(listA)>len(listB):
-    bigList = listA
-    smallList = listB
-  return [smallList,bigList]
-
-
+'''Old Rescursive methods (slow)'''
 def getSegmentsFromCut(mesh,foldList,cutEdgeIdx):
   faceList = getFacesForEdge(mesh,cutEdgeIdx)
   #print("faceList associated with new cut edge:" + str(faceList))
@@ -208,8 +219,6 @@ def createSegment(mesh,faceIdx,foldList,segment):
         segment = createSegment(mesh,newFaceIdx,foldList,segment)
     
   return segment
-
-
 
 def somethingElse(mesh,groups,leaders,flatFaces,flatEdgeCut):
   '''
@@ -248,36 +257,7 @@ def somethingElse(mesh,groups,leaders,flatFaces,flatEdgeCut):
     print "faces A,B [with flatEdge %d] in seperate islands" %flatEdgeCut.edgeIdx
     return
 
-#def getIsland(flatFaces,flatEdgeCut):
 
-
-def segmentIsland(flatFaces,island):
-  sets = UnionFind(True)
-  if len(island)==0:
-    island = range(len(flatFaces))
-  for face in island:
-    if face not in sets.leader.keys():
-      sets.makeSet([face])
-    neighbor = flatFaces[face].fromFace  
-    if neighbor != None:
-      if neighbor not in sets.leader.keys():
-        sets.makeSet([neighbor])
-      sets.union(face,neighbor)
-  return sets.group, sets.leader
-
-def removePointer(mesh,cutEdgeIdx,flatFaces):
-  A,B = getFacesForEdge(mesh,cutEdgeIdx)
-  if A == None or B==None:
-    return
-
-  if flatFaces[A].fromFace == B:
-    flatFaces[A].fromFace = None
-  elif flatFaces[B].fromFace == A:
-    flatFaces[B].fromFace = None
-  else:
-    print "faces %d and %d, associated with edge %d were not connected" %(A,B,cutEdgeIdx)
-    return
-  return (A,B)
 
 
 

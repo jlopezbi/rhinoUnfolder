@@ -1,13 +1,20 @@
 from segmentation import segmentIsland
-
+from rhino_helpers import createGroup
 class Net():
-  def __init__(self,_flatVerts,_flatEdges,_flatFaces):
-    self.flatVerts = _flatVerts
-    self.flatEdges = _flatEdges
-    self.flatFaces = _flatFaces
+  def __init__(self):
+    self.flatVerts = []
+    self.flatEdges = []
+    self.flatFaces = {}
 
-    self.groups,self.leaders = segmentIsland(self.flatFaces,[])
+    #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
     
+  def addEdge(self,flatEdge):
+    self.flatEdges.append(flatEdge)
+    return len(self.flatEdges)-1
+  
+  def addVert(self,flatVert):
+    self.flatVerts.append(flatVert)
+    return len(self.flatVerts)-1
 
 
   def segment(self,flatEdgeCut,xForm):
@@ -24,3 +31,10 @@ class Net():
 
   def replaceGroup(self,newGroups):
     pass
+
+  '''DRAWING'''
+  def drawEdges(self,netGroupName):
+    collection = []
+    for netEdge in self.flatEdges:
+      collection.append(netEdge.drawEdgeLine(self.flatVerts))
+    createGroup(netGroupName,collection)

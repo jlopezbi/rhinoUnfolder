@@ -181,11 +181,10 @@ def getUserTranslate(message,basePoint):
   if gp.CommandResult() != Rhino.Commands.Result.Success:
     return
 
-
   point = gp.Point()
   vecFrom = Rhino.Geometry.Vector3d(basePoint)
   vecTo = Rhino.Geometry.Vector3d(point)
   vec = vecTo-vecFrom
 
   xForm = Rhino.Geometry.Transform.Translation(vec)
-  return xForm
+  return xForm,point
