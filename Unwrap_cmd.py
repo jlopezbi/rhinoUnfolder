@@ -42,6 +42,8 @@ def RunCommand():
         print "face: ",
         print face
         segment = net.findSegment(flatEdge,face)
+        print "segment: ",
+        print segment
         net.translateSegment(segment,xForm)
         #net.updateCutEdge(flatEdge)
       

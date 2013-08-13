@@ -25,9 +25,20 @@ class Net():
   def findSegment(self,flatEdgeCut,face):
     assert(flatEdgeCut.type == 'fold')
     island = self.getGroupForMember(face)
+    self.removeFaceConnection(flatEdgeCut)
     group,leader = segmentIsland(self.flatFaces,island)
     self.updateIslands(group,leader,face)
-    return self.getGroupForMember(face)
+    return group[leader[face]]
+
+  def removeFaceConnection(self,flatEdgeCut):
+    faceA = flatEdgeCut.fromFace
+    faceB = flatEdgeCut.toFace
+    netFaceA = self.flatFaces[faceA]
+    netFaceB = self.flatFaces[faceB]
+    if netFaceB.fromFace==faceA:
+      netFaceB.fromFace = None
+    elif netFaceA.fromFace==faceB:
+      netFaceA.fromFace = None
 
   def translateSegment(self,segment,xForm):
     #TODO: make a more efficent version of this, would be easier if half-edge or

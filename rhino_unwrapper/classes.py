@@ -58,6 +58,7 @@ class FlatEdge():
     return getTVertsForEdge(mesh,self.edgeIdx)
 
   def drawEdgeLine(self,flatVerts):
+
     if self.type != None:
       if self.type == 'fold':
         color = (0,49,224,61) #green
@@ -68,6 +69,8 @@ class FlatEdge():
       elif self.type == 'naked':
         color = (0,55,156,196) #blue
       points = self.getCoordinates(flatVerts)
+      if self.line_id!=None:
+        scriptcontext.doc.Objects.Delete(self.line_id,True)
       line_id,line = drawLine(points,color,'None') #EndArrowhead
       self.line_id = line_id
       self.line = line
