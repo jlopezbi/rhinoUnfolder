@@ -19,12 +19,19 @@ class Map(object):
     '''To be called imediately after adding an edge'''
     self.meshEdges[edge].append(netEdge)
 
+  def updateVertMap(self,tVert,netVert):
+    self.meshVerts[tVert].append(netVert)
+
   def getSiblingNetEdge(self,edge,netEdge):
+    '''for a cut edge get the sibling edge'''
     edges = self.meshEdges[edge]
     netEdges = set(edges)
     netEdge = set([netEdge])
     singleEdge = netEdges-netEdge
     return singleEdge.pop()
+
+  def getNetEdges(self,meshEdge):
+    return self.meshEdges[meshEdge]
 
   def getRecentNetVertsForEdge(self,mesh,edge):
     meshI,meshJ = getTVertsForEdge(mesh,edge)

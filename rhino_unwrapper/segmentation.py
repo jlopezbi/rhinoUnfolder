@@ -5,7 +5,7 @@ from System.Diagnostics import Stopwatch
 from UnionFind import UnionFind
 
 
-def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
+def segmentNet(mesh,foldList,dataMap,net,flatEdgeCut,face,xForm):
 
   cutEdgeIdx = flatEdgeCut.edgeIdx
 
@@ -14,21 +14,19 @@ def segmentNet(mesh,foldList,flatVerts,flatEdges,flatFaces,flatEdgeCut,xForm):
   
     foldList.remove(cutEdgeIdx)
 
-    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx,flatFaces)
+    smallSeg,bigSeg = findSegments(mesh,foldList,cutEdgeIdx,net.flatFaces)
     
+    resetEdge(mesh,flatEdgeCut,foldList,net.flatVerts,smallSeg)    
+    newI,newJ = copyFlatVerts(dataMap,flatEdgeCut,net)     
 
-    resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg)    
-    newSpecs = copyFlatVerts(flatEdgeCut,flatVerts)     
-
-
-    newFlatEdge = createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs)
-    newFlatEdge.drawEdgeLine(flatVerts)  
-    resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,smallSeg)
-    resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs) 
+    newFlatEdge = createNewEdge(mesh,dataMap,net,flatEdgeCut,newI,newJ,face)
+    newFlatEdge.drawEdgeLine(net.flatVerts)  
+    resetEdges(mesh,net,newFlatEdge,newSpecs,smallSeg)
+    resetFaces(mesh,net.flatFaces,newFlatEdge,smallSeg,newSpecs) 
   
    
-    edgesInSeg = getEdgesInSegment(flatEdges,newFlatEdge,smallSeg)
-    vertsInSeg = getFlatVertsInSegment(flatVerts,flatFaces,smallSeg)  
+    edgesInSeg = getEdgesInSegment(net.flatEdges,newFlatEdge,smallSeg)
+    vertsInSeg = getFlatVertsInSegment(net.flatVerts,net.flatFaces,smallSeg)  
     translateLines(edgesInSeg,xForm)
     #FlatEdge.clearEdges(edgesInSeg) # remove drawn geometry
     translateSegmentVerts(vertsInSeg,xForm,flatVerts)
@@ -106,21 +104,25 @@ def modifyEdges(mesh,flatEdges,flatFaces,flatEdgeCut,newFlatEdge,newSpecs):
   for flatEdge in modifiedEdges:
     flatEdge.update(newSpecs)
 
-def resetEdges(mesh,flatEdges,newFlatEdge,newSpecs,segment):
-  tVerts = newFlatEdge.tVertIdxs
-  for vert in tVerts:
-    edges = getEdgesForVert(mesh,vert) #in original mesh
+def resetEdges(mesh,net,dataMap,newFlatEdge,netVertI,netVertJ,segment):
+  netVerts = [newFlatEdge.I,newFlatEdge,J]
+  for netVert in netVerts:
+    tVert = netVert.tVertIdx
+    edges = getEdgesForVert(mesh,tVert) #in original mesh
     for edge in edges:
-      potEdges = flatEdges[edge]
-      for flatEdge in potEdges:
-        if flatEdge.faceIdx in segment:
-          flatEdge.update(newSpecs)
+      potEdges = dataMap.getNetEdges(edge)
+      for netEdge in potEdges:
+        if netEdge.fromFace in segment:
+          netEdge.I = netVertI
+          netEdge.J = netVertJ
 
-def resetEdge(mesh,flatEdgeCut,foldList,flatVerts,smallSeg):
+def resetEdge(mesh,flatEdgeCut,foldList,flatVerts,moveSeg):
   cutEdgeIdx = flatEdgeCut.edgeIdx
   flatEdgeCut.type = 'cut'
-  if flatEdgeCut.faceIdx in smallSeg:
-    flatEdgeCut.faceIdx = getOtherFaceIdx(flatEdgeCut.edgeIdx,flatEdgeCut.faceIdx,mesh)
+  if flatEdgeCut.fromFace in moveSeg:
+    flatEdgeCut.fromFace = flatEdgeCut.toFace
+  elif flatEdgeCut.toFace in moveSeg:
+    flatEdgeCut.toFace = flatEdgeCut.fromFace
 
 def resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs):
   tVerts = newFlatEdge.tVertIdxs
@@ -130,33 +132,33 @@ def resetFaces(mesh,flatFaces,newFlatEdge,smallSeg,newSpecs):
       if face in smallSeg:
         flatFaces[face].reAssignVerts(newSpecs)
 
-def createNewEdge(mesh,flatVerts,flatEdges,flatEdgeCut,newSpecs):
+def createNewEdge(mesh,dataMap,net,flatEdgeCut,newI,newJ,face):
   cutEdgeIdx = flatEdgeCut.edgeIdx
-  newFlatEdge = FlatEdge(cutEdgeIdx,flatEdgeCut.tVertIdxs,newSpecs)
+  newFlatEdge = FlatEdge(cutEdgeIdx,newI,newJ)
   newFlatEdge.type = 'cut'
   #must have reset edge for following line to work
-  newFlatEdge.faceIdx = getOtherFaceIdx(flatEdgeCut.edgeIdx,flatEdgeCut.faceIdx,mesh)
-  flatEdges[cutEdgeIdx].append(newFlatEdge) #copy flatEdge
+  newFlatEdge.fromFace = face
+  netEdge = net.addEdge(newFlatEdge)
+  dataMap.updateEdgeMap(cutEdgeIdx,netEdge)
   return newFlatEdge
 
-def copyFlatVerts(flatEdge,flatVerts):
+def copyFlatVerts(dataMap,flatEdge,net):
+  flatVerts = net.flatVerts
   flatI,flatJ = flatEdge.getFlatVerts(flatVerts)
-  I = flatEdge.tVertIdxs[0]
-  J = flatEdge.tVertIdxs[1]
-  pointI = Rhino.Geometry.Point3d(flatI.point)
+  I = flatI.tVertIdx
+  J = flatJ.tVertIdx
+  pointI = Rhino.Geometry.Point3d(flatI.point) #important copy vert
   pointJ = Rhino.Geometry.Point3d(flatJ.point)
 
   newFlatI = FlatVert(I,pointI)
   newFlatJ = FlatVert(J,pointJ)
  
-  flatVerts[I].append(newFlatI) #make copies
-  flatVerts[J].append(newFlatJ)
+  netVertI = net.addVert(newFlatI) #make copies
+  netVertJ = net.addVert(newFlatJ)
+  dataMap.updateVertMap(I,netVertI)
+  dataMap.updateVertMap(J,netVertJ)
+  return (netVertI,netVertJ)
 
-  specI = len(flatVerts[I])-1 #make specs for new edge
-  specJ = len(flatVerts[J])-1
-  newSpecs = {I:specI,J:specJ}
-
-  return newSpecs
 
 def translateSegmentVerts(verts,xForm,flatVerts):
   for flatVertSpec in verts:
@@ -180,7 +182,7 @@ def getFlatVertsInSegment(flatVerts,flatFaces,segment):
       collection.add(vert)
   return list(collection)
 
-def getEdgesInSegment(flatEdges,newFlatEdge,faceList):
+def getEdgesInSegment(flatEdges,faceList):
   collection = []
   allElements = getFlatList(flatEdges)
   for element in allElements:

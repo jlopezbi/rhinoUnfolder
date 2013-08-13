@@ -25,6 +25,11 @@ def RunCommand():
 
   if mesh and weightFunction:
     dataMap,net,foldList = unwrap(mesh, userCuts, weightFunction)
+    net.findInitalSegments()
+    print "groups: ",
+    print net.groups
+    print "leaders: ",
+    print net.leaders
 
   while True:
     flatEdge,strType = getNewEdge("select new edge on net or mesh",net,dataMap)
@@ -33,8 +38,15 @@ def RunCommand():
       basePoint = flatEdge.getMidPoint(net.flatVerts)
       xForm,point = getUserTranslate("Pick point to translate segment to",basePoint)
       if xForm:
-        #net.segment(flatEdge,xForm,point)
-        segmentNet(mesh,foldList,net.flatVerts,net.flatEdges,net.flatFaces,flatEdge,xForm)
+        face = flatEdge.getFaceFromPoint(net,point)
+        print "face: ",
+        print face
+        segment = net.findSegment(flatEdge,face)
+        net.translateSegment(segment,xForm)
+        #net.updateCutEdge(flatEdge)
+      
+
+        #segmentNet(mesh,foldList,dataMap,net,flatEdge,face,xForm)
     elif strType == 'cut':
       break
     # elif strType == 'invalid':

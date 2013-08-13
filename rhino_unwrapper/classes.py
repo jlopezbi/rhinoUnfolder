@@ -17,6 +17,9 @@ class FlatVert():
   def hasSamePoint(self,point):
     return approxEqual(self.point.X,point.X) and approxEqual(self.point.Y,point.Y)
 
+  def translate(self,xForm):
+    self.point.Transform(xForm)
+
 class FlatEdge():
   def __init__(self,_edgeIdx,vertI,vertJ): 
     self.edgeIdx = _edgeIdx
@@ -28,8 +31,8 @@ class FlatEdge():
     self.geom = []
     self.type = None
     #self.faceIdxs = [] #if fold edge: [fromFace,toFace]
-    self.faceIdx = None
-    self.toFaceIdx = None
+    self.fromFace = None
+    self.toFace = None
 
     self.tabOnLeft = False
     self.hasTab = False
@@ -43,10 +46,14 @@ class FlatEdge():
         self.tVertSpecs[vert] = newVertSpecs[vert]
 
   def getCoordinates(self,flatVerts):
-    pntI = flatVerts[self.I].point
-    pntJ = flatVerts[self.J].point
-    return [pntI,pntJ]
-  
+    vertI,vertJ = self.getFlatVerts(flatVerts)
+    return [vertI.point,vertJ.point]
+
+  def getFlatVerts(self,flatVerts):
+    flatVertI = flatVerts[self.I]
+    flatVertJ = flatVerts[self.J]
+    return (flatVertI,flatVertJ)
+
   def getTVerts(self,mesh):
     return getTVertsForEdge(mesh,self.edgeIdx)
 
@@ -66,10 +73,19 @@ class FlatEdge():
       self.line = line
     return line_id
 
+  def translateGeom(self,flatVerts,xForm):
+    self.translateEdgeLine(xForm)
+    self.translateNetVerts(flatVerts,xForm)
+
   def translateEdgeLine(self,xForm):
     if self.line != None:
       self.line.Transform(xForm)
       scriptcontext.doc.Objects.Replace(self.line_id,self.line)
+
+  def translateNetVerts(self,flatVerts,xForm):
+    netVertI,netVertJ = self.getFlatVerts(flatVerts)
+    netVertI.translate(xForm)
+    netVertJ.translate(xForm)
 
   def drawTab(self,flatVerts):
     if len(self.tabAngles)<1:
@@ -118,7 +134,6 @@ class FlatEdge():
     polyGuid = rs.AddPolyline(points)
     self.geom.append(polyGuid)
 
-
   def clearAllGeom(self):
     '''
     note: clear self.geom and self.line_id ?
@@ -141,17 +156,19 @@ class FlatEdge():
     return Rhino.Geometry.Point3f(x,y,z)
 
   def getFaceFromPoint(self,net,point):
+    #TODO: fails for horizontal lines :(
     assert(self.type =='fold')
     faceA = self.fromFace
     faceB = self.toFace
     leftA = self.testFacesIsLeft(net,faceA)
     leftB = self.testFacesIsLeft(net,faceB)
     assert(leftA!=leftB),"both faces found to be on same side of edge"
-    leftPoint = self.testPointIsLeft(point,flatVerts)
+    leftPoint = self.testPointIsLeft(point,net.flatVerts)
     if leftA==leftPoint:
       return faceA
     elif leftB==leftPoint:
       return faceB
+    print "unable to find face"
     return 
 
   def testFacesIsLeft(self,net,face):
@@ -161,14 +178,10 @@ class FlatEdge():
 
     testPoint = net.flatVerts[self.getNeighborFlatVert(net,face)].point
     if not testPoint:
-      return 0
-    if self.testPointIsLeft(testPoint,net.flatVerts):
-      return 1 
-    else:
       return -1
+    return self.testPointIsLeft(testPoint,net.flatVerts)
+    
   
-
-
   def setTabSide(self,net):
     '''
     occurs during LAYOUT
@@ -193,7 +206,6 @@ class FlatEdge():
     cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine,vecTest)
     z = cross.Z #(pos and neg)
     return  z > 0 
-
 
   def getNeighborFlatVert(self,net,face=None):
     '''
@@ -246,7 +258,6 @@ class FlatEdge():
       # print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
 
       #return [angleI,angleJ]
-
 
 
 

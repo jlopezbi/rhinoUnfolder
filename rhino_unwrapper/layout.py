@@ -15,7 +15,7 @@ def layoutMesh(foldList, mesh):
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  net = Net()
+  net = Net(mesh)
   dataMap = Map(mesh)
   net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap)
   return net,dataMap
@@ -51,7 +51,7 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
         newToBasis = getBasisFlat(flatEdge,net.flatVerts)
 
         flatEdge.type  = "fold"
-        flatEdge.toFace = newToBasis[0]
+        flatEdge.toFace = newBasisInfo[0]
         netEdge = net.addEdge(flatEdge)
         dataMap.updateEdgeMap(edge,netEdge)
 
