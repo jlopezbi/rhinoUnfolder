@@ -1,9 +1,6 @@
 from visualization import *
 import math
 
-
-
-
 class FlatVert():
   def __init__(self,_tVertIdx,_point): 
     self.tVertIdx = _tVertIdx
@@ -39,11 +36,13 @@ class FlatEdge():
     self.tabAngles = []
     self.tabWidth = .2 #could be standard, or based on face area
 
-  def update(self,newVertSpecs):
-    newVerts = newVertSpecs.keys()
-    for vert in self.tVertIdxs:
-      if vert in newVerts:
-        self.tVertSpecs[vert] = newVertSpecs[vert]
+  def reset(self,oldVert,newVert):
+    if self.I==oldVert:
+      self.I=newVert
+    elif self.J==oldVert:
+      self.J=newVert
+    else:
+      assert(False==True), "error, flatEdge does not have oldVert"
 
   def getCoordinates(self,flatVerts):
     vertI,vertJ = self.getFlatVerts(flatVerts)
@@ -53,6 +52,9 @@ class FlatEdge():
     flatVertI = flatVerts[self.I]
     flatVertJ = flatVerts[self.J]
     return (flatVertI,flatVertJ)
+
+  def getNetVerts(self):
+    return (self.I,self.J)
 
   def getTVerts(self,mesh):
     return getTVertsForEdge(mesh,self.edgeIdx)
@@ -76,19 +78,23 @@ class FlatEdge():
       self.line = line
     return line_id
 
-  def translateGeom(self,flatVerts,xForm):
-    self.translateEdgeLine(xForm)
-    self.translateNetVerts(flatVerts,xForm)
+  def translateGeom(self,movedNetVerts,flatVerts,xForm):
+    #self.translateEdgeLine(xForm)
+    self.translateNetVerts(movedNetVerts,flatVerts,xForm)
 
   def translateEdgeLine(self,xForm):
     if self.line != None:
       self.line.Transform(xForm)
       scriptcontext.doc.Objects.Replace(self.line_id,self.line)
 
-  def translateNetVerts(self,flatVerts,xForm):
+  def translateNetVerts(self,movedNetVerts,flatVerts,xForm):
     netVertI,netVertJ = self.getFlatVerts(flatVerts)
-    netVertI.translate(xForm)
-    netVertJ.translate(xForm)
+    if netVertI not in movedNetVerts:
+      netVertI.translate(xForm)
+      movedNetVerts.append(netVertI)
+    if netVertJ not in movedNetVerts:
+      netVertJ.translate(xForm)
+      movedNetVerts.append(netVertJ)
 
   def drawTab(self,flatVerts):
     if len(self.tabAngles)<1:

@@ -33,7 +33,6 @@ def RunCommand():
 
   while True:
     flatEdge,strType = getNewEdge("select new edge on net or mesh",net,dataMap)
-    #print( str(type(flatEdgeCut)))
     if strType == 'fold':
       basePoint = flatEdge.getMidPoint(net.flatVerts)
       xForm,point = getUserTranslate("Pick point to translate segment to",basePoint)
@@ -44,6 +43,7 @@ def RunCommand():
         segment = net.findSegment(flatEdge,face)
         print "segment: ",
         print segment
+        net.copyAndReasign(mesh,dataMap,flatEdge,segment)
         net.translateSegment(segment,xForm)
         #net.updateCutEdge(flatEdge)
       

@@ -1,5 +1,8 @@
 from segmentation import segmentIsland
-from rhino_helpers import createGroup
+from rhino_helpers import createGroup,getEdgesForVert
+from classes import FlatVert
+import Rhino
+
 class Net():
   def __init__(self,mesh):
     self.flatVerts = []
@@ -30,6 +33,25 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
+  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,segment):
+    changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
+    self.resetSegment(mesh,dataMap,changedVertPairs,segment)
+
+  def translateSegment(self,segment,xForm):
+    #TODO: make a more efficent version of this, would be easier if half-edge or
+    #winged edge mesh. H-E: could traverse edges recursively, first going to sibling h-edge
+    #stopping when the edge points to no other edge(naked),or to a face not in the segment,or
+    #if the h-edge is part of the user-selected edge to be cut
+    
+    #collection = []
+    movedNetVerts = []
+    for netEdge in self.flatEdges:
+      if netEdge.fromFace in segment:
+        #collection.append[netEdge]
+        netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
+        netEdge.drawEdgeLine(self.flatVerts)
+    #return collection
+
   def removeFaceConnection(self,flatEdgeCut):
     faceA = flatEdgeCut.fromFace
     faceB = flatEdgeCut.toFace
@@ -40,19 +62,53 @@ class Net():
     elif netFaceA.fromFace==faceB:
       netFaceA.fromFace = None
 
-  def translateSegment(self,segment,xForm):
-    #TODO: make a more efficent version of this, would be easier if half-edge or
-    #winged edge mesh. H-E: could traverse edges recursively, first going to sibling h-edge
-    #stopping when the edge points to no other edge(naked),or to a face not in the segment,or
-    #if the h-edge is part of the user-selected edge to be cut
-    
-    #collection = []
-    for netEdge in self.flatEdges:
-      if netEdge.fromFace in segment:
-        #collection.append[netEdge]
-        netEdge.translateGeom(self.flatVerts,xForm)
-    #return collection
+  
 
+  def makeNewNetVerts(self,dataMap,flatEdgeCut):
+    oldNetI,oldNetJ = flatEdgeCut.getNetVerts()
+    flatI,flatJ = flatEdgeCut.getFlatVerts(self.flatVerts)
+    pointI = Rhino.Geometry.Point3d(flatI.point) #important copy vert
+    pointJ = Rhino.Geometry.Point3d(flatJ.point)
+    newI = FlatVert(flatI.tVertIdx,pointI)
+    newJ = FlatVert(flatJ.tVertIdx,pointJ)
+    newNetI = self.addVert(newI)
+    newNetJ = self.addVert(newJ)
+    dataMap.updateVertMap(flatI.tVertIdx,newNetI)
+    dataMap.updateVertMap(flatJ.tVertIdx,newNetJ)
+    return [(newNetI,oldNetI),(newNetJ,oldNetJ)]
+
+  def resetSegment(self,mesh,dataMap,changedVertPairs,segment):
+    self.resetFaces(changedVertPairs,segment)
+    self.resetEdges(mesh,dataMap,changedVertPairs,segment)
+
+  def resetFaces(self,changedVertPairs,segment):
+    #REPLACE: this is slow hack
+    newVertI,oldVertI = changedVertPairs[0]
+    newVertJ,oldVertJ = changedVertPairs[1]
+    for face in segment:
+      verts = self.flatFaces[face].vertices
+      if oldVertI in verts:
+        verts.remove(oldVertI)
+        verts.append(newVertI) #does order matter?
+      if oldVertJ in verts:
+        verts.remove(oldVertJ)
+        verts.append(newVertJ) #does order matter?
+
+
+  def resetEdges(self,mesh,dataMap,changedVertPairs,segment):
+    #REPLACE: if using he-mesh then this will be unnecessary
+    for pair in changedVertPairs:
+      newVert,oldVert = pair
+      tVert = self.flatVerts[newVert].tVertIdx
+      edges = getEdgesForVert(mesh,tVert) #in original mesh,eventually use he-mesh
+      for edge in edges:
+        netEdges = dataMap.getNetEdges(edge)
+        for netEdge in netEdges:
+          flatEdge = self.getFlatEdge(netEdge)
+          netPair = flatEdge.getNetVerts()
+          if oldVert in netPair and flatEdge.fromFace in segment:
+            #assert(flatEdge.fromFace in segment), "flatEdge not in segment"
+            flatEdge.reset(oldVert,newVert)
 
   def getGroupForMember(self,member):
     if member not in self.leaders.keys():
@@ -82,9 +138,9 @@ class Net():
         return flatEdge
     return
     
-  def getFlatEdge(flatEdges,strField,value):
-    flatEdges = FlatEdge.getFlatList(flatEdges)
-    strField = strField.upper()
+  def getFlatEdge(self,netEdge):
+    return self.flatEdges[netEdge]
+    
     
 
   '''DRAWING'''
