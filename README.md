@@ -1,7 +1,7 @@
-rhinoUnwrapper
+rhinoUnfolder
 ==============
 
-A Python plugin to Rhino that unwraps triangulated meshes.
+A Python plugin to Rhino that unfolds meshes.
 
 You can use it to create flat, foldable versions of your 3D models. It's like [Pepakura](http://www.tamasoft.co.jp/pepakura-en/) for Rhino.
 
@@ -18,8 +18,8 @@ How To Run
 Status
 ------
 
-rhinoUnwrapper is alpha software—it isn't finished yet. Don't expect it to work for you.
+rhinoUnfolder is alpha software—it isn't finished yet. Don't expect it to work for you.
 
-**Basic mesh unwrapping is working**! However, you will need to modify the code to apply it to your own mesh.
+**Basic mesh unwrapping is working**!
 
 Also, it can only unwrap relatively simple meshes with few areas of high curvature. It uses a face-angle weight function. Try adding new weight functions for higher quality unfoldings.
