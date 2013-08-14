@@ -78,6 +78,10 @@ class FlatEdge():
       self.line = line
     return line_id
 
+  def resetFromFace(self,face):
+    if self.fromFace==face:
+      self.fromFace = self.toFace
+
   def translateGeom(self,movedNetVerts,flatVerts,xForm):
     #self.translateEdgeLine(xForm)
     self.translateNetVerts(movedNetVerts,flatVerts,xForm)

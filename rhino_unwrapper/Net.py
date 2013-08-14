@@ -1,6 +1,6 @@
 from segmentation import segmentIsland
 from rhino_helpers import createGroup,getEdgesForVert
-from classes import FlatVert
+from classes import FlatVert,FlatEdge
 import Rhino
 
 class Net():
@@ -33,8 +33,12 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
-  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,segment):
+  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,segment,face):
+    flatEdgeCut.type = 'cut'
+    flatEdgeCut.resetFromFace(face)
+    flatEdgeCut.drawEdgeLine(self.flatVerts)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
+    self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,face)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
   def translateSegment(self,segment,xForm):
@@ -62,7 +66,14 @@ class Net():
     elif netFaceA.fromFace==faceB:
       netFaceA.fromFace = None
 
-  
+  def makeNewEdge(self,dataMap,changedVertPairs,meshEdge,face):
+    newVertI = changedVertPairs[0][0]
+    newVertJ = changedVertPairs[1][0]
+    newFlatEdge = FlatEdge(meshEdge,newVertI,newVertJ)
+    newFlatEdge.fromFace = face
+    newFlatEdge.type = 'cut'
+    netEdge = self.addEdge(newFlatEdge)
+    dataMap.updateEdgeMap(meshEdge,netEdge)
 
   def makeNewNetVerts(self,dataMap,flatEdgeCut):
     oldNetI,oldNetJ = flatEdgeCut.getNetVerts()
