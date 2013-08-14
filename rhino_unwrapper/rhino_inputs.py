@@ -42,7 +42,7 @@ def getNewEdge(message,net,dataMap):
 
     return flatEdge,flatEdge.type
 
-def getUserCuts(disaply=True):
+def getUserCuts(display=True):
   cuts = []
   color = (0,255,0,255)
   isChain = False
