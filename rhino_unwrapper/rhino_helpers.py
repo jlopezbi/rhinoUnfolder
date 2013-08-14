@@ -23,17 +23,12 @@ def convertArray(array):
 
 def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
   connectedFaces = getFacesForEdge(mesh,edgeIdx)
-  #assert(len(connectedFaces)==2),"getOtherFaceIdx(): did not get two connected Faces"
-  assert(faceIdx in connectedFaces),"getOtherFaceIdx(): faceIdx not in faces associated with edge"
-
-  nakedEdges = mesh.GetNakedEdges()
-  if nakedEdges !=None and edgeIdx in mesh.GetNakedEdges():
-      return 
+  assert(faceIdx in connectedFaces),"faceIdx not in faces associated with edge"
 
   if len(connectedFaces) != 2:
     #This is a naked edge
     #print("did not find two connected faces for edgeIdx %i, " %(edgeIdx))
-    return
+    return -1
     
   newFaceIdx = None
   if (connectedFaces[0]==faceIdx):

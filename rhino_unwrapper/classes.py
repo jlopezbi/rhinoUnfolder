@@ -27,12 +27,12 @@ class FlatEdge():
     self.line_id = None
     self.geom = []
     self.type = None
-    #self.faceIdxs = [] #if fold edge: [fromFace,toFace]
     self.fromFace = None
     self.toFace = None
 
     self.tabOnLeft = False
     self.hasTab = False
+    self.tabFaceCenter = None
     self.tabAngles = []
     self.tabWidth = .2 #could be standard, or based on face area
 
@@ -85,6 +85,8 @@ class FlatEdge():
   def translateGeom(self,movedNetVerts,flatVerts,xForm):
     #self.translateEdgeLine(xForm)
     self.translateNetVerts(movedNetVerts,flatVerts,xForm)
+    if self.tabFaceCenter!=None:
+      self.tabFaceCenter.Transform(xForm)
 
   def translateEdgeLine(self,xForm):
     if self.line != None:
@@ -101,10 +103,14 @@ class FlatEdge():
       movedNetVerts.append(netVertJ)
 
   def drawTab(self,flatVerts):
+    '''outputs guid for polyline'''
+    if len(self.geom)>0:
+      for guid in self.geom:
+        scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
-      self.drawTriTab(flatVerts)
+      return self.drawTriTab(flatVerts)
     else:
-      self.drawQuadTab(flatVerts)
+      return self.drawQuadTab(flatVerts)
       
   def drawQuadTab(self,flatVerts):
     pntA,pntD = self.getCoordinates(flatVerts)
@@ -138,6 +144,7 @@ class FlatEdge():
     polyGuid = rs.AddPolyline(points)
 
     self.geom.append(polyGuid)
+    return polyGuid
 
   def drawTriTab(self,flatVerts):
     pntA,pntC = self.getCoordinates(flatVerts)
@@ -146,6 +153,7 @@ class FlatEdge():
     points = [pntA,pntB,pntC]
     polyGuid = rs.AddPolyline(points)
     self.geom.append(polyGuid)
+    return polyGuid
 
   def clearAllGeom(self):
     '''
@@ -244,33 +252,41 @@ class FlatEdge():
       if getDistanceToEdge(mesh,edge,faceCenter)<=self.tabWidth:
         faceCenter.Transform(xForm)
         self.tabFaceCenter = faceCenter
-        return
-      posVecCenter = Rhino.Geometry.Vector3d(faceCenter) 
+      else:
+        posVecCenter = Rhino.Geometry.Vector3d(faceCenter) 
 
-      pntI,pntJ = getPointsForEdge(mesh,edge) #Point3d
-      vecEdge = getEdgeVector(mesh,edge) #Vector3d
-      posVecI = Rhino.Geometry.Vector3d(pntI)
-      posVecJ = Rhino.Geometry.Vector3d(pntJ)
+        pntI,pntJ = getPointsForEdge(mesh,edge) #Point3d
+        vecEdge = getEdgeVector(mesh,edge) #Vector3d
+        posVecI = Rhino.Geometry.Vector3d(pntI)
+        posVecJ = Rhino.Geometry.Vector3d(pntJ)
 
-      vecI = Rhino.Geometry.Vector3d.Subtract(posVecCenter,posVecI)
-      vecJ = Rhino.Geometry.Vector3d.Subtract(posVecJ,posVecCenter)
-      
-      angleI = rs.VectorAngle(vecI,vecEdge)
-      angleJ = rs.VectorAngle(vecJ,vecEdge)
+        vecI = Rhino.Geometry.Vector3d.Subtract(posVecCenter,posVecI)
+        vecJ = Rhino.Geometry.Vector3d.Subtract(posVecJ,posVecCenter)
+        
+        angleI = rs.VectorAngle(vecI,vecEdge)
+        angleJ = rs.VectorAngle(vecJ,vecEdge)
 
-      self.tabAngles = [angleI,angleJ]
+        self.tabAngles = [angleI,angleJ]
 
-      # color = (0,0,0,0)
-      # drawVector(vecI,posVecI,color)
-      # drawVector(vecJ,posVecCenter,color)
-      # strI = str(angleI)
-      # strJ = str(angleJ)
-      #rs.AddTextDot(strI,posVecI)
-      #rs.AddTextDot(strJ,posVecJ)
-      # print #wtf: for some reason needed this line to print below
-      # print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
+        """
+        color = (0,0,0,0)
+        drawVector(vecI,posVecI,color)
+        drawVector(vecJ,posVecCenter,color)
+        strI = str(angleI)
+        strJ = str(angleJ)
+        rs.AddTextDot(strI,posVecI)
+        rs.AddTextDot(strJ,posVecJ)
+        print #wtf: for some reason needed this line to print below
+        print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
+        """
+    elif otherFace==-1:
+      print "was nakedEdge"
+    else:
+      print "otherFace: ",
+      print otherFace
 
-      #return [angleI,angleJ]
+
+
 
 
 

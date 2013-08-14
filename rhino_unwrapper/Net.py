@@ -54,6 +54,8 @@ class Net():
         #collection.append[netEdge]
         netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
         netEdge.drawEdgeLine(self.flatVerts)
+        if netEdge.hasTab:
+          netEdge.drawTab(self.flatVerts)
     #return collection
 
   def removeFaceConnection(self,flatEdgeCut):
@@ -159,4 +161,8 @@ class Net():
     collection = []
     for netEdge in self.flatEdges:
       collection.append(netEdge.drawEdgeLine(self.flatVerts))
+      if netEdge.hasTab:
+        collection.append(netEdge.drawTab(self.flatVerts))
     createGroup(netGroupName,collection)
+
+
