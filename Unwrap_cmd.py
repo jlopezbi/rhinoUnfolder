@@ -1,5 +1,4 @@
 from rhino_unwrapper.commands import unwrap
-from rhino_unwrapper.segmentation import segmentNet
 from rhino_unwrapper.visualization import displayMeshEdges
 from rhino_unwrapper.rhino_inputs import *
 from rhino_unwrapper import weight_functions
