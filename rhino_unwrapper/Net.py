@@ -101,11 +101,13 @@ class Net():
     for face in segment:
       verts = self.flatFaces[face].vertices
       if oldVertI in verts:
-        verts.remove(oldVertI)
-        verts.append(newVertI) #does order matter?
+        index = verts.index(oldVertI)
+        verts.insert(index,newVertI) #does order matter? yes
+        verts.pop(index+1)
       if oldVertJ in verts:
-        verts.remove(oldVertJ)
-        verts.append(newVertJ) #does order matter?
+        index = verts.index(oldVertJ)
+        verts.insert(index,newVertJ) #does order matter? yes
+        verts.pop(index+1)
 
 
   def resetEdges(self,mesh,dataMap,changedVertPairs,segment):
@@ -163,6 +165,12 @@ class Net():
       collection.append(netEdge.drawEdgeLine(self.flatVerts))
       if netEdge.hasTab:
         collection.append(netEdge.drawTab(self.flatVerts))
+    createGroup(netGroupName,collection)
+
+  def drawFaces(self,netGroupName):
+    collection = []
+    for face in self.flatFaces:
+      collection.append(face.draw(self.flatVerts))
     createGroup(netGroupName,collection)
 
 

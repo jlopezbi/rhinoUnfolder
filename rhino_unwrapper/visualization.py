@@ -1,8 +1,10 @@
 from rhino_helpers import *
 
-def displayTVertIdx(mesh,vert,color=(0,255,0,255)):
+def displayTVertIdx(mesh,vert,disp=None,color=(0,255,0,255)):
+  if disp==None:
+    disp = vert
   point = mesh.TopologyVertices.Item[vert]
-  drawTextDot(point,str(vert),color)
+  drawTextDot(point,str(disp),color)
 
 def displayEdgeIdx(line,edgeIdx,color):
   cenX = (line.FromX+line.ToX)/2
@@ -18,8 +20,6 @@ def displayIJEdge(mesh,edgeIdx):
   pntJ = mesh.TopologyVertices.Item[vertJ]
   rs.AddTextDot('I',pntI)
   rs.AddTextDot('J',pntJ)
-
-
 
 
 def displayNormals(mesh):
@@ -80,6 +80,15 @@ def setAttrArrow(attr,strType):
   attr.ObjectDecoration = value
   return attr
 
+def drawPolyline(points,color,arrowType):
+  '''points = list of Point3d objects'''
+  polyline = Rhino.Geometry.Polyline(points)
+  attr = setAttrColor(color[0],color[1],color[2],color[3])
+  if arrowType:
+    attr = setAttrArrow(attr,arrowType)
+    
+  poly_id = scriptcontext.doc.Objects.AddPolyline(polyline,attr)
+  return poly_id,polyline
 
 def drawLine(points,color,arrowType):
   #points must be Point3d

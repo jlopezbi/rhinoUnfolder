@@ -286,55 +286,69 @@ class FlatEdge():
       print otherFace
 
 
-
-
-
-
-
-  @staticmethod
-  def clearEdges(flatEdges):
-    for flatEdge in flatEdges:
-      flatEdge.clearAllGeom()
-
-  @staticmethod
-  def drawEdges(flatVerts,flatEdges,groupName):
-    collection = []
-    for flatEdge in flatEdges:
-      collection.append(flatEdge.drawEdgeLine(flatVerts))
-    createGroup(groupName,collection)
-
-  @staticmethod
-  def drawTabs(flatVerts,flatEdges,groupName):
-    collection = []
-    for flatEdge in flatEdges:
-      if flatEdge.hasTab:
-        collection.append(flatEdge.drawTab(flatVerts))
-    createGroup(groupName,collection)
-
 class FlatFace():
-  #does not store meshFace because position in dict determines this
+  #does not store meshFace because position in list determines this
   def __init__(self,_vertices,_fromFace):
     self.vertices = _vertices # a list of netVerts
     self.fromFace = _fromFace
 
 
   def getFlatVerts(self,flatVerts):
-    tVerts = self.vertices.keys()
     collection = []
-    for vert in tVerts:
-      col = self.vertices[vert]
-      collection.append(flatVerts[vert][col])
+    for vert in self.vertices:
+      collection.append(flatVerts[vert])
     return collection
 
   def getFlatVertForTVert(self,tVert,flatVerts):
     assert(tVert in self.vertices.keys())
     return flatVerts[tVert][self.vertices[tVert]]
 
-  def reAssignVerts(self,newVertSpecs):
-    tVerts = newVertSpecs.keys()
-    for tVert in tVerts:
-      if tVert in self.vertices.keys():
-        self.vertices[tVert] = newVertSpecs[tVert]
+  def getCenterPoint(self,flatVerts):
+    flatVerts = self.getFlatVerts(flatVerts)
+    nVerts = len(self.vertices)
+    sumX = 0.0
+    sumY = 0.0
+    for flatVert in flatVerts:
+      point = flatVert.point
+      sumX += point.X
+      sumY += point.Y
+    x = sumX/nVerts
+    y = sumY/nVerts
+    self.centerPoint = Rhino.Geometry.Point3d(x,y,0.0)
+    return (x,y)
+
+  def draw(self,flatVerts):
+    points = [flatVerts[i].point for i in self.vertices]
+    #add first vert to end to make closed
+    points.append(flatVerts[self.vertices[0]].point) 
+    #remove 'EndArrowhead' to stop displaying orientatio of face
+    poly_id,polyline = drawPolyline(points,[0,0,0,0],'EndArrowhead')
+    self.poly_id = poly_id
+    self.polyline = polyline
+
+  def drawInnerface(self,flatVerts,ratio=.33):
+    '''draw a inset face'''
+    self.getCenterPoint(flatVerts)
+    centerVec = Rhino.Geometry.Vector3d(self.centerPoint)
+    for i in range(len(self.vertices)):
+      vert = self.vertices[i]
+      self.getInnerPoint(flatVerts,vert)
+      #TODO: finish up this function
+
+  def getInnerPoint(self,flatVerts,vert):
+    cornerVec = Rhino.Geometry.Vector3d(flatVerts[vert].point)
+    vec = Rhino.Geometry.Vector3d(centerVec-cornerVec)
+    length = vec.Length
+    if not vec.Unitize(): return
+    vec = vec.Multiply(vec,length*ratio)
+    pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
+    rs.AddTextDot(str(i),pos)
+
+
+
+
+
+
 
 
   

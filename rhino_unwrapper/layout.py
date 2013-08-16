@@ -92,9 +92,9 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
 
   if hopEdge!=None:
     netI,netJ = [hopEdge.I,hopEdge.J]
-    hopNetVerts = [netI,netJ]
+    #hopNetVerts = [netI,netJ]
     hopMeshVerts = [net.flatVerts[netI].tVertIdx,net.flatVerts[netJ].tVertIdx]
-    netVerts.extend(hopNetVerts)
+    #netVerts.extend(hopNetVerts)
     mapping[hopMeshVerts[0]] = netI
     mapping[hopMeshVerts[1]] = netJ
 
@@ -106,11 +106,15 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
         point = transformPoint(mesh,tVert,xForm)
         flatVert = FlatVert(tVert,point)
         netVert = net.addVert(flatVert)
-        #rs.AddTextDot(str(netVert),point)
         dataMap.meshVerts[tVert].append(netVert)
         netVerts.append(netVert)
         mapping[tVert]=netVert
       else:
+        #this section is important for preserving order
+        if tVert == net.flatVerts[netI].tVertIdx:
+          netVerts.append(netI)
+        elif tVert == net.flatVerts[netJ].tVertIdx:
+          netVerts.append(netJ)
         pass
   return netVerts,mapping
 

@@ -1,9 +1,4 @@
-from rhino_helpers import *
-from layout import * 
-from classes import FlatEdge,FlatVert
-from System.Diagnostics import Stopwatch
 from UnionFind import UnionFind
-
 
 def segmentIsland(flatFaces,island):
   sets = UnionFind(True)
