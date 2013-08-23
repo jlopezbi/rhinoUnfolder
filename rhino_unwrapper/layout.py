@@ -42,7 +42,8 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
     netI = mapping[meshI]
     netJ = mapping[meshJ]
     flatEdge = FlatEdge(edge,netI,netJ) 
-    flatEdge.fromFace = basisInfo[0]
+    flatEdge.fromFace = basisInfo[0] #since faces have direct mapping this fromFace corresponds
+                                     #to both the netFace and meshFace
     
     if edge in foldList:
       if not alreadyBeenPlaced(edge,dataMap.meshEdges):
@@ -67,13 +68,18 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
 
       elif len(dataMap.meshEdges[edge])==1:
         flatEdge.type = "cut"
-        flatEdge.hasTab = True
-        flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
-        flatEdge.setTabSide(net)
+        
+        #flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
+        #flatEdge.setTabSide(net)
+        if flatEdge.getTabFaceCenter(mesh,basisInfo[0],xForm):
+          flatEdge.hasTab = True
+        
         netEdge = net.addEdge(flatEdge)
         dataMap.updateEdgeMap(edge,netEdge)
         sibling = dataMap.getSiblingNetEdge(edge,netEdge)
         net.flatEdges[sibling].type = "cut" #make sure to set both edges to cut 
+        net.flatEdges[sibling].pair = netEdge
+        net.flatEdges[netEdge].pair = sibling
   return net,dataMap
 
 
@@ -92,9 +98,7 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
 
   if hopEdge!=None:
     netI,netJ = [hopEdge.I,hopEdge.J]
-    #hopNetVerts = [netI,netJ]
     hopMeshVerts = [net.flatVerts[netI].tVertIdx,net.flatVerts[netJ].tVertIdx]
-    #netVerts.extend(hopNetVerts)
     mapping[hopMeshVerts[0]] = netI
     mapping[hopMeshVerts[1]] = netJ
 

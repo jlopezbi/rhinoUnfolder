@@ -74,6 +74,8 @@ class Net():
     newFlatEdge = FlatEdge(meshEdge,newVertI,newVertJ)
     newFlatEdge.fromFace = face
     newFlatEdge.type = 'cut'
+    #newFlatEdge.hasTab = True
+    #TODO: need to set tab angles or something. NOTE: .fromFace and .toFace of flatEdge referes to a MESH face!!
     netEdge = self.addEdge(newFlatEdge)
     dataMap.updateEdgeMap(meshEdge,netEdge)
 
@@ -109,7 +111,6 @@ class Net():
         verts.insert(index,newVertJ) #does order matter? yes
         verts.pop(index+1)
 
-
   def resetEdges(self,mesh,dataMap,changedVertPairs,segment):
     #REPLACE: if using he-mesh then this will be unnecessary
     for pair in changedVertPairs:
@@ -132,7 +133,6 @@ class Net():
       return
     leader = self.leaders[member]
     return self.groups[leader]
-
 
   def updateIslands(self,newGroups,newLeaders,face):
     #get rid of old island

@@ -72,7 +72,6 @@ def getUserCuts(display=True):
 
   return cuts
 
-
 def getMeshEdge(message,isChain,angle):
   ge = Rhino.Input.Custom.GetObject()
   ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
@@ -115,7 +114,6 @@ def getMeshEdge(message,isChain,angle):
 
   return (edgeIdx,isChain,angle,mesh)
 #or do a while loop with options - select single edge - select edge
-
 
 def GetEdgeIdx(objref):
   # Rhino.DocObjects.ObjRef .GeometryComponentIndex to Rhino.Geometry.ComponentIndex

@@ -90,9 +90,10 @@ def drawPolyline(points,color,arrowType):
   poly_id = scriptcontext.doc.Objects.AddPolyline(polyline,attr)
   return poly_id,polyline
 
-def drawLine(points,color,arrowType):
+def drawLine(points,color,arrowType,line=None):
   #points must be Point3d
-  line = Rhino.Geometry.Line(points[0],points[1])
+  if len(points)!=0:
+    line = Rhino.Geometry.Line(points[0],points[1])
   attrCol = setAttrColor(color[0],color[1],color[2],color[3])
   if arrowType:
     attrCol = setAttrArrow(attrCol,arrowType)

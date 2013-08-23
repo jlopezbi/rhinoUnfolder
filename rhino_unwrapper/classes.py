@@ -27,14 +27,21 @@ class FlatEdge():
     self.line_id = None
     self.geom = []
     self.type = None
-    self.fromFace = None
+    self.fromFace = None #faces have direct mapping (this is netFace and meshFace)
     self.toFace = None
 
-    self.tabOnLeft = False
+    '''JOINERY'''
+    self.tabOnLeft = None #important for general joinery drawing
+    
+    '''Tabs'''
     self.hasTab = False
     self.tabFaceCenter = None
     self.tabAngles = []
     self.tabWidth = .2 #could be standard, or based on face area
+
+    '''Holes'''
+    self.distI = None
+    self.distJ = None
 
   def reset(self,oldVert,newVert):
     if self.I==oldVert:
@@ -59,8 +66,9 @@ class FlatEdge():
   def getTVerts(self,mesh):
     return getTVertsForEdge(mesh,self.edgeIdx)
 
-  def drawEdgeLine(self,flatVerts):
+  '''DRAWING'''
 
+  def drawEdgeLine(self,flatVerts):
     if self.type != None:
       if self.type == 'fold':
         color = (0,49,224,61) #green
@@ -73,10 +81,15 @@ class FlatEdge():
       points = self.getCoordinates(flatVerts)
       if self.line_id!=None:
         scriptcontext.doc.Objects.Delete(self.line_id,True)
-      line_id,line = drawLine(points,color,'None') #EndArrowhead
+      line_id,line = drawLine(points,color,'EndArrowhead') #EndArrowhead StartArrowhead
       self.line_id = line_id
       self.line = line
     return line_id
+
+  def getEdgeVec(self,flatVerts):
+    pointI = flatVerts[self.I].point
+    pointJ = flatVerts[self.J].point
+    return Rhino.Geometry.Vector3d(pointJ-pointI)
 
   def resetFromFace(self,face):
     if self.fromFace==face:
@@ -102,6 +115,7 @@ class FlatEdge():
       netVertJ.translate(xForm)
       movedNetVerts.append(netVertJ)
 
+  '''JOINERY'''
   def drawTab(self,flatVerts):
     '''outputs guid for polyline'''
     if len(self.geom)>0:
@@ -155,6 +169,48 @@ class FlatEdge():
     self.geom.append(polyGuid)
     return polyGuid
 
+  def drawHoles(self,flatFaces):
+    pass
+
+  def assignHoleDistances(self,net):
+    if self.distI==None and self.distJ==None:
+      pair = net.flatEdges[self.pair]
+      distsA = pair.getHoleDistances(net)
+      distsB = self.getHoleDistances(net)
+      distI = max(distsA[0],distsB[0])
+      distJ = max(distsA[1],distsB[1])
+      
+      pair.distI = distI
+      pair.distJ = distJ
+      self.distI = distI
+      self.distJ = distJ
+
+  def getHoleDistances(self,net):
+    axis = Rhino.Geometry.Vector3d(0.0,0.0,1.0) #assumes laying-out in xy plane
+    point = self.getFacePoint(net.flatVerts,net.flatFaces)
+    edgeOffset = self.offset(edgeVec,point)
+
+  def getOffsetLine(self,flatVerts,facePoint,axis,distance):
+    '''return a line which is offset from the edge by the distance specified
+    the line is on the inside of the face 
+    '''
+    edgeVec = self.getEdgeVec(flatVerts)
+    edgeVecChange = Rhino.Geometry.Vector3d(edgeVec) 
+    edgeVecChange.Unitize()
+    tabOnLeft = self.setTabSide(facePoint,flatVerts)
+    if tabOnLeft:
+      edgeVecChange.Rotate(-math.pi/2.0,axis)
+    else:
+      edgeVecChange.Rotate(math.pi/2.0,axis)
+    offsetVec = Rhino.Geometry.Vector3d.Multiply(edgeVecChange,distance)
+    offsetPoint = Rhino.Geometry.Point3d(offsetVec)
+    point = offsetPoint+flatVerts[self.I].point
+    return Rhino.Geometry.Line(point,edgeVec)
+
+
+  def getFacePoint(self,flatVerts,flatFaces):
+    return flatFaces[self.fromFace].getCenterPoint(flatVerts)
+
   def clearAllGeom(self):
     '''
     note: clear self.geom and self.line_id ?
@@ -177,6 +233,8 @@ class FlatEdge():
     return Rhino.Geometry.Point3f(x,y,z)
 
   def getFaceFromPoint(self,net,point):
+    '''return the face that corresponds to the point
+    '''
     #TODO: fails for horizontal lines :(
     assert(self.type =='fold')
     faceA = self.fromFace
@@ -201,18 +259,20 @@ class FlatEdge():
     if not testPoint:
       return -1
     return self.testPointIsLeft(testPoint,net.flatVerts)
-    
   
-  def setTabSide(self,net):
+  def setTabSide(self,facePoint,flatVerts):
     '''
-    occurs during LAYOUT
+    occurs affter complete layout
     '''
-  
-    testPoint = net.flatVerts[self.getNeighborFlatVert(net)].point
-    if self.testPointIsLeft(testPoint,net.flatVerts):
-      self.tabOnLeft = False
+    if self.tabOnLeft == None:
+      #testPoint = net.flatVerts[self.getNeighborFlatVert(net)].point
+      if self.testPointIsLeft(facePoint,flatVerts):
+        self.tabOnLeft = False
+      else:
+        self.tabOnLeft = True
+      return self.tabOnLeft
     else:
-      self.tabOnLeft = True
+      return self.tabOnLeft
 
   def testPointIsLeft(self,testPoint,flatVerts):
     '''
@@ -243,7 +303,19 @@ class FlatEdge():
     neighbors = list(tVertsFace-tVertsEdge)
     return neighbors[0] #arbitrarily return first tVert
 
+  def getTabFaceCenter(self,mesh,currFace,xForm):
+    otherFace = getOtherFaceIdx(self.edgeIdx,currFace,mesh)
+    if otherFace!=None:
+      faceCenter = mesh.Faces.GetFaceCenter(otherFace)
+      faceCenter.Transform(xForm)
+      self.tabFaceCenter = faceCenter
+    if self.tabFaceCenter==None:
+      return False
+    else:
+      return True
+
   def getTabAngles(self,mesh,currFaceIdx,xForm):
+    #WORKING AWAY FROM THIS: data is implicit in tabFaceCenter
     edge = self.edgeIdx
     otherFace = getOtherFaceIdx(edge,currFaceIdx,mesh)
 
@@ -291,7 +363,7 @@ class FlatFace():
   def __init__(self,_vertices,_fromFace):
     self.vertices = _vertices # a list of netVerts
     self.fromFace = _fromFace
-
+    self.centerPoint = None
 
   def getFlatVerts(self,flatVerts):
     collection = []
@@ -304,18 +376,19 @@ class FlatFace():
     return flatVerts[tVert][self.vertices[tVert]]
 
   def getCenterPoint(self,flatVerts):
-    flatVerts = self.getFlatVerts(flatVerts)
-    nVerts = len(self.vertices)
-    sumX = 0.0
-    sumY = 0.0
-    for flatVert in flatVerts:
-      point = flatVert.point
-      sumX += point.X
-      sumY += point.Y
-    x = sumX/nVerts
-    y = sumY/nVerts
-    self.centerPoint = Rhino.Geometry.Point3d(x,y,0.0)
-    return (x,y)
+    if self.centerPoint==None:
+      flatVerts = self.getFlatVerts(flatVerts)
+      nVerts = len(self.vertices)
+      sumX = 0.0
+      sumY = 0.0
+      for flatVert in flatVerts:
+        point = flatVert.point
+        sumX += point.X
+        sumY += point.Y
+      x = sumX/nVerts
+      y = sumY/nVerts
+      self.centerPoint = Rhino.Geometry.Point3d(x,y,0.0)
+    return self.centerPoint
 
   def draw(self,flatVerts):
     points = [flatVerts[i].point for i in self.vertices]
