@@ -81,7 +81,7 @@ class FlatEdge():
       points = self.getCoordinates(flatVerts)
       if self.line_id!=None:
         scriptcontext.doc.Objects.Delete(self.line_id,True)
-      line_id,line = drawLine(points,color,'EndArrowhead') #EndArrowhead StartArrowhead
+      line_id,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
       self.line_id = line_id
       self.line = line
     return line_id
@@ -185,27 +185,13 @@ class FlatEdge():
       self.distI = distI
       self.distJ = distJ
 
-  def getHoleDistances(self,net):
+  def getHoleDistances(self,net,connectorDist,safetyRadius):
+    '''
+    get the two distances for a given edge
+    '''
     axis = Rhino.Geometry.Vector3d(0.0,0.0,1.0) #assumes laying-out in xy plane
     point = self.getFacePoint(net.flatVerts,net.flatFaces)
-    edgeOffset = self.offset(edgeVec,point)
-
-  def getOffsetLine(self,flatVerts,facePoint,axis,distance):
-    '''return a line which is offset from the edge by the distance specified
-    the line is on the inside of the face 
-    '''
-    edgeVec = self.getEdgeVec(flatVerts)
-    edgeVecChange = Rhino.Geometry.Vector3d(edgeVec) 
-    edgeVecChange.Unitize()
-    tabOnLeft = self.setTabSide(facePoint,flatVerts)
-    if tabOnLeft:
-      edgeVecChange.Rotate(-math.pi/2.0,axis)
-    else:
-      edgeVecChange.Rotate(math.pi/2.0,axis)
-    offsetVec = Rhino.Geometry.Vector3d.Multiply(edgeVecChange,distance)
-    offsetPoint = Rhino.Geometry.Point3d(offsetVec)
-    point = offsetPoint+flatVerts[self.I].point
-    return Rhino.Geometry.Line(point,edgeVec)
+    edgeOffset = self.getOffsetLine(net.flatVerts,point,axis,connectorDist)
 
 
   def getFacePoint(self,flatVerts,flatFaces):

@@ -19,8 +19,6 @@ def convertArray(array):
     pyList.append(array.GetValue(i))
   return pyList
 
-
-
 def getOtherFaceIdx(edgeIdx,faceIdx,mesh):
   connectedFaces = getFacesForEdge(mesh,edgeIdx)
   assert(faceIdx in connectedFaces),"faceIdx not in faces associated with edge"
@@ -186,6 +184,15 @@ def compareEdgeAngle(mesh,edge,tVert,neighEdge):
   angle = Rhino.Geometry.Vector3d.VectorAngle(vecBase,vecCompare)
   return angle
 
+def getEdgeLengths(mesh):
+  edgeLens = []
+  for i in range(mesh.TopologyEdges.Count):
+    edgeLine = mesh.TopologyEdges.EdgeLine(i)
+    edgeLen = edgeLine.Length
+    edgeLens.append(edgeLen)
+  return edgeLens
+
+
 '''FACE INFO'''
 def getTVertsForFace(mesh,faceIdx):
   '''
@@ -199,18 +206,52 @@ def getFaceEdges(faceIdx,mesh):
   arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
   return convertArray(arrFaceEdges)
 
+'''MESH INFO'''
+
 def getMedianEdgeLen(mesh):
   edgeLens = getEdgeLengths(mesh)
   return getMedian(edgeLens)
 
-def getEdgeLengths(mesh):
-  edgeLens = []
-  for i in range(mesh.TopologyEdges.Count):
-    edgeLine = mesh.TopologyEdges.EdgeLine(i)
-    edgeLen = edgeLine.Length
-    edgeLens.append(edgeLen)
-  return edgeLens
+'''UNCATEGORIZED'''
 
+def getOffset(points,testPoint,distance,towards,axis=(0,0,1)):
+  '''
+  points = list of two Point3d points making up the line to be offset
+  testPoint = point which determines which side to offset
+  distance = distance to offset
+  towards = boolean, determine if offset should be towards testPoint or away
+  axis = axis about which to rotate
+  ouput:
+    returns a Rhino.Geometry.Line() object
+  '''
+  axisVec = Rhino.Geometry.Vector3d(axis[0],axis[1],axis[2])
+  vec = Rhino.Geometry.Vector3d(points[1]-points[0])
+  vecChange = Rhino.Geometry.Vector3d(vec)
+  vecChange.Unitize()
+  onLeft = testPointIsLeftB(points[0],points[1],testPoint)
+  angle = math.pi/2.0 # default is (+) to the left
+  if not onLeft:
+    angle = -1.0*angle
+  if not towards:
+    angle = -1.0*angle
+  vecChange.Rotate(angle,axisVec)
+  offsetVec = Rhino.Geometry.Vector3d.Multiply(vecChange,distance)
+  offsetPoint = Rhino.Geometry.Point3d(offsetVec)
+  point = offsetPoint+points[0]
+  return Rhino.Geometry.Line(point,vec)
+
+def testPointIsLeftB(pointA,pointB,testPoint):
+  '''
+  ASSUMES: in XY plane!!!
+  use cross product to see if testPoint is to the left of 
+  the directed line formed from pointA to pointB
+  returns False if co-linear.
+  '''
+  vecLine = getVectorForPoints(pointA,pointB)
+  vecTest = getVectorForPoints(pointA,testPoint)
+  cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine,vecTest)
+  z = cross.Z #(pos and neg)
+  return  z > 0 
 
 def getOrientedVector(mesh,edgeIdx,tVert,isEnd):
   '''
@@ -230,13 +271,10 @@ def getOrientedVector(mesh,edgeIdx,tVert,isEnd):
   vec = Rhino.Geometry.Vector3d(vecPnt)
   return vec
 
-
-
 def getVectorForPoints(pntA,pntB):
   vecA = Rhino.Geometry.Vector3d(pntA) #From
   vecB = Rhino.Geometry.Vector3d(pntB) #To
   return  Rhino.Geometry.Vector3d.Subtract(vecB,vecA)
-
 
 def getMidPoint(curve_id):
   '''get the midpoint of a curve
