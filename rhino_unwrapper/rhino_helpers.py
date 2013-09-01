@@ -4,6 +4,7 @@ import scriptcontext
 import System.Drawing
 import math
 
+#TODO: look into inline functions
 
 '''Rhino_helpers'''
 def createGroup(groupName,objects):

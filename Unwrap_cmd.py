@@ -13,6 +13,7 @@ def all_weight_functions():
 __commandname__ = "Unwrap"
 
 def RunCommand():
+  connectorDist,safetyRadius,holeRadius = .1,.08,.07
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
@@ -25,10 +26,7 @@ def RunCommand():
   if mesh and weightFunction:
     dataMap,net,foldList = unwrap(mesh, userCuts, weightFunction)
     net.findInitalSegments()
-    # print "groups: ",
-    # print net.groups
-    # print "leaders: ",
-    # print net.leaders
+  #Get 
 
   while True:
     flatEdge,idx,strType = getNewEdge("select new edge on net or mesh",net,dataMap)
@@ -42,7 +40,7 @@ def RunCommand():
         segment = net.findSegment(flatEdge,face)
         # print "segment: ",
         # print segment
-        net.copyAndReasign(mesh,dataMap,flatEdge,idx,segment,face)
+        net.copyAndReasign(mesh,dataMap,flatEdge,idx,segment,face,connectorDist,safetyRadius,holeRadius)
         net.translateSegment(segment,xForm)
         #net.updateCutEdge(flatEdge)
       

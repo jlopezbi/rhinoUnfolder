@@ -33,13 +33,14 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
-  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face):
+  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face,connectorDist,safetyRadius,holeRadius):
     flatEdgeCut.type = 'cut'
     flatEdgeCut.resetFromFace(face)
-    flatEdgeCut.drawEdgeLine(self.flatVerts)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
     newEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
     flatEdgeCut.pair = newEdge
+    flatEdgeCut.drawEdgeLine(self.flatVerts)
+    flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
   def translateSegment(self,segment,xForm):

@@ -219,7 +219,7 @@ class FlatEdge():
     flatFaces = net.flatFaces
     axis = Rhino.Geometry.Vector3d(0.0,0.0,1.0) #assumes laying-out in xy plane
     K = self.getFacePoint(flatVerts,flatFaces) #CenterPoint
-    #rs.AddPoint(K)
+    rs.AddPoint(K)
     I,J = self.getCoordinates(flatVerts)
     offsetLineA, vecA = getOffset((I,J),K,connectorDist,True) #EdgeOffset
     offsetLineB, vecB = getOffset((I,K),J,safetyRadius, True)
