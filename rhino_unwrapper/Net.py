@@ -33,12 +33,13 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
-  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,segment,face):
+  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face):
     flatEdgeCut.type = 'cut'
     flatEdgeCut.resetFromFace(face)
     flatEdgeCut.drawEdgeLine(self.flatVerts)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
-    self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,face)
+    newEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
+    flatEdgeCut.pair = newEdge
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
   def translateSegment(self,segment,xForm):
@@ -52,10 +53,14 @@ class Net():
     for netEdge in self.flatEdges:
       if netEdge.fromFace in segment:
         #collection.append[netEdge]
+        netEdge.clearAllGeom()
         netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
         netEdge.drawEdgeLine(self.flatVerts)
-        if netEdge.hasTab:
-          netEdge.drawTab(self.flatVerts)
+        #if netEdge.hasTab:
+        #  netEdge.drawTab(self.flatVerts)
+        if netEdge.type=='cut':
+          #TODO: perhaps user input for hole parameters?
+          netEdge.drawHoles(self,.1,.08,.07)
     #return collection
 
   def removeFaceConnection(self,flatEdgeCut):
@@ -68,16 +73,18 @@ class Net():
     elif netFaceA.fromFace==faceB:
       netFaceA.fromFace = None
 
-  def makeNewEdge(self,dataMap,changedVertPairs,meshEdge,face):
+  def makeNewEdge(self,dataMap,changedVertPairs,meshEdge,idx,face):
     newVertI = changedVertPairs[0][0]
     newVertJ = changedVertPairs[1][0]
     newFlatEdge = FlatEdge(meshEdge,newVertI,newVertJ)
     newFlatEdge.fromFace = face
     newFlatEdge.type = 'cut'
+    newFlatEdge.pair = idx
     #newFlatEdge.hasTab = True
     #TODO: need to set tab angles or something. NOTE: .fromFace and .toFace of flatEdge referes to a MESH face!!
     netEdge = self.addEdge(newFlatEdge)
     dataMap.updateEdgeMap(meshEdge,netEdge)
+    return netEdge
 
   def makeNewNetVerts(self,dataMap,flatEdgeCut):
     oldNetI,oldNetJ = flatEdgeCut.getNetVerts()
@@ -112,6 +119,9 @@ class Net():
         verts.pop(index+1)
 
   def resetEdges(self,mesh,dataMap,changedVertPairs,segment):
+    '''
+    reset all edges touching the newely added vertices
+    '''
     #REPLACE: if using he-mesh then this will be unnecessary
     for pair in changedVertPairs:
       newVert,oldVert = pair
@@ -148,9 +158,9 @@ class Net():
   '''SELECTION'''
   def getFlatEdgeForLine(self,value):
     #assert guid?
-    for flatEdge in self.flatEdges:
+    for i,flatEdge in enumerate(self.flatEdges):
       if flatEdge.line_id == value:
-        return flatEdge
+        return flatEdge,i
     return
     
   def getFlatEdge(self,netEdge):
@@ -163,9 +173,12 @@ class Net():
     collection = []
     for netEdge in self.flatEdges:
       collection.append(netEdge.drawEdgeLine(self.flatVerts))
-      if netEdge.hasTab:
-        collection.append(netEdge.drawTab(self.flatVerts))
+      if netEdge.type=='cut':
+        netEdge.drawHoles(self,.1,.08,.07)
+      #if netEdge.hasTab:
+       # collection.append(netEdge.drawTab(self.flatVerts))
     createGroup(netGroupName,collection)
+
 
   def drawFaces(self,netGroupName):
     collection = []

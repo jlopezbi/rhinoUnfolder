@@ -238,7 +238,7 @@ def getOffset(points,testPoint,distance,towards,axis=(0,0,1)):
   offsetVec = Rhino.Geometry.Vector3d.Multiply(vecChange,distance)
   offsetPoint = Rhino.Geometry.Point3d(offsetVec)
   point = offsetPoint+points[0]
-  return Rhino.Geometry.Line(point,vec)
+  return Rhino.Geometry.Line(point,vec),offsetVec
 
 def testPointIsLeftB(pointA,pointB,testPoint):
   '''

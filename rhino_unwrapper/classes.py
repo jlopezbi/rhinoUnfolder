@@ -169,29 +169,84 @@ class FlatEdge():
     self.geom.append(polyGuid)
     return polyGuid
 
-  def drawHoles(self,flatFaces):
-    pass
+  def drawHoles(self,net,connectorDist,safetyRadius,holeRadius):
+    self.assignHolePoints(net,connectorDist,safetyRadius)
+    pointI,pointJ = self.getHolePoints(net.flatVerts)
 
-  def assignHoleDistances(self,net):
+    circleI = Rhino.Geometry.Circle(pointI,holeRadius)
+    guidI = scriptcontext.doc.Objects.AddCircle(circleI)
+
+    circleJ = Rhino.Geometry.Circle(pointJ,holeRadius)
+    guidJ = scriptcontext.doc.Objects.AddCircle(circleJ)
+    self.geom.extend((guidI,guidJ))
+
+  def getHolePoints(self,flatVerts):
+    #TODO: replace this with less redundant version (iterate trhough points)
+    vecI = self.getEdgeVec(flatVerts)
+    vecI.Unitize()
+    vecI = vecI*self.distI
+    pointI = (flatVerts[self.I].point+vecI)
+    pointI = pointI+self.holeVec
+
+    vecJ = -1*self.getEdgeVec(flatVerts)
+    vecJ.Unitize()
+    vecJ = vecJ*self.distJ
+    pointJ = (flatVerts[self.J].point+vecJ)
+    pointJ = pointJ+self.holeVec
+    return (pointI,pointJ)
+
+  def assignHolePoints(self,net,connectorDist,safetyRadius):
     if self.distI==None and self.distJ==None:
       pair = net.flatEdges[self.pair]
-      distsA = pair.getHoleDistances(net)
-      distsB = self.getHoleDistances(net)
+      distsA = pair.getHoleDistances(net,connectorDist,safetyRadius)
+      distsB = self.getHoleDistances(net,connectorDist,safetyRadius)
       distI = max(distsA[0],distsB[0])
       distJ = max(distsA[1],distsB[1])
       
       pair.distI = distI
       pair.distJ = distJ
+      pair.holeVec = distsA[2]
       self.distI = distI
       self.distJ = distJ
+      self.holeVec = distsB[2]
 
   def getHoleDistances(self,net,connectorDist,safetyRadius):
     '''
-    get the two distances for a given edge
+    get the two distances for a given edge by interescting the offset lines
+    from the edge line and the two lines formed from the edgePoints to faceCenter
     '''
+    flatVerts = net.flatVerts
+    flatFaces = net.flatFaces
     axis = Rhino.Geometry.Vector3d(0.0,0.0,1.0) #assumes laying-out in xy plane
-    point = self.getFacePoint(net.flatVerts,net.flatFaces)
-    edgeOffset = self.getOffsetLine(net.flatVerts,point,axis,connectorDist)
+    K = self.getFacePoint(flatVerts,flatFaces) #CenterPoint
+    #rs.AddPoint(K)
+    I,J = self.getCoordinates(flatVerts)
+    offsetLineA, vecA = getOffset((I,J),K,connectorDist,True) #EdgeOffset
+    offsetLineB, vecB = getOffset((I,K),J,safetyRadius, True)
+    offsetLineC, vecC = getOffset((J,K),I,safetyRadius, True)
+      
+    rcI,aI,bI = Rhino.Geometry.Intersect.Intersection.LineLine(offsetLineA,offsetLineB)
+    if not rcI:
+      print "No Intersection found for first chordB"
+      return Rhino.Commands.Result.Nothing
+    rcJ,aJ,bJ = Rhino.Geometry.Intersect.Intersection.LineLine(offsetLineA,offsetLineC)
+    if not rcJ:
+      print "No Intersection found for second chordC"
+      return Rhino.Commands.Result.Nothing
+    pointI = offsetLineA.PointAt(aI)
+    pointJ = offsetLineA.PointAt(aJ)
+    #rs.AddPoint(pointI)
+    #rs.AddPoint(pointJ)
+    if self.line==None:
+      self.line = Rhino.Geometry.Line(I,J)
+    pntOnEdgeI = self.line.ClosestPoint(pointI,True)
+    pntOnEdgeJ = self.line.ClosestPoint(pointJ,True)
+    #rs.AddPoint(pntOnEdgeI)
+    #rs.AddPoint(pntOnEdgeJ)
+    distI = pntOnEdgeI.DistanceTo(I)
+    distJ = pntOnEdgeJ.DistanceTo(J)
+    return (distI,distJ,vecA) #vecA will be used to place actually hole
+
 
 
   def getFacePoint(self,flatVerts,flatFaces):

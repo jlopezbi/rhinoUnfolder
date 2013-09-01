@@ -17,7 +17,7 @@ def getNewEdge(message,net,dataMap):
 
   if ge.CommandResult() != Rhino.Commands.Result.Success:
     print('failed to get mesh edge or curve in getNewCut')
-    return None, 'exit'
+    return None, None, 'exit'
 
   objRef = ge.Object(0)
   curve = objRef.Curve()
@@ -26,11 +26,11 @@ def getNewEdge(message,net,dataMap):
   if curve:
     print("selected a curve:")
     curve_id = objRef.ObjectId
-    flatEdge = net.getFlatEdgeForLine(curve_id)
+    flatEdge,idx = net.getFlatEdgeForLine(curve_id)
     if flatEdge:
       print(" corresponding to mesh edge " +str(flatEdge.edgeIdx))
 
-      return flatEdge,flatEdge.type
+      return flatEdge,idx,flatEdge.type
     else:
       print(" not corresponding to a mesh edge")
 
@@ -39,8 +39,9 @@ def getNewEdge(message,net,dataMap):
     edgeIdx = GetEdgeIdx(objRef)
     #print("selected mesh edge "+str(edgeIdx))
     flatEdge = None #in this case there could be multiple flat edges
+    return edgeIdx,flatEdge,flatEdge
 
-    return flatEdge,flatEdge.type
+  return flatEdge,idx,flatEdge.type
 
 def getUserCuts(display=True):
   cuts = []
