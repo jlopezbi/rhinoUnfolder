@@ -174,11 +174,22 @@ class FlatEdge():
     pointI,pointJ = self.getHolePoints(net.flatVerts)
 
     circleI = Rhino.Geometry.Circle(pointI,holeRadius)
-    guidI = scriptcontext.doc.Objects.AddCircle(circleI)
-
     circleJ = Rhino.Geometry.Circle(pointJ,holeRadius)
-    guidJ = scriptcontext.doc.Objects.AddCircle(circleJ)
-    self.geom.extend((guidI,guidJ))
+    curveI = Rhino.Geometry.ArcCurve(circleI)
+    curveJ = Rhino.Geometry.ArcCurve(circleJ)
+    tolerance = .001
+    plane = Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0),Rhino.Geometry.Vector3d(0,0,1))
+    relation = Rhino.Geometry.Curve.PlanarClosedCurveRelationship(curveI,curveJ,plane,tolerance)
+    if relation==Rhino.Geometry.RegionContainment.Disjoint:
+      guidI = scriptcontext.doc.Objects.AddCircle(circleI)
+      guidJ = scriptcontext.doc.Objects.AddCircle(circleJ)
+      self.geom.extend((guidI,guidJ))
+    elif relation==Rhino.Geometry.RegionContainment.MutualIntersection:
+      #only add I circle
+      guid = scriptcontext.doc.Objects.AddCircle(circleI)
+      self.geom.append(guid)
+
+    
 
   def getHolePoints(self,flatVerts):
     #TODO: replace this with less redundant version (iterate trhough points)
