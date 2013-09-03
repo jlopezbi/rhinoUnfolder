@@ -175,8 +175,11 @@ class FlatEdge():
 
     circleI = Rhino.Geometry.Circle(pointI,holeRadius)
     circleJ = Rhino.Geometry.Circle(pointJ,holeRadius)
-    curveI = Rhino.Geometry.ArcCurve(circleI)
-    curveJ = Rhino.Geometry.ArcCurve(circleJ)
+    safeR = holeRadius+(safetyRadius-holeRadius)/2.0
+    circleSafeI = Rhino.Geometry.Circle(pointI,safeR)
+    circleSafeJ = Rhino.Geometry.Circle(pointJ,safeR)
+    curveI = Rhino.Geometry.ArcCurve(circleSafeI)
+    curveJ = Rhino.Geometry.ArcCurve(circleSafeJ)
     tolerance = .001
     plane = Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0),Rhino.Geometry.Vector3d(0,0,1))
     relation = Rhino.Geometry.Curve.PlanarClosedCurveRelationship(curveI,curveJ,plane,tolerance)
