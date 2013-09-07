@@ -6,7 +6,7 @@ from classes import FlatEdge
 from Map import Map
 from Net import Net
 
-def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
+def unwrap(mesh, userCuts,holeParams, weightFunction=weight_functions.edgeAngle):
   mesh.FaceNormals.ComputeFaceNormals() 
   meshDual = traversal.buildMeshGraph(mesh, userCuts, weightFunction)
   foldList = traversal.getSpanningKruskal(meshDual,mesh)
@@ -20,7 +20,7 @@ def unwrap(mesh, userCuts, weightFunction=weight_functions.edgeAngle):
   #visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
 
   netGroupName = "net1"
-  net.drawEdges(netGroupName)
+  net.drawEdges(netGroupName,holeParams)
   #net.drawHoles(netGroupName)
   #net.drawFaces(netGroupName)
 

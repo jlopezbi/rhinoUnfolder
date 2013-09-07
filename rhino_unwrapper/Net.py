@@ -33,7 +33,8 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
-  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face,connectorDist,safetyRadius,holeRadius):
+  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face,holeParams):
+    connectorDist,safetyRadius,holeRadius = holeParams
     flatEdgeCut.type = 'cut'
     flatEdgeCut.resetFromFace(face)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
@@ -170,12 +171,13 @@ class Net():
     
 
   '''DRAWING'''
-  def drawEdges(self,netGroupName):
+  def drawEdges(self,netGroupName,holeParams):
+    connectorDist,safetyRadius,holeRadius = holeParams
     collection = []
     for netEdge in self.flatEdges:
       collection.append(netEdge.drawEdgeLine(self.flatVerts))
       if netEdge.type=='cut':
-        netEdge.drawHoles(self,.1,.08,.07)
+        netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
       #if netEdge.hasTab:
        # collection.append(netEdge.drawTab(self.flatVerts))
     createGroup(netGroupName,collection)

@@ -80,9 +80,7 @@ def setAttrArrow(attr,strType):
   attr.ObjectDecoration = value
   return attr
 
-def drawPolyline(points,color,arrowType):
-  '''points = list of Point3d objects'''
-  polyline = Rhino.Geometry.Polyline(points)
+def drawPolyline(polyline,color,arrowType):
   attr = setAttrColor(color[0],color[1],color[2],color[3])
   if arrowType:
     attr = setAttrArrow(attr,arrowType)

@@ -171,42 +171,48 @@ class FlatEdge():
 
   def drawHoles(self,net,connectorDist,safetyRadius,holeRadius):
     self.assignHolePoints(net,connectorDist,safetyRadius)
-    pointI,pointJ = self.getHolePoints(net.flatVerts)
-
-    circleI = Rhino.Geometry.Circle(pointI,holeRadius)
-    circleJ = Rhino.Geometry.Circle(pointJ,holeRadius)
+    points = self.getHolePoints(net.flatVerts)
     safeR = holeRadius+(safetyRadius-holeRadius)/2.0
-    circleSafeI = Rhino.Geometry.Circle(pointI,safeR)
-    circleSafeJ = Rhino.Geometry.Circle(pointJ,safeR)
-    curveI = Rhino.Geometry.ArcCurve(circleSafeI)
-    curveJ = Rhino.Geometry.ArcCurve(circleSafeJ)
-    tolerance = .001
-    plane = Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0),Rhino.Geometry.Vector3d(0,0,1))
-    relation = Rhino.Geometry.Curve.PlanarClosedCurveRelationship(curveI,curveJ,plane,tolerance)
-    if relation==Rhino.Geometry.RegionContainment.Disjoint:
-      guidI = scriptcontext.doc.Objects.AddCircle(circleI)
-      guidJ = scriptcontext.doc.Objects.AddCircle(circleJ)
-      self.geom.extend((guidI,guidJ))
-    elif relation==Rhino.Geometry.RegionContainment.MutualIntersection:
-      #only add I circle
-      guid = scriptcontext.doc.Objects.AddCircle(circleI)
+    geom = [[0,0],[0,0]]
+    for i, point in enumerate(points):
+      if point!=None:
+        geom[i][0] = Rhino.Geometry.Circle(point,holeRadius)
+        circleSafe = Rhino.Geometry.Circle(point,safeR)
+        geom[i][1] = Rhino.Geometry.ArcCurve(circleSafe)
+    if geom[0][0]!=0 and geom[1][0]!=0:
+      tolerance = .001
+      plane = Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0),Rhino.Geometry.Vector3d(0,0,1))
+      relation = Rhino.Geometry.Curve.PlanarClosedCurveRelationship(geom[0][1],geom[1][1],plane,tolerance)
+      if relation==Rhino.Geometry.RegionContainment.Disjoint:
+        guidI = scriptcontext.doc.Objects.AddCircle(geom[0][0])
+        guidJ = scriptcontext.doc.Objects.AddCircle(geom[1][0])
+        self.geom.extend((guidI,guidJ))
+      elif relation==Rhino.Geometry.RegionContainment.MutualIntersection:
+        #only add I circle
+        guid = scriptcontext.doc.Objects.AddCircle(geom[0][0])
+        self.geom.append(guid)
+    elif geom[0][0]!=0:
+      guid = scriptcontext.doc.Objects.AddCircle(geom[0][0])
       self.geom.append(guid)
-
-    
+    elif geom[1][0]!=0:
+      guid = scriptcontext.doc.Objects.AddCircle(geom[1][0])
+      self.geom.append(guid)
 
   def getHolePoints(self,flatVerts):
     #TODO: replace this with less redundant version (iterate trhough points)
-    vecI = self.getEdgeVec(flatVerts)
-    vecI.Unitize()
-    vecI = vecI*self.distI
-    pointI = (flatVerts[self.I].point+vecI)
-    pointI = pointI+self.holeVec
-
-    vecJ = -1*self.getEdgeVec(flatVerts)
-    vecJ.Unitize()
-    vecJ = vecJ*self.distJ
-    pointJ = (flatVerts[self.J].point+vecJ)
-    pointJ = pointJ+self.holeVec
+    pointI,pointJ = (None,None)
+    if self.distI!=-1:
+      vecI = self.getEdgeVec(flatVerts)
+      vecI.Unitize()
+      vecI = vecI*self.distI
+      pointI = (flatVerts[self.I].point+vecI)
+      pointI = pointI+self.holeVec
+    if self.distJ!=-1:  
+      vecJ = -1*self.getEdgeVec(flatVerts)
+      vecJ.Unitize()
+      vecJ = vecJ*self.distJ
+      pointJ = (flatVerts[self.J].point+vecJ)
+      pointJ = pointJ+self.holeVec
     return (pointI,pointJ)
 
   def assignHolePoints(self,net,connectorDist,safetyRadius):
@@ -249,22 +255,41 @@ class FlatEdge():
       return Rhino.Commands.Result.Nothing
     pointI = offsetLineA.PointAt(aI)
     pointJ = offsetLineA.PointAt(aJ)
-    #rs.AddPoint(pointI)
-    #rs.AddPoint(pointJ)
-    if self.line==None:
-      self.line = Rhino.Geometry.Line(I,J)
-    pntOnEdgeI = self.line.ClosestPoint(pointI,True)
-    pntOnEdgeJ = self.line.ClosestPoint(pointJ,True)
+    #CHECK IF POINTS ARE WITHIN THAT FACE
+    if self.line==None: self.line = Rhino.Geometry.Line(I,J)
+
+    if not self.inFace(flatVerts,flatFaces,pointI):
+      distI = -1
+    else:
+      pntOnEdgeI = self.line.ClosestPoint(pointI,True)
+      distI = pntOnEdgeI.DistanceTo(I)
+
+    if not self.inFace(flatVerts,flatFaces,pointJ):
+      distJ = -1
+    else:
+      pntOnEdgeJ = self.line.ClosestPoint(pointJ,True)
+      distJ = pntOnEdgeJ.DistanceTo(J)    
     #rs.AddPoint(pntOnEdgeI)
     #rs.AddPoint(pntOnEdgeJ)
-    distI = pntOnEdgeI.DistanceTo(I)
-    distJ = pntOnEdgeJ.DistanceTo(J)
     return (distI,distJ,vecA) #vecA will be used to place actually hole
-
-
 
   def getFacePoint(self,flatVerts,flatFaces):
     return flatFaces[self.fromFace].getCenterPoint(flatVerts)
+
+  def inFace(self,flatVerts,flatFaces,point):
+    polylineCurve = flatFaces[self.fromFace].getPolylineCurve(flatVerts)
+    relationship = polylineCurve.Contains(point)
+    if Rhino.Geometry.PointContainment.Unset==relationship:
+      print "curve was not closed, relationship meaningless"
+      return
+    elif Rhino.Geometry.PointContainment.Inside==relationship:
+      return True
+    elif Rhino.Geometry.PointContainment.Outside==relationship:
+      return False
+    else:
+      #coincident, still leads to bad condition for holes
+      return False
+
 
   def clearAllGeom(self):
     '''
@@ -446,13 +471,21 @@ class FlatFace():
     return self.centerPoint
 
   def draw(self,flatVerts):
+    polyline = self.getPolyline(flatVerts)
+    #remove 'EndArrowhead' to stop displaying orientatio of face
+    poly_id,polyline = drawPolyline(polyline,[0,0,0,0],'EndArrowhead')
+    self.poly_id = poly_id
+    self.polyline = polyline
+
+  def getPolyline(self,flatVerts):
     points = [flatVerts[i].point for i in self.vertices]
     #add first vert to end to make closed
     points.append(flatVerts[self.vertices[0]].point) 
-    #remove 'EndArrowhead' to stop displaying orientatio of face
-    poly_id,polyline = drawPolyline(points,[0,0,0,0],'EndArrowhead')
-    self.poly_id = poly_id
-    self.polyline = polyline
+    return Rhino.Geometry.Polyline(points)
+
+  def getPolylineCurve(self,flatVerts):
+    polyline = self.getPolyline(flatVerts)
+    return Rhino.Geometry.PolylineCurve(polyline)
 
   def drawInnerface(self,flatVerts,ratio=.33):
     '''draw a inset face'''
