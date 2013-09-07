@@ -135,7 +135,7 @@ def getTangentEdge(mesh,edge,tVert,angleTolerance,chain):
   of the edges are within angleTolerance
   '''
   edges = getEdgesForVert(mesh,tVert)
-  edges.remove(edge)
+  if edge in edges: edges.remove(edge)
   winEdge = (None,angleTolerance)
   for neighEdge in edges:
     angle  = compareEdgeAngle(mesh,edge,tVert,neighEdge)

@@ -29,6 +29,7 @@ class FlatEdge():
     self.type = None
     self.fromFace = None #faces have direct mapping (this is netFace and meshFace)
     self.toFace = None
+    self.angle = None
 
     '''JOINERY'''
     self.tabOnLeft = None #important for general joinery drawing
@@ -66,12 +67,30 @@ class FlatEdge():
   def getTVerts(self,mesh):
     return getTVertsForEdge(mesh,self.edgeIdx)
 
+  def getMeshAngle(self,mesh):
+    '''get angle of the corresponding mesh edge'''
+    if self.angle==None:
+      edge = self.edgeIdx
+      faceIdxs = getFacesForEdge(mesh, edge)
+      if (len(faceIdxs)==2):
+        faceNorm0 = mesh.FaceNormals.Item[faceIdxs[0]]
+        faceNorm1 = mesh.FaceNormals.Item[faceIdxs[1]]
+        self.angle = Rhino.Geometry.Vector3d.VectorAngle(faceNorm0,faceNorm1) 
+        return self.angle
+      else:
+        return None
+    else:
+      return self.angle
+
   '''DRAWING'''
 
-  def drawEdgeLine(self,flatVerts):
+  def drawEdgeLine(self,flatVerts,angleThresh,mesh):
     if self.type != None:
       if self.type == 'fold':
-        color = (0,49,224,61) #green
+        if self.getMeshAngle(mesh)>=angleThresh:
+          color = (0,49,224,61) #green
+        else:
+          color = (0,161,176,181) #bluegreyish for no crease lines
       elif self.type == 'cut':
         color = (0,237,43,120) #red
         if self.hasTab:
@@ -289,7 +308,6 @@ class FlatEdge():
     else:
       #coincident, still leads to bad condition for holes
       return False
-
 
   def clearAllGeom(self):
     '''

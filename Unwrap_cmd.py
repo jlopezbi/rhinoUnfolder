@@ -13,7 +13,7 @@ def all_weight_functions():
 __commandname__ = "Unwrap"
 
 def RunCommand():
-  connectorDist,safetyRadius,holeRadius = (.3,.3/2.0,.12/2.0)
+  connectorDist,safetyRadius,holeRadius = (.235,.3/2.0,.12/2.0)
   holeParams = (connectorDist,safetyRadius,holeRadius)
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return

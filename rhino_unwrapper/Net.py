@@ -2,12 +2,15 @@ from segmentation import segmentIsland
 from rhino_helpers import createGroup,getEdgesForVert
 from classes import FlatVert,FlatEdge
 import Rhino
+import math
 
 class Net():
   def __init__(self,mesh):
     self.flatVerts = []
     self.flatEdges = []
     self.flatFaces = [None]*mesh.Faces.Count
+    self.angleThresh = math.radians(4)
+    self.mesh = mesh
 
     #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
     
@@ -40,7 +43,7 @@ class Net():
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
     newEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
     flatEdgeCut.pair = newEdge
-    flatEdgeCut.drawEdgeLine(self.flatVerts)
+    flatEdgeCut.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
     flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
@@ -57,7 +60,7 @@ class Net():
         #collection.append[netEdge]
         netEdge.clearAllGeom()
         netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
-        netEdge.drawEdgeLine(self.flatVerts)
+        netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
         #if netEdge.hasTab:
         #  netEdge.drawTab(self.flatVerts)
         if netEdge.type=='cut':
@@ -175,7 +178,7 @@ class Net():
     connectorDist,safetyRadius,holeRadius = holeParams
     collection = []
     for netEdge in self.flatEdges:
-      collection.append(netEdge.drawEdgeLine(self.flatVerts))
+      collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
       if netEdge.type=='cut':
         netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
       #if netEdge.hasTab:
