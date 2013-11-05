@@ -40,8 +40,9 @@ def RunCommand():
         segment = net.findSegment(flatEdge,face)
         # print "segment: ",
         # print segment
-        net.copyAndReasign(mesh,dataMap,flatEdge,idx,segment,face,holeParams)
-        net.translateSegment(segment,xForm)
+        net.copyAndReasign(mesh,dataMap,flatEdge,idx,segment,face)
+        translatedEdges = net.translateSegment(segment,xForm)
+        net.redrawSegment(translatedEdges)
         #net.updateCutEdge(flatEdge)
       
 

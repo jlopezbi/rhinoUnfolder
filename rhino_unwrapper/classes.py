@@ -193,6 +193,18 @@ class FlatEdge():
     self.geom.append(hole)
     return polyGuid
 
+  def drawFaceHole(self,net,holeRadius):
+    pntA,pntC = self.getCoordinates(net.flatVerts)
+    pntB = net.flatFaces[self.fromFace].getCenterPoint(net.flatVerts)
+    polyline = Rhino.Geometry.PolylineCurve([pntA,pntB,pntC,pntA])
+    props = Rhino.Geometry.AreaMassProperties.Compute(polyline)
+    centerPnt = props.Centroid
+    hole = rs.AddCircle(centerPnt,holeRadius)
+    self.geom.append(hole)
+    
+
+
+
   def drawHoles(self,net,connectorDist,safetyRadius,holeRadius):
     self.assignHoleDists(net,connectorDist,safetyRadius)
     points = self.getHolePoints(net.flatVerts)

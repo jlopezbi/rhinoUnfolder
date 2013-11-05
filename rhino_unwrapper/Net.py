@@ -37,15 +37,14 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
-  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face,holeParams):
-    connectorDist,safetyRadius,holeRadius = holeParams
+  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face):
     flatEdgeCut.type = 'cut'
     flatEdgeCut.resetFromFace(face)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
     newEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
     flatEdgeCut.pair = newEdge
     flatEdgeCut.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
-    flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
+    #flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
   def translateSegment(self,segment,xForm):
@@ -54,20 +53,25 @@ class Net():
     #stopping when the edge points to no other edge(naked),or to a face not in the segment,or
     #if the h-edge is part of the user-selected edge to be cut
     
-    #collection = []
+    collection = []
     movedNetVerts = []
     for netEdge in self.flatEdges:
       if netEdge.fromFace in segment:
-        #collection.append[netEdge]
+        collection.append(netEdge)
         netEdge.clearAllGeom()
         netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
+
         netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
-        if netEdge.hasTab:
-          netEdge.drawTab(self.flatVerts,self.holeRadius)
+        
         # if netEdge.type=='cut':
         #   #TODO: perhaps user input for hole parameters?
         #   netEdge.drawHoles(self,.1,.08,.07)
-    #return collection
+    return collection
+
+  def redrawSegment(self,translatedEdges):
+    for netEdge in translatedEdges:
+      self.drawEdge(netEdge)
+
 
   def removeFaceConnection(self,flatEdgeCut):
     faceA = flatEdgeCut.fromFace
@@ -175,15 +179,26 @@ class Net():
     
 
   '''DRAWING'''
+  def drawEdge(self,netEdge):
+    collection = []
+    collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
+    if netEdge.type=='cut':
+        if netEdge.hasTab:
+          collection.append(netEdge.drawTab(self.flatVerts,self.holeRadius))
+        else:
+          collection.append(netEdge.drawFaceHole(self,self.holeRadius))
+    return collection
+
   def drawEdges(self,netGroupName):
-  
     collection = []
     for netEdge in self.flatEdges:
-      collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
+
       #if netEdge.type=='cut':
         #netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
-      if netEdge.hasTab:
-        collection.append(netEdge.drawTab(self.flatVerts,self.holeRadius))
+
+      subCollection = self.drawEdge(netEdge)
+      for item in subCollection:
+        collection.append(item)
     createGroup(netGroupName,collection)
 
 
