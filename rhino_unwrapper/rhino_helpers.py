@@ -215,6 +215,8 @@ def getMedianEdgeLen(mesh):
 
 '''UNCATEGORIZED'''
 
+
+
 def getOffset(points,testPoint,distance,towards,axis=(0,0,1)):
   '''
   points = list of two Point3d points making up the line to be offset

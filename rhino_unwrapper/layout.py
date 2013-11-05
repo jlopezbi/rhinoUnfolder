@@ -10,12 +10,12 @@ def initBasisInfo(mesh, origin):
   initBasisInfo = (faceIdx,edgeIdx,tVertIdx)
   return initBasisInfo
 
-def layoutMesh(foldList, mesh):
+def layoutMesh(foldList, mesh,holeRadius):
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  net = Net(mesh)
+  net = Net(mesh,holeRadius)
   dataMap = Map(mesh)
   net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap)
   return net,dataMap

@@ -13,8 +13,7 @@ def all_weight_functions():
 __commandname__ = "Unwrap"
 
 def RunCommand():
-  connectorDist,safetyRadius,holeRadius = (.235,.3/2.0,.12/2.0)
-  holeParams = (connectorDist,safetyRadius,holeRadius)
+  holeRadius = 0.125/2.0
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
@@ -25,7 +24,7 @@ def RunCommand():
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
 
   if mesh and weightFunction:
-    dataMap,net,foldList = unwrap(mesh, userCuts, holeParams, weightFunction)
+    dataMap,net,foldList = unwrap(mesh, userCuts, holeRadius, weightFunction)
     net.findInitalSegments()
   #Get 
 

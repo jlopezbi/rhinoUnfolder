@@ -135,13 +135,13 @@ class FlatEdge():
       movedNetVerts.append(netVertJ)
 
   '''JOINERY'''
-  def drawTab(self,flatVerts):
+  def drawTab(self,flatVerts,holeRadius):
     '''outputs guid for polyline'''
     if len(self.geom)>0:
       for guid in self.geom:
         scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
-      return self.drawTriTab(flatVerts)
+      return self.drawTriTab(flatVerts,holeRadius)
     else:
       return self.drawQuadTab(flatVerts)
       
@@ -179,17 +179,22 @@ class FlatEdge():
     self.geom.append(polyGuid)
     return polyGuid
 
-  def drawTriTab(self,flatVerts):
+  def drawTriTab(self,flatVerts,holeRadius):
     pntA,pntC = self.getCoordinates(flatVerts)
     pntB = self.tabFaceCenter
 
     points = [pntA,pntB,pntC]
+    polyline = Rhino.Geometry.PolylineCurve([pntA,pntB,pntC,pntA])
+    props = Rhino.Geometry.AreaMassProperties.Compute(polyline)
+    centerPnt = props.Centroid
+    hole = rs.AddCircle(centerPnt,holeRadius)
     polyGuid = rs.AddPolyline(points)
     self.geom.append(polyGuid)
+    self.geom.append(hole)
     return polyGuid
 
   def drawHoles(self,net,connectorDist,safetyRadius,holeRadius):
-    self.assignHolePoints(net,connectorDist,safetyRadius)
+    self.assignHoleDists(net,connectorDist,safetyRadius)
     points = self.getHolePoints(net.flatVerts)
     safeR = holeRadius+(safetyRadius-holeRadius)/2.0
     geom = [[0,0],[0,0]]
@@ -201,10 +206,22 @@ class FlatEdge():
     if geom[0][0]!=0 and geom[1][0]!=0:
       tolerance = .001
       plane = Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0),Rhino.Geometry.Vector3d(0,0,1))
+
+      #check if the circles are inside there parent face
+
+      #check if the circles are intersectin each other
       relation = Rhino.Geometry.Curve.PlanarClosedCurveRelationship(geom[0][1],geom[1][1],plane,tolerance)
       if relation==Rhino.Geometry.RegionContainment.Disjoint:
         guidI = scriptcontext.doc.Objects.AddCircle(geom[0][0])
         guidJ = scriptcontext.doc.Objects.AddCircle(geom[1][0])
+        
+        #draw lines for debugging
+        centerPnt = geom[0][0].Center
+        rs.AddLine(centerPnt,self.line.ClosestPoint(centerPnt,True))
+
+        centerPnt = geom[1][0].Center
+        rs.AddLine(centerPnt,self.line.ClosestPoint(centerPnt,True))
+
         self.geom.extend((guidI,guidJ))
       elif relation==Rhino.Geometry.RegionContainment.MutualIntersection:
         #only add I circle
@@ -216,6 +233,11 @@ class FlatEdge():
     elif geom[1][0]!=0:
       guid = scriptcontext.doc.Objects.AddCircle(geom[1][0])
       self.geom.append(guid)
+
+  def circleIsInFace(self,net,circle):
+    # faceForEdge = 
+    # faceBoundary = net.
+    pass
 
   def getHolePoints(self,flatVerts):
     #TODO: replace this with less redundant version (iterate trhough points)
@@ -234,7 +256,7 @@ class FlatEdge():
       pointJ = pointJ+self.holeVec
     return (pointI,pointJ)
 
-  def assignHolePoints(self,net,connectorDist,safetyRadius):
+  def assignHoleDists(self,net,connectorDist,safetyRadius):
     if self.distI==None and self.distJ==None:
       pair = net.flatEdges[self.pair]
       distsA = pair.getHoleDistances(net,connectorDist,safetyRadius)
@@ -248,6 +270,18 @@ class FlatEdge():
       self.distI = distI
       self.distJ = distJ
       self.holeVec = distsB[2]
+
+  def assignHoleDistsRatio(self,flatVerts,ratio):
+    edgeVec = self.getEdgeVec(flatVerts)
+    length = edgeVec.Length
+    distI = length*ratio 
+    distJ = length*ratio
+    return (distI,distJ,vec)
+
+  def getHoleDistancesSimple(self,net,connectorDist,ratioEdgeLen):
+    edgeVec = self.getEdgeVec(net.flatVerts)
+
+
 
   def getHoleDistances(self,net,connectorDist,safetyRadius):
     '''
@@ -277,13 +311,14 @@ class FlatEdge():
     #CHECK IF POINTS ARE WITHIN THAT FACE
     if self.line==None: self.line = Rhino.Geometry.Line(I,J)
 
-    if not self.inFace(flatVerts,flatFaces,pointI):
+    if not self.inFace(net,pointI):
+      print "assining -1"
       distI = -1
     else:
       pntOnEdgeI = self.line.ClosestPoint(pointI,True)
       distI = pntOnEdgeI.DistanceTo(I)
 
-    if not self.inFace(flatVerts,flatFaces,pointJ):
+    if not self.inFace(net,pointJ):
       distJ = -1
     else:
       pntOnEdgeJ = self.line.ClosestPoint(pointJ,True)
@@ -295,8 +330,12 @@ class FlatEdge():
   def getFacePoint(self,flatVerts,flatFaces):
     return flatFaces[self.fromFace].getCenterPoint(flatVerts)
 
-  def inFace(self,flatVerts,flatFaces,point):
-    polylineCurve = flatFaces[self.fromFace].getPolylineCurve(flatVerts)
+  def getFacePolyline(self,net):
+    polylineCurve = net.flatFaces[self.fromFace].getPolylineCurve(net.flatVerts)
+    return polylineCurve
+
+  def inFace(self,net,point):
+    polylineCurve = self.getFacePolyline(net)
     relationship = polylineCurve.Contains(point)
     if Rhino.Geometry.PointContainment.Unset==relationship:
       print "curve was not closed, relationship meaningless"
