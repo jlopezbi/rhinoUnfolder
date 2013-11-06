@@ -195,13 +195,14 @@ class FlatEdge():
 
   def drawFaceHole(self,net,holeRadius):
     pntA,pntC = self.getCoordinates(net.flatVerts)
-    pntB = net.flatFaces[self.fromFace].getCenterPoint(net.flatVerts)
-    polyline = Rhino.Geometry.PolylineCurve([pntA,pntB,pntC,pntA])
+    pntB = net.flatFaces[self.fromFace].getCenterPoint(net.flatVerts,True)
+    pnts = [pntA,pntB,pntC,pntA]
+    polyline = Rhino.Geometry.PolylineCurve(pnts)
     props = Rhino.Geometry.AreaMassProperties.Compute(polyline)
     centerPnt = props.Centroid
     hole = rs.AddCircle(centerPnt,holeRadius)
     self.geom.append(hole)
-    
+
 
 
 
@@ -524,7 +525,9 @@ class FlatFace():
     assert(tVert in self.vertices.keys())
     return flatVerts[tVert][self.vertices[tVert]]
 
-  def getCenterPoint(self,flatVerts):
+  def getCenterPoint(self,flatVerts,getNew=False):
+    if getNew:
+      self.centerPoint=None
     if self.centerPoint==None:
       flatVerts = self.getFlatVerts(flatVerts)
       nVerts = len(self.vertices)

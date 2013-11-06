@@ -39,6 +39,7 @@ class Net():
 
   def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face):
     flatEdgeCut.type = 'cut'
+    #flatEdgeCut.hasTab = True
     flatEdgeCut.resetFromFace(face)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
     newEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
@@ -89,6 +90,7 @@ class Net():
     newFlatEdge = FlatEdge(meshEdge,newVertI,newVertJ)
     newFlatEdge.fromFace = face
     newFlatEdge.type = 'cut'
+    #newFlatEdge.hasTab = True
     newFlatEdge.pair = idx
     #newFlatEdge.hasTab = True
     #TODO: need to set tab angles or something. NOTE: .fromFace and .toFace of flatEdge referes to a MESH face!!
