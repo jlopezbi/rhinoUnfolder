@@ -21,7 +21,7 @@ def unwrap(mesh, userCuts,holeRadius, weightFunction=weight_functions.edgeAngle)
 
   netGroupName = "net1"
   net.drawEdges(netGroupName)
-  #net.drawHoles(netGroupName)
+  net.drawHoles(netGroupName)
   #net.drawFaces(netGroupName)
 
   #FlatEdge.drawEdges(flatVerts,flatEdgesSimple,netGroupName)

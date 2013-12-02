@@ -145,6 +145,8 @@ def getTangentEdge(mesh,edge,tVert,angleTolerance,chain):
   newEdge = winEdge[0]
   if newEdge == None:
     return chain
+  if newEdge in chain:
+    return chain
   else:
     chain.append(newEdge)
     nextTVert = getOtherTVert(mesh,newEdge,tVert)

@@ -26,10 +26,11 @@ def getMesh(message=None):
     return mesh
 
 def getUserCuts(display=True):
-  cuts = []
+  cuts = set()
   color = (0,255,0,255)
   isChain = False
   angleTolerance = math.radians(30) #inital defautl value
+  drawnEdges = {}
   while True:
     edgeIdx,isChain,angleTolerance,mesh = getMeshEdge("select cut edge on mesh",isChain,angleTolerance)
 
@@ -42,11 +43,23 @@ def getUserCuts(display=True):
       #print("selected: valid edgeIdx")
       if edgeIdx not in cuts:
         if isChain:
-          cuts.extend(getChain(mesh,edgeIdx,angleTolerance))
+          cuts.update(getChain(mesh,edgeIdx,angleTolerance))
         else:
-          cuts.append(edgeIdx)
+          cuts.update([edgeIdx])
+      else:
+        #if isChain:
+         # cuts.difference_update(getChain(mesh,edgeIdx,angleTolerance))
+        #else:
+        cuts.difference_update([edgeIdx])
+
+        if len(drawnEdges)!=0:
+          scriptcontext.doc.Objects.Delete(drawnEdges[edgeIdx],True)
+
       if display:
-        displayMeshEdges(mesh,color,cuts,"cuts")
+        for edgeIdx in drawnEdges.keys():
+          scriptcontext.doc.Objects.Delete(drawnEdges[edgeIdx],True)
+
+        drawnEdges.update(displayMeshEdges(mesh,color,cuts,"cuts"))
           
     elif edgeIdx == -1:
       print("enter:")

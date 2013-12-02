@@ -61,6 +61,9 @@ class FlatEdge():
     flatVertJ = flatVerts[self.J]
     return (flatVertI,flatVertJ)
 
+  def getFlatFace(self,flatFaces):
+    return flatFaces[self.fromFace]
+
   def getNetVerts(self):
     return (self.I,self.J)
 
@@ -135,15 +138,15 @@ class FlatEdge():
       movedNetVerts.append(netVertJ)
 
   '''JOINERY'''
-  def drawTab(self,flatVerts,holeRadius):
+  def drawTab(self,net):
     '''outputs guid for polyline'''
     if len(self.geom)>0:
       for guid in self.geom:
         scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
-      return self.drawTriTab(flatVerts,holeRadius)
+      return self.drawTriTab(net)
     else:
-      return self.drawQuadTab(flatVerts)
+      return self.drawQuadTab(net.flatVerts)
       
   def drawQuadTab(self,flatVerts):
     pntA,pntD = self.getCoordinates(flatVerts)
@@ -179,19 +182,37 @@ class FlatEdge():
     self.geom.append(polyGuid)
     return polyGuid
 
-  def drawTriTab(self,flatVerts,holeRadius):
+  def drawTriTab(self,net):
+    holeRadius = net.holeRadius
+    mesh = net.mesh
+    flatVerts = net.flatVerts
+    flatFaces = net.flatFaces
+
+    minArea = (holeRadius**2.0)*math.pi*30
+    #print "minArea: " + str(minArea)
+
+    flatFace = self.getConnectToFace(flatFaces,mesh)
+    area = flatFace.getArea(flatVerts)
+
     pntA,pntC = self.getCoordinates(flatVerts)
     pntB = self.tabFaceCenter
 
     points = [pntA,pntB,pntC]
     polyline = Rhino.Geometry.PolylineCurve([pntA,pntB,pntC,pntA])
     props = Rhino.Geometry.AreaMassProperties.Compute(polyline)
-    centerPnt = props.Centroid
+    if area > minArea:
+      centerPnt = props.Centroid
+    else:
+      rs.AddTextDot("o",pntB)
+      centerPnt = flatFaces[self.fromFace].getCenterPoint(flatVerts,True)
     hole = rs.AddCircle(centerPnt,holeRadius)
     polyGuid = rs.AddPolyline(points)
     self.geom.append(polyGuid)
     self.geom.append(hole)
     return polyGuid
+
+  def getConnectToFace(self,flatFaces,mesh):
+    return flatFaces[getOtherFaceIdx(self.edgeIdx,self.fromFace,mesh)]
 
   def drawFaceHole(self,net,holeRadius):
     pntA,pntC = self.getCoordinates(net.flatVerts)
@@ -458,6 +479,7 @@ class FlatEdge():
     if otherFace!=None:
       faceCenter = mesh.Faces.GetFaceCenter(otherFace)
       faceCenter.Transform(xForm)
+      faceCenter.Z = 0.0 #this results in small error, TODO: change to more robust method
       self.tabFaceCenter = faceCenter
     if self.tabFaceCenter==None:
       return False
@@ -465,7 +487,7 @@ class FlatEdge():
       return True
 
   def getTabAngles(self,mesh,currFaceIdx,xForm):
-    #WORKING AWAY FROM THIS: data is implicit in tabFaceCenter
+    #WORKING AWAY FROM THIS: data is implicit in 
     edge = self.edgeIdx
     otherFace = getOtherFaceIdx(edge,currFaceIdx,mesh)
 
@@ -558,6 +580,16 @@ class FlatFace():
   def getPolylineCurve(self,flatVerts):
     polyline = self.getPolyline(flatVerts)
     return Rhino.Geometry.PolylineCurve(polyline)
+
+  def getProps(self,flatVerts):
+    polylineCurve = self.getPolylineCurve(flatVerts)
+    return Rhino.Geometry.AreaMassProperties.Compute(polylineCurve)
+  
+
+  def getArea(self,flatVerts):
+    props = self.getProps(flatVerts)
+    return props.Area
+
 
   def drawInnerface(self,flatVerts,ratio=.33):
     '''draw a inset face'''

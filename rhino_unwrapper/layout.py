@@ -1,3 +1,4 @@
+
 from transformations import *
 from classes import FlatVert, FlatEdge, FlatFace
 from Net import Net
@@ -63,6 +64,8 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
     else:
       if len(dataMap.meshEdges[edge])==0:
         flatEdge.type  = "naked"
+        #flatEdge.getTabFaceCenter(mesh,basisInfo[0],xForm)
+
         netEdge = net.addEdge(flatEdge)
         dataMap.updateEdgeMap(edge,netEdge)
 
@@ -77,8 +80,10 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
         netEdge = net.addEdge(flatEdge)
         dataMap.updateEdgeMap(edge,netEdge)
         sibling = dataMap.getSiblingNetEdge(edge,netEdge)
-        net.flatEdges[sibling].type = "cut" #make sure to set both edges to cut 
-        net.flatEdges[sibling].pair = netEdge
+        sibFlatEdge = net.flatEdges[sibling]
+        sibFlatEdge.type = "cut" #make sure to set both edges to cut 
+        
+        sibFlatEdge.pair = netEdge
         net.flatEdges[netEdge].pair = sibling
   return net,dataMap
 
@@ -131,7 +136,7 @@ def getNetEdges(mesh,edge,netVerts,dataMap):
 def transformPoint(mesh,tVert,xForm):
   point = Rhino.Geometry.Point3d(mesh.TopologyVertices.Item[tVert])
   point.Transform(xForm)
-  point.Z = 0.0
+  point.Z = 0.0 #TODO: find where error comes from!!! (rounding?)
   return point
 
 def alreadyBeenPlaced(edge,meshEdges):

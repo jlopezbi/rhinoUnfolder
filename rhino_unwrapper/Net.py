@@ -39,7 +39,6 @@ class Net():
 
   def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face):
     flatEdgeCut.type = 'cut'
-    #flatEdgeCut.hasTab = True
     flatEdgeCut.resetFromFace(face)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
     newEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
@@ -186,7 +185,7 @@ class Net():
     collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
     if netEdge.type=='cut':
         if netEdge.hasTab:
-          collection.append(netEdge.drawTab(self.flatVerts,self.holeRadius))
+          collection.append(netEdge.drawTab(self))
         else:
           collection.append(netEdge.drawFaceHole(self,self.holeRadius))
     return collection
