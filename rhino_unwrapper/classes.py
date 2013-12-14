@@ -38,7 +38,7 @@ class FlatEdge():
     self.hasTab = False
     self.tabFaceCenter = None
     self.tabAngles = []
-    self.tabWidth = .2 #could be standard, or based on face area
+    self.tabWidth = .5 #could be standard, or based on face area
 
     '''Holes'''
     self.distI = None
@@ -144,7 +144,8 @@ class FlatEdge():
       for guid in self.geom:
         scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
-      return self.drawTriTab(net)
+      return self.drawTruncatedTab(net)
+      #return self.drawTriTab(net)
     else:
       return self.drawQuadTab(net.flatVerts)
       
@@ -180,6 +181,39 @@ class FlatEdge():
     polyGuid = rs.AddPolyline(points)
 
     self.geom.append(polyGuid)
+    return polyGuid
+
+  def drawTruncatedTab(self,net):
+    '''
+    draw a truncated tab using the drawing style of triTab, but with an offset-line intersection
+    '''
+    tabLen = self.tabWidth
+    flatVerts = net.flatVerts
+    flatFaces = net.flatFaces
+    I,J = self.getCoordinates(flatVerts)
+    K = self.tabFaceCenter
+
+    diagA = Rhino.Geometry.Line(I,K)
+    diagB = Rhino.Geometry.Line(J,K)
+    offsetLine, vecA = getOffset((I,J),K,tabLen,True) 
+
+    resultI,aI,bI = Rhino.Geometry.Intersect.Intersection.LineLine(offsetLine,diagA)
+    resultJ,aJ,bJ = Rhino.Geometry.Intersect.Intersection.LineLine(offsetLine,diagB)
+    if  resultI and resultJ:
+      intersectPntI = offsetLine.PointAt(aI)
+      intersectPntJ = offsetLine.PointAt(aJ)
+
+      points = [I,intersectPntI,intersectPntJ,J]
+
+      lineA = Rhino.Geometry.Line(I,intersectPntI)
+      lineB = Rhino.Geometry.Line(J,intersectPntJ)
+      
+    else:
+      points = [I,K,J]
+
+    polyGuid = rs.AddPolyline(points)
+    self.geom.append(polyGuid)
+
     return polyGuid
 
   def drawTriTab(self,net):
