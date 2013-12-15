@@ -64,7 +64,7 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
     else:
       if len(dataMap.meshEdges[edge])==0:
         flatEdge.type  = "naked"
-        #flatEdge.getTabFaceCenter(mesh,basisInfo[0],xForm)
+        flatEdge.getTabFaceCenter(mesh,basisInfo[0],xForm)
 
         netEdge = net.addEdge(flatEdge)
         dataMap.updateEdgeMap(edge,netEdge)
@@ -82,6 +82,7 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
         sibling = dataMap.getSiblingNetEdge(edge,netEdge)
         sibFlatEdge = net.flatEdges[sibling]
         sibFlatEdge.type = "cut" #make sure to set both edges to cut 
+        sibFlatEdge.hasTab = True #make sure to set both edges to cut 
         
         sibFlatEdge.pair = netEdge
         net.flatEdges[netEdge].pair = sibling

@@ -36,7 +36,7 @@ class FlatEdge():
     
     '''Tabs'''
     self.hasTab = False
-    self.tabFaceCenter = None
+    self.tabFaceCenter = None #point3d
     self.tabAngles = []
     self.tabWidth = .5 #could be standard, or based on face area
 
@@ -192,7 +192,8 @@ class FlatEdge():
     flatFaces = net.flatFaces
     I,J = self.getCoordinates(flatVerts)
     K = self.tabFaceCenter
-
+    if self.tabFaceCenter ==None: #this is ahack: TODO: if a new cut edge is created, give it a tabFaceCenter
+      return
     diagA = Rhino.Geometry.Line(I,K)
     diagB = Rhino.Geometry.Line(J,K)
     offsetLine, vecA = getOffset((I,J),K,tabLen,True) 
@@ -202,12 +203,19 @@ class FlatEdge():
     if  resultI and resultJ:
       intersectPntI = offsetLine.PointAt(aI)
       intersectPntJ = offsetLine.PointAt(aJ)
+      
+      shorterThanTab = self.checkIfShortTab(net)
+      if shorterThanTab == 1:
+        points = [I,intersectPntJ,intersectPntI,J] #flip order to avoid self-intersction
+      elif shorterThanTab == 0:
+        point = [I,K,J]
+      elif shorterThanTab == -1:
+        points = [I,intersectPntI,intersectPntJ,J] #order is as expected
 
-      points = [I,intersectPntI,intersectPntJ,J]
 
       lineA = Rhino.Geometry.Line(I,intersectPntI)
       lineB = Rhino.Geometry.Line(J,intersectPntJ)
-      
+
     else:
       points = [I,K,J]
 
@@ -215,6 +223,19 @@ class FlatEdge():
     self.geom.append(polyGuid)
 
     return polyGuid
+
+  def checkIfShortTab(self,net):
+    center = self.tabFaceCenter
+    edgeLine =  self.getEdgeLine(net)
+    closestPnt = edgeLine.ClosestPoint(center,True)
+    vec = Rhino.Geometry.Point3d.Subtract(center,closestPnt)
+    lenVec = vec.Length
+    if lenVec < self.tabWidth:
+      return 1
+    if lenVec == self.tabWidth:
+      return 0
+    else:
+      return -1
 
   def drawTriTab(self,net):
     holeRadius = net.holeRadius
@@ -508,9 +529,13 @@ class FlatEdge():
     neighbors = list(tVertsFace-tVertsEdge)
     return neighbors[0] #arbitrarily return first tVert
 
+  def getEdgeLine(self,net):
+    pntI,pntJ = self.getCoordinates(net.flatVerts)
+    return Rhino.Geometry.Line(pntI,pntJ)
+
   def getTabFaceCenter(self,mesh,currFace,xForm):
     otherFace = getOtherFaceIdx(self.edgeIdx,currFace,mesh)
-    if otherFace!=None:
+    if otherFace!=None and otherFace != -1:
       faceCenter = mesh.Faces.GetFaceCenter(otherFace)
       faceCenter.Transform(xForm)
       faceCenter.Z = 0.0 #this results in small error, TODO: change to more robust method

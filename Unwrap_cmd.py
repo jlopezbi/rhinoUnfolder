@@ -42,7 +42,6 @@ def RunCommand():
         # print segment
         net.copyAndReasign(mesh,dataMap,flatEdge,idx,segment,face)
         translatedEdges = net.translateSegment(segment,xForm)
-        net.redrawSegment(translatedEdges)
         #net.updateCutEdge(flatEdge)
       
 

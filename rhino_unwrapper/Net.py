@@ -2,6 +2,7 @@ from segmentation import segmentIsland
 from rhino_helpers import createGroup,getEdgesForVert
 from classes import FlatVert,FlatEdge
 import Rhino
+import rhinoscriptsyntax as rs
 import math
 
 class Net():
@@ -52,7 +53,8 @@ class Net():
     #winged edge mesh. H-E: could traverse edges recursively, first going to sibling h-edge
     #stopping when the edge points to no other edge(naked),or to a face not in the segment,or
     #if the h-edge is part of the user-selected edge to be cut
-    
+    group = rs.AddGroup()
+
     collection = []
     movedNetVerts = []
     for netEdge in self.flatEdges:
@@ -61,7 +63,8 @@ class Net():
         netEdge.clearAllGeom()
         netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
 
-        netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
+        geom = self.drawEdge(netEdge)
+        rs.AddObjectsToGroup(geom,group)
         
         # if netEdge.type=='cut':
         #   #TODO: perhaps user input for hole parameters?
@@ -69,8 +72,15 @@ class Net():
     return collection
 
   def redrawSegment(self,translatedEdges):
+    group = rs.AddGroup()
+    geom = []
     for netEdge in translatedEdges:
-      self.drawEdge(netEdge)
+      geom.append(self.drawEdge(netEdge))
+    grouped =  rs.AddObjectsToGroup(geom,group)
+    if grouped==None: 
+      print "failed to make segment group"
+    else:
+      print "made segment group of" + str(grouped) +" elements"
 
 
   def removeFaceConnection(self,flatEdgeCut):
@@ -184,8 +194,10 @@ class Net():
     collection = []
     collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
     if netEdge.type=='cut':
+        collection.append(netEdge.drawTab(self))
         if netEdge.hasTab:
-          collection.append(netEdge.drawTab(self))
+          pass
+         # collection.append(netEdge.drawTab(self))
         else:
           collection.append(netEdge.drawFaceHole(self,self.holeRadius))
     return collection
