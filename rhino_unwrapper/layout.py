@@ -3,35 +3,68 @@ from transformations import *
 from classes import FlatVert, FlatEdge, FlatFace
 from Net import Net
 from Map import Map
+import math
 
 def initBasisInfo(mesh, origin):
-  faceIdx = 0
+  #faceIdx = 0
+  faceIdx = getLowestFace(mesh)
   edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
   tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
   initBasisInfo = (faceIdx,edgeIdx,tVertIdx)
   return initBasisInfo
 
-def layoutMesh(foldList, mesh,holeRadius):
+#TODO: make the init face make sense: (the face closest to the xy plane)
+#thats what the next two functions are about
+def getLowestFace(mesh):
+  lowestFace = (0,float('inf')) #(faceIdx,Zcoord)
+  for i in range(mesh.Faces.Count):
+    faceCenter = mesh.Faces.GetFaceCenter(i)
+    Zcoord = math.fabs(faceCenter.Z)
+    if Zcoord < lowestFace[1]:
+      lowestFace = (i,Zcoord)
+  return lowestFace[0]
+
+def getLowestTVert(mesh,faceIdx):
+  '''
+  find the vertex on the given face that is closest to the origin
+  '''
+  tVerts = getTVertsForFace(mesh,faceIdx)
+  origin = Rhino.Geometry.Point3f(0,0,0)
+  lowest = (0,float('inf'))
+  for tVert in tVerts:
+    point = mesh.TopologyVertices[tVert] #point3f
+    dist = point.DistanceTo(origin)
+    if dist < lowest[1]:
+      lowest = (tVert,dist)
+  return lowest[0]
+
+
+def layoutMesh(foldList, mesh,holeRadius,userCuts):
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
   net = Net(mesh,holeRadius)
   dataMap = Map(mesh)
-  net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap)
+  net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts)
   return net,dataMap
 
 
-def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
+def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts):
   ''' Recurse through faces, hopping along fold edges
     input:
-      depth = recursion level
+      fromFace = the face just came from in recursive traversal
+      hopEdge = the face just hopped over from recursive traversal
       basisInfo = (faceIdx,edgeIdx,tVertIdx) information required to make basis
       foldList = list of edges that are folded
       mesh = mesh to unfold
       toBasis = basis in flat world
+      net = data structure where flattened mesh is stored
+      dataMap = data structure for mapping net elements to mesh elements
+      userCuts = user defined cut edges
     out/in:
-      flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
+      net
+      dataMap
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
   netVerts,mapping = assignFlatVerts(mesh,dataMap,net,hopEdge,basisInfo[0],xForm)
@@ -52,14 +85,18 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
         newBasisInfo = getNewBasisInfo(basisInfo,edge,mesh)
         newToBasis = getBasisFlat(flatEdge,net.flatVerts)
 
-        flatEdge.type  = "fold"
+        if edge in userCuts:
+          flatEdge.type = "contested"
+        else:
+          flatEdge.type  = "fold"
+
         flatEdge.toFace = newBasisInfo[0]
         netEdge = net.addEdge(flatEdge)
         dataMap.updateEdgeMap(edge,netEdge)
 
         #RECURSE
         recurse = True
-        net,dataMap = layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,net,dataMap)
+        net,dataMap = layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,net,dataMap,userCuts)
 
     else:
       if len(dataMap.meshEdges[edge])==0:

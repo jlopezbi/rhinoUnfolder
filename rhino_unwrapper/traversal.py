@@ -1,4 +1,5 @@
 import rhinoscriptsyntax as rs
+from UnionFind import UnionFind
 
 def getSpanningKruskal(graph,mesh):
 
@@ -56,6 +57,14 @@ def getSpanningKruskal(graph,mesh):
     # also the if staements could be cleaned up probs.
   return foldList
 
+
+def spanningKruskal(graph,mesh):
+  '''
+  use union-find!!!
+  allow for islands??
+  '''
+  faces, edge_weights = graph
+
 def getCutList(mesh,foldList):
   cutList = []
   for i in range(mesh.TopologyEdges.Count):
@@ -68,6 +77,11 @@ def meshFaces(mesh):
   return (mesh.Faces.GetFace(i) for i in xrange(mesh.Faces.Count))
 
 def buildMeshGraph(mesh, userCuts, weight):
+  '''
+  ouput:
+    nodes = list of meshFace objects (appears to be unused)
+    edge_weights = sorted list of tuples (edge,weight) by weight, largest to smallest
+  '''
   nodes = meshFaces(mesh)
   edge_weights = []
   for i in xrange(mesh.TopologyEdges.Count):
@@ -75,7 +89,7 @@ def buildMeshGraph(mesh, userCuts, weight):
       if i not in userCuts:
         edge_weights.append((i,weight(mesh,i)))
       else:
-        edge_weights.append( (i,float('inf')) )
+        edge_weights.append( (i,float('inf')) ) #user cuts given infinite weight
     else:
       edge_weights.append((i,weight(mesh,i)))
 

@@ -11,7 +11,7 @@ def unwrap(mesh, userCuts,holeRadius, weightFunction=weight_functions.edgeAngle)
   meshDual = traversal.buildMeshGraph(mesh, userCuts, weightFunction)
   foldList = traversal.getSpanningKruskal(meshDual,mesh)
   cutList = traversal.getCutList(mesh,foldList)
-  net,dataMap = layout.layoutMesh(foldList, mesh,holeRadius)
+  net,dataMap = layout.layoutMesh(foldList, mesh,holeRadius,userCuts)
 
   
 

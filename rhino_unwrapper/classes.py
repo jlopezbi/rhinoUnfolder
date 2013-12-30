@@ -100,6 +100,8 @@ class FlatEdge():
           color = (0,255,0,255) #magenta
       elif self.type == 'naked':
         color = (0,55,156,196) #blue
+      elif self.type == 'contested':
+        color = (0,255,115,0) #orange
       points = self.getCoordinates(flatVerts)
       if self.line_id!=None:
         scriptcontext.doc.Objects.Delete(self.line_id,True)
