@@ -62,28 +62,13 @@ def getTransform(basisInfo,toBasis,mesh):
   xForm = createTransformMatrix(fromBasis,toBasis)
   return xForm
 
-# def getBasisFlat(newCoords):
-#   #Convention: always use .I element from the tVerts associated with a given edge
-#   o = newCoords[0]
-#   x = Rhino.Geometry.Vector3d(newCoords[1]-newCoords[0])
-#   x.Unitize()
-#   z = rs.WorldXYPlane()[3]
-#   z.Unitize()
-#   y = Rhino.Geometry.Vector3d.CrossProduct(z,x)
-#   y.Unitize()
-
-#   assert(x.Length-1<.00000001), "x.Length!~=1"
-#   assert(y.Length-1<.00000001), "y.Length!~=1"
-#   assert(z.Length-1<.00000001), "z.Length!~=1"
-
-#   return [o,x,y,z]
 
 def getBasisFlat(flatEdge,flatVerts):
   pntI,pntJ = flatEdge.getCoordinates(flatVerts)
   o = pntI
   x = Rhino.Geometry.Vector3d(pntJ-pntI)
   x.Unitize()
-  z = rs.WorldXYPlane()[3]
+  z = rs.WorldXYPlane()[3] #world z
   z.Unitize()
   y = Rhino.Geometry.Vector3d.CrossProduct(z,x)
   y.Unitize()
@@ -93,5 +78,3 @@ def getBasisFlat(flatEdge,flatVerts):
   assert(z.Length-1<.00000001), "z.Length!~=1"
 
   return [o,x,y,z]
-
-  pass

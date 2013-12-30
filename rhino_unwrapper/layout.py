@@ -87,6 +87,8 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,user
 
         if edge in userCuts:
           flatEdge.type = "contested"
+          # if a flatEdge is contested then the next edge is going to be offset;
+          # have unique netVertices -> the newToBasis is offset
         else:
           flatEdge.type  = "fold"
 
