@@ -48,6 +48,7 @@ def displayFaceIdx(mesh,face):
   rs.AddTextDot(str(face),centerPnt)
 
 def displayMeshEdges(mesh,color,edgeIdxs,groupName):
+  #TODO: try this: Rhino.Display.DisplayPipeline.DrawLine,  Rhino.Display.DisplayPipeline.DrawDottedLine  
   drawnEdges = {}
   if edgeIdxs:
     for edgeIdx in edgeIdxs:

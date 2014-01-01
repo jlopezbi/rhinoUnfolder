@@ -217,7 +217,8 @@ def getMedianEdgeLen(mesh):
 
 '''UNCATEGORIZED'''
 
-
+def angleBetweenVecAndPlane(vec,planeNormal):
+  return math.asin(math.fabs(vec*planeNormal)/(vec.Length*planeNormal.Length))
 
 def getOffset(points,testPoint,distance,towards,axis=(0,0,1)):
   '''
