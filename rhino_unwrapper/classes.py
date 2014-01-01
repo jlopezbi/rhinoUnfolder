@@ -419,11 +419,25 @@ class FlatEdge():
     return (distI,distJ,vecA) #vecA will be used to place actually hole
 
   def getFacePoint(self,flatVerts,flatFaces):
+    '''
+    get the center point of this edges's fromFace
+    '''
     return flatFaces[self.fromFace].getCenterPoint(flatVerts)
 
   def getFacePolyline(self,net):
+    '''
+    get the polyline curve for this edges' face
+    '''
     polylineCurve = net.flatFaces[self.fromFace].getPolylineCurve(net.flatVerts)
     return polylineCurve
+
+  def getFaceMidVec(self,net):
+    '''
+    get the vector from the center of this edges fromFace, to the midpoint of this edge
+    '''
+    centerPnt = self.getFacePoint(net.flatVerts,net.flatFaces)
+    midPnt = self.getMidPoint(net.flatVerts)
+    return Rhino.Geometry.Vector3d(midPnt-centerPnt)
 
   def inFace(self,net,point):
     polylineCurve = self.getFacePolyline(net)
@@ -624,6 +638,7 @@ class FlatFace():
       y = sumY/nVerts
       self.centerPoint = Rhino.Geometry.Point3d(x,y,0.0)
     return self.centerPoint
+
 
   def draw(self,flatVerts):
     polyline = self.getPolyline(flatVerts)

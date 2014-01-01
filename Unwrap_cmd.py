@@ -26,6 +26,7 @@ def RunCommand():
   if mesh and weightFunction:
     dataMap,net,foldList = unwrap(mesh, userCuts, holeRadius, weightFunction)
     net.findInitalSegments()
+    
   #Get 
 
   while True:

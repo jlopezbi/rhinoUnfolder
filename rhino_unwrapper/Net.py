@@ -197,7 +197,6 @@ class Net():
         collection.append(netEdge.drawTab(self))
         if netEdge.hasTab:
           pass
-         # collection.append(netEdge.drawTab(self))
         else:
           collection.append(netEdge.drawFaceHole(self,self.holeRadius))
     return collection
