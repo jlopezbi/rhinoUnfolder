@@ -52,6 +52,8 @@ class FlatEdge():
     else:
       assert(False==True), "error, flatEdge does not have oldVert"
 
+  '''SELF INFO'''
+
   def getCoordinates(self,flatVerts):
     vertI,vertJ = self.getFlatVerts(flatVerts)
     return [vertI.point,vertJ.point]
@@ -85,6 +87,11 @@ class FlatEdge():
     else:
       return self.angle
 
+  def getLength(self,flatVerts):
+    pntA,pntB = self.getCoordinates(flatVerts)
+    return getVectorForPoints(pntA,pntB).Length
+
+
   '''DRAWING'''
 
   def drawEdgeLine(self,flatVerts,angleThresh,mesh):
@@ -110,6 +117,27 @@ class FlatEdge():
       self.line = line
     return line_id
 
+  def drawOffset(self,net,buckleVal,scale):
+    '''
+    draw line that is offset from this edge by an amount proportional to the buckleVal and
+    the len of the neighboring edge (for QUAD FACES)
+    '''
+    oppositeEdge = self.getOppositeFlatEdge(net)
+    if oppositeEdge==-1:
+      pass
+    oppositeMidPnt = oppositeEdge.getMidPoint(net.flatVerts)
+    midPnt = self.getMidPoint(net.flatVerts)
+    lengthFace = getVectorForPoints(oppositeMidPnt,midPnt).Length
+
+    midVec = self.getFaceMidVec(net)
+    midVec.Unitize()
+    offsetVec = midVec*(scale*buckleVal*lengthFace/2.0) #half for each side
+
+    xForm = Rhino.Geometry.Transform.Translation(offsetVec)
+
+    self.translateEdgeLine(xForm,True)
+
+
   def getEdgeVec(self,flatVerts):
     pointI = flatVerts[self.I].point
     pointJ = flatVerts[self.J].point
@@ -125,10 +153,13 @@ class FlatEdge():
     if self.tabFaceCenter!=None:
       self.tabFaceCenter.Transform(xForm)
 
-  def translateEdgeLine(self,xForm):
+  def translateEdgeLine(self,xForm,copy=False):
     if self.line != None:
       self.line.Transform(xForm)
-      scriptcontext.doc.Objects.Replace(self.line_id,self.line)
+      if copy:
+        scriptcontext.doc.Objects.AddLine(self.line)
+      else:
+        scriptcontext.doc.Objects.Replace(self.line_id,self.line)
 
   def translateNetVerts(self,movedNetVerts,flatVerts,xForm):
     netVertI,netVertJ = self.getFlatVerts(flatVerts)
@@ -281,9 +312,6 @@ class FlatEdge():
     hole = rs.AddCircle(centerPnt,holeRadius)
     self.geom.append(hole)
 
-
-
-
   def drawHoles(self,net,connectorDist,safetyRadius,holeRadius):
     self.assignHoleDists(net,connectorDist,safetyRadius)
     points = self.getHolePoints(net.flatVerts)
@@ -372,8 +400,6 @@ class FlatEdge():
   def getHoleDistancesSimple(self,net,connectorDist,ratioEdgeLen):
     edgeVec = self.getEdgeVec(net.flatVerts)
 
-
-
   def getHoleDistances(self,net,connectorDist,safetyRadius):
     '''
     get the two distances for a given edge by interescting the offset lines
@@ -436,7 +462,7 @@ class FlatEdge():
     get the vector from the center of this edges fromFace, to the midpoint of this edge
     '''
     centerPnt = self.getFacePoint(net.flatVerts,net.flatFaces)
-    midPnt = self.getMidPoint(net.flatVerts)
+    midPnt = Rhino.Geometry.Point3d(self.getMidPoint(net.flatVerts))
     return Rhino.Geometry.Vector3d(midPnt-centerPnt)
 
   def inFace(self,net,point):
@@ -530,21 +556,6 @@ class FlatEdge():
     z = cross.Z #(pos and neg)
     return  z > 0 
 
-  def getNeighborFlatVert(self,net,face=None):
-    '''
-    gets one of the flatVerts associated with the given
-    face, but that is not a part of this flatEdge.
-    if face==None uses the fromFace associated with this edge
-    '''
-
-    if face==None:
-      face = self.fromFace
-    tVertsEdge = set([self.I,self.J])
-    flatFace = net.flatFaces[face]
-    tVertsFace = set(flatFace.vertices)
-    neighbors = list(tVertsFace-tVertsEdge)
-    return neighbors[0] #arbitrarily return first tVert
-
   def getEdgeLine(self,net):
     pntI,pntJ = self.getCoordinates(net.flatVerts)
     return Rhino.Geometry.Line(pntI,pntJ)
@@ -604,11 +615,62 @@ class FlatEdge():
       print "otherFace: ",
       print otherFace
 
+  '''ADJACENCY LOOKUP''' #fuckkkk: need to implement some better mesh data structure :(:(
+
+  def getNeighborFlatEdge(self,net):
+    '''
+    get a neighbor flatEdge
+    '''
+    verts = self.getNetVerts()
+    flatFace = net.flatFaces[self.fromFace]
+    flatEdges = flatFace.flatEdges
+    flatEdges.remove(self)
+    for flatEdge in flatEdges:
+      if flatEdge.I in verts or flatEdge.J in verts:
+        return flatEdge
+
+  def getOppositeFlatEdge(self,net):
+    '''
+    get the opposite flatEdge (QUADS)
+    '''
+    verts = self.getNetVerts()
+    flatFace = net.flatFaces[self.fromFace]
+    flatEdges = flatFace.flatEdges
+    if len(flatEdges)<4:
+      print "numEdges for flatFace " + str(self.fromFace) + " :" + str(len(flatEdges))
+      for i,flatEdge in enumerate(flatEdges):
+        print "flatEdge " + str(i) + "is a " + flatEdge.type
+    flatEdges.remove(self)
+    #assert(len(flatEdges)<4), "getOppositeFlatEdge only works for quad faces; face " + str(self.fromFace)+ " is a triangle"
+    for flatEdge in flatEdges:
+      if flatEdge.I not in verts and flatEdge.J not in verts:
+        return flatEdge
+    print "could not find opposite flatEdg for face: " + str(self.fromFace)
+    
+    return -1
+
+  def getNeighborFlatVert(self,net,face=None):
+    '''
+    gets one of the flatVerts associated with the given
+    face, but that is not a part of this flatEdge.
+    if face==None uses the fromFace associated with this edge
+    '''
+
+    if face==None:
+      face = self.fromFace
+    tVertsEdge = set([self.I,self.J])
+    flatFace = net.flatFaces[face]
+    tVertsFace = set(flatFace.vertices)
+    neighbors = list(tVertsFace-tVertsEdge)
+    return neighbors[0] #arbitrarily return first tVert
+
+
 
 class FlatFace():
   #does not store meshFace because position in list determines this
   def __init__(self,_vertices,_fromFace):
     self.vertices = _vertices # a list of netVerts
+    self.flatEdges = []
     self.fromFace = _fromFace
     self.centerPoint = None
 

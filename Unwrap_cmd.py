@@ -2,6 +2,7 @@ from rhino_unwrapper.commands import unwrap
 from rhino_unwrapper.visualization import displayMeshEdges
 from rhino_unwrapper.rhino_inputs import *
 from rhino_unwrapper import weight_functions
+from rhino_unwrapper import buckling_strips
 
 # -RunPythonScript ResetEngine RhinoUnwrapper.Unwrap_cmd
 
@@ -14,6 +15,8 @@ __commandname__ = "Unwrap"
 
 def RunCommand():
   holeRadius = 0.125/2.0
+  targetVec = Rhino.Geometry.Vector3d(0,0,1)
+  buckleScale = 1.0
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
@@ -24,10 +27,11 @@ def RunCommand():
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
 
   if mesh and weightFunction:
-    dataMap,net,foldList = unwrap(mesh, userCuts, holeRadius, weightFunction)
+    faceVals = buckling_strips.assignValuesToFaces(targetVec,mesh)
+    dataMap,net,foldList = unwrap(mesh,faceVals,buckleScale, userCuts, holeRadius, weightFunction)
     net.findInitalSegments()
     
-  #Get 
+  #SEGMENTATION 
 
   while True:
     flatEdge,idx,strType = getNewEdge("select new edge on net or mesh",net,dataMap)

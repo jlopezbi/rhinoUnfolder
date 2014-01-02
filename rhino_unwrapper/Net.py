@@ -16,7 +16,10 @@ class Net():
 
     #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
     
-  def addEdge(self,flatEdge):
+  def addEdge(self,flatEdge,flatFace):
+    if flatFace.fromFace == 24:
+      print "addedEdge to face 24------------"
+    flatFace.flatEdges.append(flatEdge) #each flatFace stores an array of its flatEdges
     self.flatEdges.append(flatEdge)
     return len(self.flatEdges)-1
   
@@ -190,25 +193,33 @@ class Net():
     
 
   '''DRAWING'''
-  def drawEdge(self,netEdge):
+  def drawEdge(self,netEdge,buckleVal,scale):
     collection = []
     collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
     if netEdge.type=='cut':
         collection.append(netEdge.drawTab(self))
+        collection.append(netEdge.drawOffset(self,buckleVal,scale))
         if netEdge.hasTab:
           pass
         else:
           collection.append(netEdge.drawFaceHole(self,self.holeRadius))
     return collection
 
-  def drawEdges(self,netGroupName):
+  def drawEdges(self,netGroupName,faceVals,scale):
+    '''
+    draw all edge geometry for the net
+    input:
+      netGroupName = name for the group
+      faceVals = dictionary mapping faceIdx to buckling val (not yet adjusted for edgeLen)
+    '''
     collection = []
     for netEdge in self.flatEdges:
 
       #if netEdge.type=='cut':
         #netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
-
-      subCollection = self.drawEdge(netEdge)
+      fromFace = netEdge.fromFace
+      buckleVal = faceVals[fromFace]
+      subCollection = self.drawEdge(netEdge,buckleVal,scale)
       for item in subCollection:
         collection.append(item)
     createGroup(netGroupName,collection)
