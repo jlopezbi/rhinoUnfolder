@@ -27,8 +27,8 @@ def RunCommand():
   weightFunction = getOption(all_weight_functions(), "WeightFunction")
 
   if mesh and weightFunction:
-    faceVals = buckling_strips.assignValuesToFaces(targetVec,mesh)
-    dataMap,net,foldList = unwrap(mesh,faceVals,buckleScale, userCuts, holeRadius, weightFunction)
+    buckleVals = buckling_strips.assignValuesToFaces(targetVec,mesh)
+    dataMap,net,foldList = unwrap(mesh,buckleVals,buckleScale, userCuts, holeRadius, weightFunction)
     net.findInitalSegments()
     
   #SEGMENTATION 

@@ -6,8 +6,10 @@ import rhinoscriptsyntax as rs
 import math
 
 class Net():
-  def __init__(self,mesh,holeRadius):
-    self.holeRadius = holeRadius
+  def __init__(self,mesh,holeRadius,buckleScale,buckleVals):
+    self.holeRadius = holeRadius #holes used for fastening joinery
+    self.buckleScale = buckleScale #scale for the buckling offset
+    self.buckleVals = buckleVals #dict mapping faceIdx to buckleVal
     self.flatVerts = []
     self.flatEdges = []
     self.flatFaces = [None]*mesh.Faces.Count
@@ -17,8 +19,12 @@ class Net():
     #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
     
   def addEdge(self,flatEdge,flatFace):
-    if flatFace.fromFace == 24:
-      print "addedEdge to face 24------------"
+    '''
+    adds a flatEdge to the flatEdges array
+    input:
+      flatEdge = the new flatEdge to add (instance of FlatEdge class)
+      flatFace = the flatFace which will have this edge (instance of FlatFace class)
+    '''
     flatFace.flatEdges.append(flatEdge) #each flatFace stores an array of its flatEdges
     self.flatEdges.append(flatEdge)
     return len(self.flatEdges)-1
@@ -105,8 +111,9 @@ class Net():
     #newFlatEdge.hasTab = True
     newFlatEdge.pair = idx
     #newFlatEdge.hasTab = True
-    #TODO: need to set tab angles or something. NOTE: .fromFace and .toFace of flatEdge referes to a MESH face!!
-    netEdge = self.addEdge(newFlatEdge)
+    #TODO: need to set tab angles or something. NOTE: .fromFace and .toFace of flatEdge referes to a MESH face,
+    #wait silly: mesh faces and net faces are the same!!
+    netEdge = self.addEdge(newFlatEdge,self.flatFaces[face])
     dataMap.updateEdgeMap(meshEdge,netEdge)
     return netEdge
 
@@ -193,24 +200,24 @@ class Net():
     
 
   '''DRAWING'''
-  def drawEdge(self,netEdge,buckleVal,scale):
+  def drawEdge(self,netEdge):
     collection = []
     collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
     if netEdge.type=='cut':
         collection.append(netEdge.drawTab(self))
-        collection.append(netEdge.drawOffset(self,buckleVal,scale))
+        collection.append(netEdge.drawOffset(self,self.buckleVals[netEdge.fromFace],self.buckleScale))
         if netEdge.hasTab:
           pass
         else:
           collection.append(netEdge.drawFaceHole(self,self.holeRadius))
     return collection
 
-  def drawEdges(self,netGroupName,faceVals,scale):
+  def drawEdges(self,netGroupName):
     '''
     draw all edge geometry for the net
     input:
       netGroupName = name for the group
-      faceVals = dictionary mapping faceIdx to buckling val (not yet adjusted for edgeLen)
+      buckleVals = dictionary mapping faceIdx to buckling val (not yet adjusted for edgeLen)
     '''
     collection = []
     for netEdge in self.flatEdges:
@@ -218,8 +225,8 @@ class Net():
       #if netEdge.type=='cut':
         #netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
       fromFace = netEdge.fromFace
-      buckleVal = faceVals[fromFace]
-      subCollection = self.drawEdge(netEdge,buckleVal,scale)
+      buckleVal = self.buckleVals[fromFace]
+      subCollection = self.drawEdge(netEdge)
       for item in subCollection:
         collection.append(item)
     createGroup(netGroupName,collection)

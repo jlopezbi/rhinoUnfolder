@@ -39,12 +39,12 @@ def getLowestTVert(mesh,faceIdx):
   return lowest[0]
 
 
-def layoutMesh(foldList, mesh,holeRadius,userCuts):
+def layoutMesh(foldList,mesh,holeRadius,buckleScale,buckleVals,userCuts):
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  net = Net(mesh,holeRadius)
+  net = Net(mesh,holeRadius,buckleScale,buckleVals)
   dataMap = Map(mesh)
   net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts)
   return net,dataMap
