@@ -72,9 +72,6 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,user
   net.flatFaces[basisInfo[0]] = flatFace
   if hopEdge!=None:
     flatFace.flatEdges.append(hopEdge)
-    if fromFace==24:
-      print "added fold (hop) edge",
-      print "len flatEdges: " + str(len(flatFace.flatEdges))
 
   faceEdges = getFaceEdges(basisInfo[0],mesh)
   for edge in faceEdges:
@@ -101,10 +98,6 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,user
         flatEdge.toFace = newBasisInfo[0]
         
         netEdge = net.addEdge(flatEdge,flatFace)
-        if fromFace==24:
-          print "added fold edge",
-          print "len flatEdges: " + str(len(flatFace.flatEdges))
-
         dataMap.updateEdgeMap(edge,netEdge)
 
         #RECURSE
@@ -117,9 +110,6 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,user
         flatEdge.getTabFaceCenter(mesh,basisInfo[0],xForm)
 
         netEdge = net.addEdge(flatEdge,flatFace)
-        if fromFace==24:
-          print "added naked edge",
-          print "len flatEdges: " + str(len(flatFace.flatEdges))
         dataMap.updateEdgeMap(edge,netEdge)
 
       elif len(dataMap.meshEdges[edge])==1:
@@ -131,9 +121,6 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,user
           flatEdge.hasTab = True
         
         netEdge = net.addEdge(flatEdge,flatFace)
-        if fromFace==24:
-          print "added cut edge",
-          print "len flatEdges: " + str(len(flatFace.flatEdges))
         dataMap.updateEdgeMap(edge,netEdge)
         sibling = dataMap.getSiblingNetEdge(edge,netEdge)
         sibFlatEdge = net.flatEdges[sibling]

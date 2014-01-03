@@ -1,5 +1,5 @@
 from visualization import *
-import math
+import math,copy
 
 class FlatVert():
   def __init__(self,_tVertIdx,_point): 
@@ -635,18 +635,13 @@ class FlatEdge():
     '''
     verts = self.getNetVerts()
     flatFace = net.flatFaces[self.fromFace]
-    flatEdges = flatFace.flatEdges
-    if len(flatEdges)<4:
-      print "numEdges for flatFace " + str(self.fromFace) + " :" + str(len(flatEdges))
-      for i,flatEdge in enumerate(flatEdges):
-        print "flatEdge " + str(i) + "is a " + flatEdge.type
+    flatEdges = copy.copy(flatFace.flatEdges)
     flatEdges.remove(self)
     #assert(len(flatEdges)<4), "getOppositeFlatEdge only works for quad faces; face " + str(self.fromFace)+ " is a triangle"
     for flatEdge in flatEdges:
       if flatEdge.I not in verts and flatEdge.J not in verts:
         return flatEdge
     print "could not find opposite flatEdg for face: " + str(self.fromFace)
-    
     return -1
 
   def getNeighborFlatVert(self,net,face=None):

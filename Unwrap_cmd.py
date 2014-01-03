@@ -16,7 +16,7 @@ __commandname__ = "Unwrap"
 def RunCommand():
   holeRadius = 0.125/2.0
   targetVec = Rhino.Geometry.Vector3d(0,0,1)
-  buckleScale = 1.0
+  buckleScale = .2
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
