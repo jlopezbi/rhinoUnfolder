@@ -62,23 +62,15 @@ class Net():
     #winged edge mesh. H-E: could traverse edges recursively, first going to sibling h-edge
     #stopping when the edge points to no other edge(naked),or to a face not in the segment,or
     #if the h-edge is part of the user-selected edge to be cut
-    group = rs.AddGroup()
 
-    collection = []
+    translatedEdges = []
     movedNetVerts = []
     for netEdge in self.flatEdges:
       if netEdge.fromFace in segment:
-        collection.append(netEdge)
-        netEdge.clearAllGeom()
-        netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
-
-        geom = self.drawEdge(netEdge)
-        rs.AddObjectsToGroup(geom,group)
-        
-        # if netEdge.type=='cut':
-        #   #TODO: perhaps user input for hole parameters?
-        #   netEdge.drawHoles(self,.1,.08,.07)
-    return collection
+        translatedEdges.append(netEdge)
+        #netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
+        netEdge.translateNetVerts(movedNetVerts,self.flatVerts,xForm)
+    return translatedEdges
 
   def redrawSegment(self,translatedEdges):
     group = rs.AddGroup()
@@ -135,7 +127,10 @@ class Net():
     self.resetEdges(mesh,dataMap,changedVertPairs,segment)
 
   def resetFaces(self,changedVertPairs,segment):
-    #REPLACE: this is slow hack
+    '''
+    reset the faces to contain the newley added flatVertices
+    '''
+    #if better data structure: REPLACE: this is slow hack
     newVertI,oldVertI = changedVertPairs[0]
     newVertJ,oldVertJ = changedVertPairs[1]
     for face in segment:

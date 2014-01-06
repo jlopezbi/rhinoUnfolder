@@ -127,16 +127,17 @@ class FlatEdge():
       pass
     oppositeMidPnt = oppositeEdge.getMidPoint(net.flatVerts)
     midPnt = self.getMidPoint(net.flatVerts)
-    lengthFace = getVectorForPoints(oppositeMidPnt,midPnt).Length
+    rs.AddLine(midPnt,oppositeMidPnt)
+    faceVec = getVectorForPoints(oppositeMidPnt,midPnt)
+    lengthFace = faceVec.Length
 
-    midVec = self.getFaceMidVec(net)
-    midVec.Unitize()
-    offsetVec = midVec*(scale*buckleVal*lengthFace/2.0) #half for each side
+    faceVec.Unitize()
+    offsetVec = faceVec*(scale*buckleVal*lengthFace/2.0) #half for each side
+    drawVector(offsetVec,midPnt,(0,255,255,255))
 
     xForm = Rhino.Geometry.Transform.Translation(offsetVec)
 
     self.translateEdgeLine(xForm,True)
-
 
   def getEdgeVec(self,flatVerts):
     pointI = flatVerts[self.I].point

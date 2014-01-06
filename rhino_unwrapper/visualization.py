@@ -89,16 +89,24 @@ def drawPolyline(polyline,color,arrowType):
   poly_id = scriptcontext.doc.Objects.AddPolyline(polyline,attr)
   return poly_id,polyline
 
+def drawVector(vector,startPnt,color,arrowType='EndArrowhead'):
+  startPnt = Rhino.Geometry.Point3d(startPnt)
+  endPnt = startPnt+vector 
+  drawLine([startPnt,endPnt],color,arrowType)
+
+
 def drawLine(points,color,arrowType,line=None):
   #points must be Point3d
+  a,r,g,b = color
   if len(points)!=0:
-    line = Rhino.Geometry.Line(points[0],points[1])
-  attrCol = setAttrColor(color[0],color[1],color[2],color[3])
+    pntA,pntB = points
+    line = Rhino.Geometry.Line(pntA,pntB)
+  attr = setAttrColor(a,r,g,b)
   if arrowType:
-    attrCol = setAttrArrow(attrCol,arrowType)
+    attr = setAttrArrow(attr,arrowType)
 
   # returns a Guid (globally unique identifier)
-  lineGuid = scriptcontext.doc.Objects.AddLine(line,attrCol)
+  lineGuid = scriptcontext.doc.Objects.AddLine(line,attr)
   return lineGuid,line
 
 def translateLine(self,xForm):
@@ -108,7 +116,7 @@ def translateLine(self,xForm):
 
 def drawVector(vector,position,color):
   pntStart = Rhino.Geometry.Point3d(position)
-  vecEnd = position + vector
+  vecEnd = pntStart + vector
   pntEnd = Rhino.Geometry.Point3d(vecEnd)
   lineGuid = drawLine([pntStart,pntEnd],color,'EndArrowhead')
   return lineGuid
