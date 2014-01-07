@@ -1,10 +1,11 @@
 from visualization import *
+from transformations import transformToXY
 import math,copy
 
 class FlatVert():
   def __init__(self,_tVertIdx,_point): 
     self.tVertIdx = _tVertIdx
-    self.point = _point
+    self.point = Rhino.Geometry.Point3d(_point) #clobbber to point3d
     self.fromFace = None
     #self.toFace = None
 
@@ -19,9 +20,9 @@ class FlatVert():
 
 class FlatEdge():
   def __init__(self,_edgeIdx,vertI,vertJ): 
-    self.edgeIdx = _edgeIdx
-    self.I = vertI
-    self.J = vertJ
+    self.edgeIdx = _edgeIdx #edgeIdx in mesh
+    self.I = vertI #netVertIdx
+    self.J = vertJ #netVertIdx
     
     self.line = None
     self.line_id = None
@@ -91,6 +92,10 @@ class FlatEdge():
     pntA,pntB = self.getCoordinates(flatVerts)
     return getVectorForPoints(pntA,pntB).Length
 
+  def getEdgeVec(self,flatVerts):
+    pointI = flatVerts[self.I].point
+    pointJ = flatVerts[self.J].point
+    return Rhino.Geometry.Vector3d(pointJ-pointI)
 
   '''DRAWING'''
 
@@ -117,6 +122,15 @@ class FlatEdge():
       self.line = line
     return line_id
 
+  def _drawEdgeLineNoMesh(self,color,flatVerts):
+    '''
+    for testing
+    '''
+    points = self.getCoordinates(flatVerts)
+    line_id,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
+    return line_id
+
+
   def drawOffset(self,net,buckleVal,scale):
     '''
     draw line that is offset from this edge by an amount proportional to the buckleVal and
@@ -139,10 +153,7 @@ class FlatEdge():
 
     self.translateEdgeLine(xForm,True)
 
-  def getEdgeVec(self,flatVerts):
-    pointI = flatVerts[self.I].point
-    pointJ = flatVerts[self.J].point
-    return Rhino.Geometry.Vector3d(pointJ-pointI)
+  '''TRANSLATION'''
 
   def resetFromFace(self,face):
     if self.fromFace==face:
@@ -162,6 +173,10 @@ class FlatEdge():
       else:
         scriptcontext.doc.Objects.Replace(self.line_id,self.line)
 
+  def translateTabFaceCenter(self,xForm):
+    if self.tabFaceCenter!=None:
+      self.tabFaceCenter.Transform(xForm)
+
   def translateNetVerts(self,movedNetVerts,flatVerts,xForm):
     netVertI,netVertJ = self.getFlatVerts(flatVerts)
     if netVertI not in movedNetVerts:
@@ -173,17 +188,22 @@ class FlatEdge():
 
   '''JOINERY'''
   def drawTab(self,net):
-    '''outputs guid for polyline'''
+
+    '''
+    outputs guid for polyline
+    '''
+    #TODO: remove this clearing of geom: unnecessary
     if len(self.geom)>0:
       for guid in self.geom:
         scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
-      return self.drawTruncatedTab(net)
-      #return self.drawTriTab(net)
+      #return self._drawTruncatedTab(net)
+      return self._drawAngleTab(net.flatVerts,net.angle)
+      #return self._drawTriTab(net)
     else:
-      return self.drawQuadTab(net.flatVerts)
+      return self._drawQuadTab(net.flatVerts)
       
-  def drawQuadTab(self,flatVerts):
+  def _drawQuadTab(self,flatVerts):
     pntA,pntD = self.getCoordinates(flatVerts)
     vecA = Rhino.Geometry.Vector3d(pntA)
     vecD = Rhino.Geometry.Vector3d(pntD)
@@ -217,7 +237,71 @@ class FlatEdge():
     self.geom.append(polyGuid)
     return polyGuid
 
-  def drawTruncatedTab(self,net):
+  def _drawAngleTab(self,flatVerts,angle):
+    '''
+    draw a truncated tab in the style of pepakura:
+    constant tabWidth, constant inner angles
+    input:
+      flatVerts = list of FlatVerts instances
+      angle = angle in radians for the inner angles of the tab. for now let this be a net-wide property
+    '''
+    #         T
+    #    B-------C  
+    #   /         \
+    #  /           \
+    # A->x-------x<-D
+    # TODO: write this function, use tabFace center to set the side of the tab
+    # methinks
+
+
+    pntA,pntD = self.getCoordinates(flatVerts)
+    #print "type: " + str(type(pntA))
+    pntT = self.tabFaceCenter
+    assert(pntT!=None), "need a tabFaceCenter to make a tab"
+
+    vecDiag = Rhino.Geometry.Vector3d(pntT-pntA)
+    vecEdge = Rhino.Geometry.Vector3d(pntD-pntA)
+
+
+    vecClosestPnt = projectVector(vecDiag,vecEdge)
+    vecPerp = Rhino.Geometry.Vector3d(vecDiag - vecClosestPnt)
+    vecPerp.Unitize()
+    vecTabWidth = vecPerp*self.tabWidth
+    x = self.tabWidth/math.tan(angle)
+
+    #This means the edge is to short for a truncated tab:
+    #make a traingular tab instead
+    if (vecEdge.Length <= 2.0*x):
+      pntMid = getMidPointPoints(pntA,pntD)
+      pntE = Rhino.Geometry.Point3d(vecTabWidth+pntMid)
+
+      points = [pntA,pntE,pntD]
+
+    else:
+      vecEdge.Unitize()
+
+      vecEdgeAD = vecEdge*x 
+      vecEdgeDA = vecEdge*-x
+
+      vecB = vecTabWidth+vecEdgeAD
+      vecC = vecTabWidth+vecEdgeDA
+
+      pntB = Rhino.Geometry.Point3d(pntA+vecB)
+      pntC = Rhino.Geometry.Point3d(pntD+vecC)
+
+      points = [pntA,pntB,pntC,pntD]
+
+    polyline = Rhino.Geometry.Polyline(points)
+    poly_id,polyline = drawPolyline(polyline)
+    return poly_id
+
+  def test_drawAngleTab(self):
+    print "MEOW"
+
+    
+
+
+  def _drawTruncatedTab(self,net):
     '''
     draw a truncated tab using the drawing style of triTab, but with an offset-line intersection
     '''
@@ -238,7 +322,7 @@ class FlatEdge():
       intersectPntI = offsetLine.PointAt(aI)
       intersectPntJ = offsetLine.PointAt(aJ)
       
-      shorterThanTab = self.checkIfShortTab(net)
+      shorterThanTab = self._checkIfShortTab(net)
       if shorterThanTab == 1:
         points = [I,intersectPntJ,intersectPntI,J] #flip order to avoid self-intersction
       elif shorterThanTab == 0:
@@ -258,7 +342,7 @@ class FlatEdge():
 
     return polyGuid
 
-  def checkIfShortTab(self,net):
+  def _checkIfShortTab(self,net):
     center = self.tabFaceCenter
     edgeLine =  self.getEdgeLine(net)
     closestPnt = edgeLine.ClosestPoint(center,True)
@@ -271,7 +355,7 @@ class FlatEdge():
     else:
       return -1
 
-  def drawTriTab(self,net):
+  def _drawTriTab(self,net):
     holeRadius = net.holeRadius
     mesh = net.mesh
     flatVerts = net.flatVerts
@@ -358,6 +442,17 @@ class FlatEdge():
     # faceForEdge = 
     # faceBoundary = net.
     pass
+
+  '''GET INFO'''
+  def getTabFaceCenter(self,mesh,currFace,xForm):
+    otherFace = getOtherFaceIdx(self.edgeIdx,currFace,mesh)
+    if otherFace!=None and otherFace != -1:
+      faceCenter = mesh.Faces.GetFaceCenter(otherFace)
+      self.tabFaceCenter = transformToXY(faceCenter,xForm)
+    if self.tabFaceCenter==None:
+      return False
+    else:
+      return True
 
   def getHolePoints(self,flatVerts):
     #TODO: replace this with less redundant version (iterate trhough points)
@@ -502,7 +597,7 @@ class FlatEdge():
     return Rhino.Geometry.Point3f(x,y,z)
 
   def getFaceFromPoint(self,net,point):
-    '''return the face that corresponds to the point
+    '''return the face that corresponds to the point that a use seleceted to translate the segment to
     '''
     #TODO: fails for horizontal lines :(
     assert(self.type =='fold')
@@ -561,17 +656,6 @@ class FlatEdge():
     pntI,pntJ = self.getCoordinates(net.flatVerts)
     return Rhino.Geometry.Line(pntI,pntJ)
 
-  def getTabFaceCenter(self,mesh,currFace,xForm):
-    otherFace = getOtherFaceIdx(self.edgeIdx,currFace,mesh)
-    if otherFace!=None and otherFace != -1:
-      faceCenter = mesh.Faces.GetFaceCenter(otherFace)
-      faceCenter.Transform(xForm)
-      faceCenter.Z = 0.0 #this results in small error, TODO: change to more robust method
-      self.tabFaceCenter = faceCenter
-    if self.tabFaceCenter==None:
-      return False
-    else:
-      return True
 
   def getTabAngles(self,mesh,currFaceIdx,xForm):
     #WORKING AWAY FROM THIS: data is implicit in 
@@ -660,7 +744,28 @@ class FlatEdge():
     neighbors = list(tVertsFace-tVertsEdge)
     return neighbors[0] #arbitrarily return first tVert
 
+def test_FlatEdge():
+  '''
+  test functionality of various FlatEdge functions
+  '''
+  vertA = FlatVert(0,Rhino.Geometry.Point3f(5,0,0))
+  vertB = FlatVert(1,Rhino.Geometry.Point3f(6,0,0))
+  vertC = FlatVert(2,Rhino.Geometry.Point3f(7,10,0))
+  flatVerts = [vertA,vertB,vertC]
+  angle = math.pi/6.0
 
+  flatEdgeA = FlatEdge(0,0,1)
+  flatEdgeA.tabFaceCenter = Rhino.Geometry.Point3d(5,-5,0)
+
+  flatEdgeB = FlatEdge(0,1,2)
+  flatEdgeB.tabFaceCenter = Rhino.Geometry.Point3d(5,-5,0)
+
+  '''tests'''
+  flatEdgeA._drawEdgeLineNoMesh((0,0,0,0),flatVerts)
+  flatEdgeA._drawAngleTab(flatVerts,angle)
+
+  flatEdgeB._drawEdgeLineNoMesh((0,0,0,0),flatVerts)
+  flatEdgeB._drawAngleTab(flatVerts,angle)
 
 class FlatFace():
   #does not store meshFace because position in list determines this
@@ -669,6 +774,8 @@ class FlatFace():
     self.flatEdges = []
     self.fromFace = _fromFace
     self.centerPoint = None
+
+  '''GET PROPERTIES'''
 
   def getFlatVerts(self,flatVerts):
     collection = []
@@ -697,13 +804,9 @@ class FlatFace():
       self.centerPoint = Rhino.Geometry.Point3d(x,y,0.0)
     return self.centerPoint
 
-
-  def draw(self,flatVerts):
+  def getPolylineCurve(self,flatVerts):
     polyline = self.getPolyline(flatVerts)
-    #remove 'EndArrowhead' to stop displaying orientatio of face
-    poly_id,polyline = drawPolyline(polyline,[0,0,0,0],'EndArrowhead')
-    self.poly_id = poly_id
-    self.polyline = polyline
+    return Rhino.Geometry.PolylineCurve(polyline)
 
   def getPolyline(self,flatVerts):
     points = [flatVerts[i].point for i in self.vertices]
@@ -711,28 +814,13 @@ class FlatFace():
     points.append(flatVerts[self.vertices[0]].point) 
     return Rhino.Geometry.Polyline(points)
 
-  def getPolylineCurve(self,flatVerts):
-    polyline = self.getPolyline(flatVerts)
-    return Rhino.Geometry.PolylineCurve(polyline)
-
   def getProps(self,flatVerts):
     polylineCurve = self.getPolylineCurve(flatVerts)
     return Rhino.Geometry.AreaMassProperties.Compute(polylineCurve)
   
-
   def getArea(self,flatVerts):
     props = self.getProps(flatVerts)
     return props.Area
-
-
-  def drawInnerface(self,flatVerts,ratio=.33):
-    '''draw a inset face'''
-    self.getCenterPoint(flatVerts)
-    centerVec = Rhino.Geometry.Vector3d(self.centerPoint)
-    for i in range(len(self.vertices)):
-      vert = self.vertices[i]
-      self.getInnerPoint(flatVerts,vert)
-      #TODO: finish up this function
 
   def getInnerPoint(self,flatVerts,vert):
     cornerVec = Rhino.Geometry.Vector3d(flatVerts[vert].point)
@@ -743,8 +831,40 @@ class FlatFace():
     pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
     rs.AddTextDot(str(i),pos)
 
+  '''DRAWING'''
+
+  def draw(self,flatVerts):
+    polyline = self.getPolyline(flatVerts)
+    #remove 'EndArrowhead' to stop displaying orientatio of face
+    poly_id,polyline = drawPolyline(polyline,[0,0,0,0],'EndArrowhead')
+    self.poly_id = poly_id
+    self.polyline = polyline
+
+  def drawInnerface(self,flatVerts,ratio=.33):
+    '''draw a inset face'''
+    self.getCenterPoint(flatVerts)
+    centerVec = Rhino.Geometry.Vector3d(self.centerPoint)
+    for i in range(len(self.vertices)):
+      vert = self.vertices[i]
+      self.getInnerPoint(flatVerts,vert)
+      #TODO: finish up this function
+
+  '''SEGMENTATION'''
+
+  def resetFlatEdges(self,newFlatEdge):
+    '''
+    when a new edge is created (bescause of segmentation), the flatEdges that the face which that edge belongs to
+    is updated: the old edge is removed and the new edge is inserted
+    '''
+    edgeIdx = newFlatEdge.edgeIdx
+    for flatEdge in self.flatEdges:
+      if flatEdge.edgeIdx==edgeIdx:
+        self.flatEdges.remove(flatEdge)
+        self.flatEdges.append(newFlatEdge)
 
 
+if __name__=="__main__":
+  test_FlatEdge()
 
 
 

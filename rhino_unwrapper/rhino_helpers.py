@@ -4,7 +4,10 @@ import scriptcontext
 import System.Drawing
 import math
 
-#TODO: look into inline functions
+# visuzliation is only imported for displaying results from testing
+from visualization import *
+
+#TODO: look into inline functions (why did I write this??)
 
 '''Rhino_helpers'''
 def createGroup(groupName,objects):
@@ -217,8 +220,29 @@ def getMedianEdgeLen(mesh):
 
 '''UNCATEGORIZED'''
 
+'''VECTORS'''
+
 def angleBetweenVecAndPlane(vec,planeNormal):
   return math.asin(math.fabs(vec*planeNormal)/(vec.Length*planeNormal.Length))
+
+def projectVector(vecB,vecA):
+  '''
+  project B onto A
+  '''
+  magnitude = vecA*vecB/vecA.Length
+  vecUnit = Rhino.Geometry.Vector3d(vecA) #make copy of vecA so that vecA is unchanged
+  vecUnit.Unitize()
+  return magnitude*vecUnit
+
+def test_projectVector():
+  pntsA = rs.GetPoints(True,True, 'select base of first vector', 'select end of first vec',2)
+  pntsB = rs.GetPoints(True,True, 'select base of second vector', 'select end of second vec',2)
+  vecA = Rhino.Geometry.Vector3d(pntsA[1]-pntsA[0])
+  vecB = Rhino.Geometry.Vector3d(pntsB[1]-pntsB[0])
+  vecProj = projectVector(vecA,vecB)
+  drawVector(vecProj,pntsA[0],(0,255,255,255))
+
+'''UNCATEGORIZED'''
 
 def getOffset(points,testPoint,distance,towards,axis=(0,0,1)):
   '''
@@ -277,6 +301,7 @@ def getOrientedVector(mesh,edgeIdx,tVert,isEnd):
   vec = Rhino.Geometry.Vector3d(vecPnt)
   return vec
 
+'''POINTS'''
 def getVectorForPoints(pntA,pntB):
   vecA = Rhino.Geometry.Vector3d(pntA) #From
   vecB = Rhino.Geometry.Vector3d(pntB) #To
@@ -291,9 +316,15 @@ def getMidPoint(curve_id):
   cenX = (startPnt.X+endPnt.X)/2
   cenY = (startPnt.Y+endPnt.Y)/2
   cenZ = (startPnt.Z+endPnt.Z)/2
-  point = Rhino.Geometry.Point3d(cenX,cenY,cenZ)
+  return Rhino.Geometry.Point3d(cenX,cenY,cenZ)
 
-  return point
+def getMidPointPoints(pntA,pntB):
+  '''get the midpoint between two points
+  '''
+  cenX = (pntA.X+pntB.X)/2.0
+  cenY = (pntA.Y+pntB.Y)/2.0
+  cenZ = (pntA.Z+pntB.Z)/2.0
+  return Rhino.Geometry.Point3d(cenX,cenY,cenZ)
 
 def getMedian(edgeLens):
   eLensSorted = sorted(edgeLens)
@@ -329,3 +360,8 @@ def uniqueList(seq, idfun=None):
        result.append(item)
    return result
 
+def test_main():
+  test_projectVector()
+
+if __name__=="__main__":
+  test_main()

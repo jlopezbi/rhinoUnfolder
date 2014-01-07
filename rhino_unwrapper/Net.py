@@ -51,10 +51,10 @@ class Net():
     flatEdgeCut.type = 'cut'
     flatEdgeCut.resetFromFace(face)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
-    newEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
-    flatEdgeCut.pair = newEdge
+    newNetEdgeIdx,newFlatEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
+    self.flatFaces[face].resetFlatEdges(newFlatEdge)
+    flatEdgeCut.pair = newNetEdgeIdx
     flatEdgeCut.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
-    #flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
   def translateSegment(self,segment,xForm):
@@ -68,8 +68,8 @@ class Net():
     for netEdge in self.flatEdges:
       if netEdge.fromFace in segment:
         translatedEdges.append(netEdge)
-        #netEdge.translateGeom(movedNetVerts,self.flatVerts,xForm)
         netEdge.translateNetVerts(movedNetVerts,self.flatVerts,xForm)
+        netEdge.translateTabFaceCenter(xForm)
     return translatedEdges
 
   def redrawSegment(self,translatedEdges):
@@ -107,7 +107,7 @@ class Net():
     #wait silly: mesh faces and net faces are the same!!
     netEdge = self.addEdge(newFlatEdge,self.flatFaces[face])
     dataMap.updateEdgeMap(meshEdge,netEdge)
-    return netEdge
+    return netEdge,newFlatEdge
 
   def makeNewNetVerts(self,dataMap,flatEdgeCut):
     oldNetI,oldNetJ = flatEdgeCut.getNetVerts()

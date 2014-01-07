@@ -156,8 +156,9 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
     if tVert not in seen: #avoid duplicates (triangle faces)
       seen.append(tVert)
       if tVert not in hopMeshVerts:
-        point = transformPoint(mesh,tVert,xForm)
-        flatVert = FlatVert(tVert,point)
+        point = Rhino.Geometry.Point3d(mesh.TopologyVertices.Item[tVert])
+        xFormedPoint = transformPoint(point,xForm)
+        flatVert = FlatVert(tVert,xFormedPoint)
         netVert = net.addVert(flatVert)
         dataMap.meshVerts[tVert].append(netVert)
         netVerts.append(netVert)
@@ -178,7 +179,12 @@ def getNetEdges(mesh,edge,netVerts,dataMap):
 
 
 def transformPoint(mesh,tVert,xForm):
-  point = Rhino.Geometry.Point3d(mesh.TopologyVertices.Item[tVert])
+  '''
+  gets the point for a tVert (idx), clobbers the z component to zero!!! (very dangerous)
+  this works because always unwrapps to xy plane.
+  TODO: figure out a better way of handling error (rounding??) than setting .Z to 0.0
+  '''
+  point = Rhino.Geometry.Point3d(mesh.TopologyVertices.Item[tVert]) 
   point.Transform(xForm)
   point.Z = 0.0 #TODO: find where error comes from!!! (rounding?)
   return point

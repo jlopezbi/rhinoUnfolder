@@ -1,5 +1,15 @@
 from rhino_helpers import *
 
+def transformToXY(point,xForm):
+  '''
+  transforms point. ASSUMES THAT xFORM TRANSFORMS TO XY PLANE!
+  clobbers the z component to zero!!! (very dangerous)
+  this works because always unwrapps to xy plane.
+  TODO: figure out a better way of handling error (rounding??) than setting .Z to 0.0
+  ''' 
+  point.Transform(xForm)
+  point.Z = 0.0 #TODO: find where error comes from!!! (rounding?)
+  return point
 
 def createTransformMatrix(fromBasis,toBasis):
   p, u, v, w = fromBasis
@@ -61,7 +71,6 @@ def getTransform(basisInfo,toBasis,mesh):
   fromBasis = getBasisOnMesh(basisInfo,mesh)
   xForm = createTransformMatrix(fromBasis,toBasis)
   return xForm
-
 
 def getBasisFlat(flatEdge,flatVerts):
   pntI,pntJ = flatEdge.getCoordinates(flatVerts)

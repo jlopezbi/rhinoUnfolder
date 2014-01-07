@@ -34,10 +34,6 @@ def displayNormals(mesh):
   name = createGroup('Normals',normLines)
   return name
 
-
-def displayVector(vector,position,color):
-  endPnt = vec
-
 def displayFaceIdxs(mesh):
   for i in xrange(mesh.Faces.Count):
     centerPnt = mesh.Faces.GetFaceCenter(i)
@@ -81,15 +77,16 @@ def setAttrArrow(attr,strType):
   attr.ObjectDecoration = value
   return attr
 
-def drawPolyline(polyline,color,arrowType):
-  attr = setAttrColor(color[0],color[1],color[2],color[3])
+def drawPolyline(polyline,color=(0,0,0,0),arrowType='None'):
+  a,r,g,b = color
+  attr = setAttrColor(a,r,g,b)
   if arrowType:
     attr = setAttrArrow(attr,arrowType)
     
   poly_id = scriptcontext.doc.Objects.AddPolyline(polyline,attr)
   return poly_id,polyline
 
-def drawVector(vector,startPnt,color,arrowType='EndArrowhead'):
+def drawVector(vector,startPnt,color=(0,0,0,0),arrowType='EndArrowhead'):
   startPnt = Rhino.Geometry.Point3d(startPnt)
   endPnt = startPnt+vector 
   drawLine([startPnt,endPnt],color,arrowType)
@@ -114,12 +111,12 @@ def translateLine(self,xForm):
     self.line.Transform(xForm)
     scriptcontext.doc.Objects.Replace(self.line_id,self.line)
 
-def drawVector(vector,position,color):
-  pntStart = Rhino.Geometry.Point3d(position)
-  vecEnd = pntStart + vector
-  pntEnd = Rhino.Geometry.Point3d(vecEnd)
-  lineGuid = drawLine([pntStart,pntEnd],color,'EndArrowhead')
-  return lineGuid
+# def drawVector(vector,position,color):
+#   pntStart = Rhino.Geometry.Point3d(position)
+#   vecEnd = pntStart + vector
+#   pntEnd = Rhino.Geometry.Point3d(vecEnd)
+#   lineGuid = drawLine([pntStart,pntEnd],color,'EndArrowhead')
+#   return lineGuid
 
 def drawTextDot(point,message,color):
   attrCol = setAttrColor(color[0],color[1],color[2],color[3])
