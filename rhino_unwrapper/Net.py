@@ -200,6 +200,7 @@ class Net():
     group = rs.AddGroup()
     geom = []
     for netEdge in translatedEdges:
+      netEdge.clearAllGeom()
       geom.append(netEdge.drawNetEdge(self))
     grouped =  rs.AddObjectsToGroup(geom,group)
     if grouped==None: 

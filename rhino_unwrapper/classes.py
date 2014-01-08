@@ -107,8 +107,11 @@ class FlatEdge():
       self.line_id = None
 
     if len(self.geom)>0:
-      for guid in self.geom:
-        scriptcontext.doc.Objects.Delete(guid,True)
+      rs.DeleteObjects(self.geom)
+      # for guid in self.geom:
+      #   scriptcontext.doc.Objects.Delete(guid,True) 
+        #TODO: PROBLEM HERE: 
+        #Multiple targets could match: Delete(ObjRef, bool), Delete(RhinoObject, bool), Delete(IEnumerable[Guid], bool)
 
   def drawNetEdge(self,net):
     '''
@@ -118,7 +121,7 @@ class FlatEdge():
     geom = self.geom
     geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
     if self.type=='cut':
-        geom.append(self.drawOffset(net))
+        geom.append(self._drawOffset(net))
         if net.drawTabs:
           geom.append(self.drawTab(net))
         if net.drawFaceHoles:
@@ -144,10 +147,10 @@ class FlatEdge():
       points = self.getCoordinates(flatVerts)
       if self.line_id!=None: #just in case clearing geom did not get perfomed
         scriptcontext.doc.Objects.Delete(self.line_id,True)
-      line_id,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
-      self.line_id = line_id
+      lineGuid,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
+      self.line_id = lineGuid
       self.line = line
-    return line_id
+    return lineGuid
 
   def _drawEdgeLineNoMesh(self,color,flatVerts):
     '''
@@ -157,8 +160,7 @@ class FlatEdge():
     line_id,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
     return line_id
 
-
-  def drawOffset(self,net):
+  def _drawOffset(self,net):
     '''
     draw line that is offset from this edge by an amount proportional to the buckleVal and
     the len of the neighboring edge (for QUAD FACES)
@@ -170,17 +172,17 @@ class FlatEdge():
       pass
     oppositeMidPnt = oppositeEdge.getMidPoint(net.flatVerts)
     midPnt = self.getMidPoint(net.flatVerts)
-    rs.AddLine(midPnt,oppositeMidPnt)
     faceVec = getVectorForPoints(oppositeMidPnt,midPnt)
     lengthFace = faceVec.Length
 
     faceVec.Unitize()
     offsetVec = faceVec*(scale*buckleVal*lengthFace/2.0) #half for each side
-    drawVector(offsetVec,midPnt,(0,255,255,255))
+    #drawVector(offsetVec,midPnt,(0,255,255,255))
 
     xForm = Rhino.Geometry.Transform.Translation(offsetVec)
 
-    self.translateEdgeLine(xForm,True)
+    return self.translateEdgeLine(xForm,True)
+    
 
   '''TRANSLATION'''
 
@@ -205,9 +207,10 @@ class FlatEdge():
     if self.line != None:
       self.line.Transform(xForm)
       if copy:
-        scriptcontext.doc.Objects.AddLine(self.line)
+        return scriptcontext.doc.Objects.AddLine(self.line)
       else:
         scriptcontext.doc.Objects.Replace(self.line_id,self.line)
+        return
 
   def translateTabFaceCenter(self,xForm):
     if self.tabFaceCenter!=None:
