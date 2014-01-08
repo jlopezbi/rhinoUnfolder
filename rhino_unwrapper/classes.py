@@ -116,16 +116,23 @@ class FlatEdge():
   def drawNetEdge(self,net):
     '''
     Assumes that all flatEdge geom has already been removed
+    Draws all geometry for netEdge:
+      -edgeLine
+      -Tabs
+      -offsets
+      -holes
     '''
     group = rs.AddGroup() # create a sub-group for each edge
     geom = self.geom
     geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
+    if self.type=='cut' or self.type=='naked':
+      geom.append(self._drawOffset(net))
     if self.type=='cut':
-        geom.append(self._drawOffset(net))
         if net.drawTabs:
           geom.append(self.drawTab(net))
         if net.drawFaceHoles:
           geom.append(self.drawFaceHole(net))
+    
     grouped =  rs.AddObjectsToGroup(geom,group)
     return geom
 
