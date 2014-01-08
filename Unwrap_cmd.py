@@ -15,6 +15,7 @@ __commandname__ = "Unwrap"
 
 def RunCommand():
   holeRadius = 0.125/2.0
+  tabAngle = math.pi/4.0 #45deg
   targetVec = Rhino.Geometry.Vector3d(0,0,1)
   buckleScale = .2
   mesh = getMesh("Select mesh to unwrap")
@@ -28,24 +29,24 @@ def RunCommand():
 
   if mesh and weightFunction:
     buckleVals = buckling_strips.assignValuesToFaces(targetVec,mesh)
-    dataMap,net,foldList = unwrap(mesh,buckleVals,buckleScale, userCuts, holeRadius, weightFunction)
+    dataMap,net,foldList = unwrap(mesh,buckleVals,buckleScale, userCuts, holeRadius,tabAngle,weightFunction)
     net.findInitalSegments()
     
   #SEGMENTATION 
 
   while True:
-    flatEdge,idx,strType = getNewEdge("select new edge on net or mesh",net,dataMap)
+    flatEdge,edgeIdx,strType = getNewEdge("select new edge on net or mesh",net,dataMap)
     if strType == 'fold':
       basePoint = flatEdge.getMidPoint(net.flatVerts)
       xForm,point = getUserTranslate("Pick point to translate segment to",basePoint)
       if xForm and point:
-        face = flatEdge.getFaceFromPoint(net,point)
+        face = flatEdge.getFaceFromPoint(net,point) #the face on segment side of the picked edge
         print "face: ",
         print face
         segment = net.findSegment(flatEdge,face)
         # print "segment: ",
         # print segment
-        net.copyAndReasign(mesh,dataMap,flatEdge,idx,segment,face)
+        net.copyAndReasign(mesh,dataMap,flatEdge,edgeIdx,segment,face)
         translatedEdges = net.translateSegment(segment,xForm)
         net.redrawSegment(translatedEdges)
         #net.updateCutEdge(flatEdge)

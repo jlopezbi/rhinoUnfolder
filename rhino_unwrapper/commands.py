@@ -6,7 +6,7 @@ from classes import FlatEdge
 from Map import Map
 from Net import Net
 
-def unwrap(mesh,buckleVals,buckleScale,userCuts,holeRadius, weightFunction=weight_functions.edgeAngle):
+def unwrap(mesh,buckleVals,buckleScale,userCuts,holeRadius,tabAngle,weightFunction=weight_functions.edgeAngle):
   '''
   input:
     mesh = mesh
@@ -21,7 +21,7 @@ def unwrap(mesh,buckleVals,buckleScale,userCuts,holeRadius, weightFunction=weigh
   meshDual = traversal.buildMeshGraph(mesh, userCuts, weightFunction)
   foldList = traversal.getSpanningKruskal(meshDual,mesh)
   cutList = traversal.getCutList(mesh,foldList)
-  net,dataMap = layout.layoutMesh(foldList,mesh,holeRadius,buckleScale,buckleVals,userCuts)
+  net,dataMap = layout.layoutMesh(foldList,mesh,holeRadius,tabAngle,buckleScale,buckleVals,userCuts)
 
   
   '''VISUALZE UNFOLDING ON MESH'''

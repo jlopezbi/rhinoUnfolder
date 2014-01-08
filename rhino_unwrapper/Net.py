@@ -6,8 +6,9 @@ import rhinoscriptsyntax as rs
 import math
 
 class Net():
-  def __init__(self,mesh,holeRadius,buckleScale,buckleVals):
+  def __init__(self,mesh,holeRadius,tabAngle,buckleScale,buckleVals):
     self.holeRadius = holeRadius #holes used for fastening joinery
+    self.tabAngle = tabAngle #innner tab angle for all tabs in net
     self.buckleScale = buckleScale #scale for the buckling offset
     self.buckleVals = buckleVals #dict mapping faceIdx to buckleVal
     self.flatVerts = []
@@ -47,12 +48,22 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
-  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,idx,segment,face):
+  def copyAndReasign(self,mesh,dataMap,flatEdgeCut,edgeIdx,segment,segmentFace):
+    '''
+    input:
+      mesh = mesh
+      dataMap = class which maps mesh elements to net elements
+      flatEdgeCut = the flatEdge whcih has been selected by the user to segment net
+      edgeIdx = the index of the flatEdge (TODO: get this from the flatEdgeCut?)
+      segment = the segment that is to be translated
+      segmentFace = the segmentFace on the segment side of the selected edge
+    '''
     flatEdgeCut.type = 'cut'
-    flatEdgeCut.resetFromFace(face)
+    nonSegmentFace = flatEdgeCut.resetFromFace(segmentFace)
     changedVertPairs = self.makeNewNetVerts(dataMap,flatEdgeCut)
-    newNetEdgeIdx,newFlatEdge = self.makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,idx,face)
-    self.flatFaces[face].resetFlatEdges(newFlatEdge)
+    newNetEdgeIdx,newFlatEdge = self._makeNewEdge(dataMap,changedVertPairs,flatEdgeCut.edgeIdx,edgeIdx,segmentFace)
+    newFlatEdge.tabFaceCenter = self.flatFaces[nonSegmentFace].getCenterPoint(self.flatVerts)
+    self.flatFaces[segmentFace].resetFlatEdges(newFlatEdge)
     flatEdgeCut.pair = newNetEdgeIdx
     flatEdgeCut.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
@@ -94,7 +105,7 @@ class Net():
     elif netFaceA.fromFace==faceB:
       netFaceA.fromFace = None
 
-  def makeNewEdge(self,dataMap,changedVertPairs,meshEdge,idx,face):
+  def _makeNewEdge(self,dataMap,changedVertPairs,meshEdge,idx,face):
     newVertI = changedVertPairs[0][0]
     newVertJ = changedVertPairs[1][0]
     newFlatEdge = FlatEdge(meshEdge,newVertI,newVertJ)

@@ -39,18 +39,18 @@ def getLowestTVert(mesh,faceIdx):
   return lowest[0]
 
 
-def layoutMesh(foldList,mesh,holeRadius,buckleScale,buckleVals,userCuts):
+def layoutMesh(foldList,mesh,holeRadius,tabAngle,buckleScale,buckleVals,userCuts):
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  net = Net(mesh,holeRadius,buckleScale,buckleVals)
+  net = Net(mesh,holeRadius,tabAngle,buckleScale,buckleVals)
   dataMap = Map(mesh)
-  net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts)
+  net,dataMap = _layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts)
   return net,dataMap
 
 
-def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts):
+def _layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts):
   ''' Recurse through faces, hopping along fold edges
     input:
       fromFace = the face just came from in recursive traversal
@@ -102,7 +102,7 @@ def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,user
 
         #RECURSE
         recurse = True
-        net,dataMap = layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,net,dataMap,userCuts)
+        net,dataMap = _layoutFace(basisInfo[0],flatEdge,newBasisInfo,foldList,mesh,newToBasis,net,dataMap,userCuts)
 
     else:
       if len(dataMap.meshEdges[edge])==0:
@@ -157,7 +157,7 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
       seen.append(tVert)
       if tVert not in hopMeshVerts:
         point = Rhino.Geometry.Point3d(mesh.TopologyVertices.Item[tVert])
-        xFormedPoint = transformPoint(point,xForm)
+        xFormedPoint = transformToXY(point,xForm)
         flatVert = FlatVert(tVert,xFormedPoint)
         netVert = net.addVert(flatVert)
         dataMap.meshVerts[tVert].append(netVert)

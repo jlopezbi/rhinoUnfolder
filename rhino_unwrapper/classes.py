@@ -155,9 +155,16 @@ class FlatEdge():
 
   '''TRANSLATION'''
 
-  def resetFromFace(self,face):
-    if self.fromFace==face:
+  def resetFromFace(self,segmentFace):
+    '''
+    specific to segmentation:
+    set the from face of this edge, which is the user-selected edge to perform segmentation,
+    to be the face NOT in the segment (ie not the segmentFace)
+    '''
+    if self.fromFace == segmentFace:
       self.fromFace = self.toFace
+      return self.toFace
+    return self.fromFace
 
   def translateGeom(self,movedNetVerts,flatVerts,xForm):
     #self.translateEdgeLine(xForm)
@@ -190,6 +197,7 @@ class FlatEdge():
   def drawTab(self,net):
 
     '''
+    drawTab joinery:
     outputs guid for polyline
     '''
     #TODO: remove this clearing of geom: unnecessary
@@ -198,7 +206,7 @@ class FlatEdge():
         scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
       #return self._drawTruncatedTab(net)
-      return self._drawAngleTab(net.flatVerts,net.angle)
+      return self._drawAngleTab(net.flatVerts,net.tabAngle)
       #return self._drawTriTab(net)
     else:
       return self._drawQuadTab(net.flatVerts)
@@ -297,9 +305,6 @@ class FlatEdge():
 
   def test_drawAngleTab(self):
     print "MEOW"
-
-    
-
 
   def _drawTruncatedTab(self,net):
     '''
@@ -743,6 +748,8 @@ class FlatEdge():
     tVertsFace = set(flatFace.vertices)
     neighbors = list(tVertsFace-tVertsEdge)
     return neighbors[0] #arbitrarily return first tVert
+
+'''FLAT EDGE TESTS'''
 
 def test_FlatEdge():
   '''
