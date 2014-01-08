@@ -125,8 +125,11 @@ class FlatEdge():
     group = rs.AddGroup() # create a sub-group for each edge
     geom = self.geom
     geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
+    didOffset = False
     if self.type=='cut' or self.type=='naked':
       geom.append(self._drawOffset(net))
+      didOffset = True
+
     if self.type=='cut':
         if net.drawTabs:
           geom.append(self.drawTab(net))
@@ -171,6 +174,7 @@ class FlatEdge():
     '''
     draw line that is offset from this edge by an amount proportional to the buckleVal and
     the len of the neighboring edge (for QUAD FACES)
+    add the new points to this flatEdge for later use
     '''
     buckleVal = net.buckleVals[self.fromFace]
     scale = net.buckleScale
@@ -188,7 +192,8 @@ class FlatEdge():
 
     xForm = Rhino.Geometry.Transform.Translation(offsetVec)
 
-    return self.translateEdgeLine(xForm,True)
+    lineGuid,line =  self.translateEdgeLine(xForm,True)
+    return lineGuid
     
 
   '''TRANSLATION'''
@@ -212,12 +217,19 @@ class FlatEdge():
 
   def translateEdgeLine(self,xForm,copy=False):
     if self.line != None:
-      self.line.Transform(xForm)
       if copy:
-        return scriptcontext.doc.Objects.AddLine(self.line)
+        line = Rhino.Geometry.Line(self.line.From,self.line.To) #make copy of edge line
+        line.Transform(xForm)
+        lineGuid = scriptcontext.doc.Objects.AddLine(line)
+
       else:
-        scriptcontext.doc.Objects.Replace(self.line_id,self.line)
-        return
+        line = self.line
+        line.Transform(xForm)
+        lineGuid = scriptcontext.doc.Objects.Replace(self.line_id,line)
+
+      return lineGuid,line
+    print "did not succesfully translate edge line!"
+    return None,None
 
   def translateTabFaceCenter(self,xForm):
     if self.tabFaceCenter!=None:
