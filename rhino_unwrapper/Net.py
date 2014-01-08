@@ -6,11 +6,14 @@ import rhinoscriptsyntax as rs
 import math
 
 class Net():
-  def __init__(self,mesh,holeRadius,tabAngle,buckleScale,buckleVals):
+  def __init__(self,mesh,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,drawFaceHoles):
     self.holeRadius = holeRadius #holes used for fastening joinery
     self.tabAngle = tabAngle #innner tab angle for all tabs in net
     self.buckleScale = buckleScale #scale for the buckling offset
     self.buckleVals = buckleVals #dict mapping faceIdx to buckleVal
+    self.drawTabs = drawTabs #boolean
+    self.drawFaceHoles = drawFaceHoles #boolean face holes == mouth etc.
+
     self.flatVerts = []
     self.flatEdges = []
     self.flatFaces = [None]*mesh.Faces.Count
@@ -82,18 +85,6 @@ class Net():
         netEdge.translateNetVerts(movedNetVerts,self.flatVerts,xForm)
         netEdge.translateTabFaceCenter(xForm)
     return translatedEdges
-
-  def redrawSegment(self,translatedEdges):
-    group = rs.AddGroup()
-    geom = []
-    for netEdge in translatedEdges:
-      geom.append(self.drawEdge(netEdge))
-    grouped =  rs.AddObjectsToGroup(geom,group)
-    if grouped==None: 
-      print "failed to make segment group"
-    else:
-      print "made segment group of" + str(grouped) +" elements"
-
 
   def removeFaceConnection(self,flatEdgeCut):
     faceA = flatEdgeCut.fromFace
@@ -204,8 +195,18 @@ class Net():
     return self.flatEdges[netEdge]
     
     
-
   '''DRAWING'''
+  def redrawSegment(self,translatedEdges):
+    group = rs.AddGroup()
+    geom = []
+    for netEdge in translatedEdges:
+      geom.append(netEdge.drawNetEdge(self))
+    grouped =  rs.AddObjectsToGroup(geom,group)
+    if grouped==None: 
+      print "failed to make segment group"
+    else:
+      print "made segment group of" + str(grouped) +" elements"
+
   def drawEdge(self,netEdge):
     collection = []
     collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
@@ -232,11 +233,11 @@ class Net():
         #netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
       fromFace = netEdge.fromFace
       buckleVal = self.buckleVals[fromFace]
-      subCollection = self.drawEdge(netEdge)
+      #subCollection = self.drawEdge(netEdge)
+      subCollection = netEdge.drawNetEdge(self)
       for item in subCollection:
         collection.append(item)
     createGroup(netGroupName,collection)
-
 
   def drawFaces(self,netGroupName):
     collection = []

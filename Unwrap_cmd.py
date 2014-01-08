@@ -14,10 +14,14 @@ def all_weight_functions():
 __commandname__ = "Unwrap"
 
 def RunCommand():
+  #TODO: let user set these variables
   holeRadius = 0.125/2.0
   tabAngle = math.pi/4.0 #45deg
-  targetVec = Rhino.Geometry.Vector3d(0,0,1)
   buckleScale = .2
+  drawTabs = True
+  drawFaceHoles = False 
+
+  targetVec = Rhino.Geometry.Vector3d(0,0,1)
   mesh = getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
@@ -29,7 +33,7 @@ def RunCommand():
 
   if mesh and weightFunction:
     buckleVals = buckling_strips.assignValuesToFaces(targetVec,mesh)
-    dataMap,net,foldList = unwrap(mesh,buckleVals,buckleScale, userCuts, holeRadius,tabAngle,weightFunction)
+    dataMap,net,foldList = unwrap(mesh,userCuts,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,drawFaceHoles,weightFunction)
     net.findInitalSegments()
     
   #SEGMENTATION 

@@ -7,7 +7,7 @@ import math
 
 def initBasisInfo(mesh, origin):
   #faceIdx = 0
-  faceIdx = getLowestFace(mesh)
+  faceIdx = _getLowestFace(mesh)
   edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
   tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
   initBasisInfo = (faceIdx,edgeIdx,tVertIdx)
@@ -15,7 +15,7 @@ def initBasisInfo(mesh, origin):
 
 #TODO: make the init face make sense: (the face closest to the xy plane)
 #thats what the next two functions are about
-def getLowestFace(mesh):
+def _getLowestFace(mesh):
   lowestFace = (0,float('inf')) #(faceIdx,Zcoord)
   for i in range(mesh.Faces.Count):
     faceCenter = mesh.Faces.GetFaceCenter(i)
@@ -24,7 +24,7 @@ def getLowestFace(mesh):
       lowestFace = (i,Zcoord)
   return lowestFace[0]
 
-def getLowestTVert(mesh,faceIdx):
+def _getLowestTVert(mesh,faceIdx):
   '''
   find the vertex on the given face that is closest to the origin
   '''
@@ -38,17 +38,15 @@ def getLowestTVert(mesh,faceIdx):
       lowest = (tVert,dist)
   return lowest[0]
 
-
-def layoutMesh(foldList,mesh,holeRadius,tabAngle,buckleScale,buckleVals,userCuts):
+def layoutMesh(foldList,userCuts,mesh,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,drawFaceHoles):
   origin = rs.WorldXYPlane()
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  net = Net(mesh,holeRadius,tabAngle,buckleScale,buckleVals)
+  net = Net(mesh,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,drawFaceHoles)
   dataMap = Map(mesh)
   net,dataMap = _layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts)
   return net,dataMap
-
 
 def _layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,userCuts):
   ''' Recurse through faces, hopping along fold edges

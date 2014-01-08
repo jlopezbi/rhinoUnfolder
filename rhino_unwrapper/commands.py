@@ -6,7 +6,9 @@ from classes import FlatEdge
 from Map import Map
 from Net import Net
 
-def unwrap(mesh,buckleVals,buckleScale,userCuts,holeRadius,tabAngle,weightFunction=weight_functions.edgeAngle):
+def unwrap(mesh,userCuts,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,drawFaceHoles,weightFunction=weight_functions.edgeAngle):
+  
+  #TODO: SEEMS LIKE ALOT OF VARIABLES, better organization??
   '''
   input:
     mesh = mesh
@@ -21,7 +23,7 @@ def unwrap(mesh,buckleVals,buckleScale,userCuts,holeRadius,tabAngle,weightFuncti
   meshDual = traversal.buildMeshGraph(mesh, userCuts, weightFunction)
   foldList = traversal.getSpanningKruskal(meshDual,mesh)
   cutList = traversal.getCutList(mesh,foldList)
-  net,dataMap = layout.layoutMesh(foldList,mesh,holeRadius,tabAngle,buckleScale,buckleVals,userCuts)
+  net,dataMap = layout.layoutMesh(foldList,userCuts,mesh,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,drawFaceHoles)
 
   
   '''VISUALZE UNFOLDING ON MESH'''

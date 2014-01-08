@@ -26,7 +26,7 @@ class FlatEdge():
     
     self.line = None
     self.line_id = None
-    self.geom = []
+    self.geom = [] #all geometry associated with this edge
     self.type = None
     self.fromFace = None #faces have direct mapping (this is netFace and meshFace)
     self.toFace = None
@@ -98,6 +98,33 @@ class FlatEdge():
     return Rhino.Geometry.Vector3d(pointJ-pointI)
 
   '''DRAWING'''
+  def clearAllGeom(self):
+    '''
+    note: clear self.geom and self.line_id ?
+    '''
+    if self.line_id !=None:
+      scriptcontext.doc.Objects.Delete(self.line_id,True)
+      self.line_id = None
+
+    if len(self.geom)>0:
+      for guid in self.geom:
+        scriptcontext.doc.Objects.Delete(guid,True)
+
+  def drawNetEdge(self,net):
+    '''
+    Assumes that all flatEdge geom has already been removed
+    '''
+    group = rs.AddGroup() # create a sub-group for each edge
+    geom = self.geom
+    geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
+    if self.type=='cut':
+        geom.append(self.drawOffset(net))
+        if net.drawTabs:
+          geom.append(self.drawTab(net))
+        if net.drawFaceHoles:
+          geom.append(self.drawFaceHole(net))
+    grouped =  rs.AddObjectsToGroup(geom,group)
+    return geom
 
   def drawEdgeLine(self,flatVerts,angleThresh,mesh):
     if self.type != None:
@@ -115,7 +142,7 @@ class FlatEdge():
       elif self.type == 'contested':
         color = (0,255,115,0) #orange
       points = self.getCoordinates(flatVerts)
-      if self.line_id!=None:
+      if self.line_id!=None: #just in case clearing geom did not get perfomed
         scriptcontext.doc.Objects.Delete(self.line_id,True)
       line_id,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
       self.line_id = line_id
@@ -131,11 +158,13 @@ class FlatEdge():
     return line_id
 
 
-  def drawOffset(self,net,buckleVal,scale):
+  def drawOffset(self,net):
     '''
     draw line that is offset from this edge by an amount proportional to the buckleVal and
     the len of the neighboring edge (for QUAD FACES)
     '''
+    buckleVal = net.buckleVals[self.fromFace]
+    scale = net.buckleScale
     oppositeEdge = self.getOppositeFlatEdge(net)
     if oppositeEdge==-1:
       pass
@@ -201,9 +230,9 @@ class FlatEdge():
     outputs guid for polyline
     '''
     #TODO: remove this clearing of geom: unnecessary
-    if len(self.geom)>0:
-      for guid in self.geom:
-        scriptcontext.doc.Objects.Delete(guid,True)
+    # if len(self.geom)>0:
+    #   for guid in self.geom:
+    #     scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
       #return self._drawTruncatedTab(net)
       return self._drawAngleTab(net.flatVerts,net.tabAngle)
@@ -389,10 +418,8 @@ class FlatEdge():
     self.geom.append(hole)
     return polyGuid
 
-  def getConnectToFace(self,flatFaces,mesh):
-    return flatFaces[getOtherFaceIdx(self.edgeIdx,self.fromFace,mesh)]
-
-  def drawFaceHole(self,net,holeRadius):
+  def drawFaceHole(self,net):
+    holeRadius = net.holeRadius
     pntA,pntC = self.getCoordinates(net.flatVerts)
     pntB = net.flatFaces[self.fromFace].getCenterPoint(net.flatVerts,True)
     pnts = [pntA,pntB,pntC,pntA]
@@ -449,6 +476,9 @@ class FlatEdge():
     pass
 
   '''GET INFO'''
+  def getConnectToFace(self,flatFaces,mesh):
+    return flatFaces[getOtherFaceIdx(self.edgeIdx,self.fromFace,mesh)]
+
   def getTabFaceCenter(self,mesh,currFace,xForm):
     otherFace = getOtherFaceIdx(self.edgeIdx,currFace,mesh)
     if otherFace!=None and otherFace != -1:
@@ -579,18 +609,6 @@ class FlatEdge():
     else:
       #coincident, still leads to bad condition for holes
       return False
-
-  def clearAllGeom(self):
-    '''
-    note: clear self.geom and self.line_id ?
-    '''
-    if self.line_id !=None:
-      scriptcontext.doc.Objects.Delete(self.line_id,True)
-      self.line_id = None
-
-    if len(self.geom)>0:
-      for guid in self.geom:
-        scriptcontext.doc.Objects.Delete(guid,True)
   
   def getMidPoint(self,flatVerts):
     coordinates = self.getCoordinates(flatVerts)
