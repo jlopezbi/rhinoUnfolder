@@ -135,17 +135,23 @@ class FlatEdge():
     '''
     group = rs.AddGroup() # create a sub-group for each edge
     geom = self.geom
-    geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
+    self._addGeom(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
+    #geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
     didOffset = False
     if self.type=='cut' or self.type=='naked':
-      geom.append(self._drawOffset(net))
+      offsetXForm,lineGuid = self._drawOffset(net)
+      self._addGeom(lineGuid)
       didOffset = True
 
     if self.type=='cut':
         if net.drawTabs:
-          geom.append(self.drawTab(net))
+          polyGuid,polyCurve = self.drawTab(net)
+          if didOffset:
+            polyCurve.Transform(offsetXForm)
+            scriptcontext.doc.Objects.Replace(polyGuid,polyCurve)
+          self._addGeom(polyGuid)
         if net.drawFaceHoles:
-          geom.append(self.drawFaceHole(net))
+          self._addGeom(self.drawFaceHole(net))
     
     grouped =  rs.AddObjectsToGroup(geom,group)
     return geom
@@ -209,7 +215,11 @@ class FlatEdge():
     lineGuid,line =  self.translateEdgeLine(xForm,True)
     self.offsetXForm = xForm
     self.offsetLine = line #save this line to this flatEdge for later use
-    return lineGuid
+    return xForm,lineGuid
+
+  def _addGeom(self,guid):
+    assert(str(type(guid))== "<type 'Guid'>"), "attempt to added not guid geom"
+    self.geom.append(guid)
     
 
   '''TRANSLATION'''
@@ -273,7 +283,8 @@ class FlatEdge():
     #     scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
       #return self._drawTruncatedTab(net)
-      return self._drawAngleTab(net.flatVerts,net.tabAngle)
+      poly_id,polylineCurve = self._drawAngleTab(net.flatVerts,net.tabAngle)
+      return poly_id,polylineCurve
       #return self._drawTriTab(net)
     else:
       return self._drawQuadTab(net.flatVerts)
@@ -307,12 +318,12 @@ class FlatEdge():
     pntC = Rhino.Geometry.Point3d(vecC)
 
     points = [pntA,pntB,pntC,pntD]
-    polyGuid = rs.AddPolyline(points)
 
-    self.geom.append(polyGuid)
-    return polyGuid
+    polylineCurve =  getPolylineCurve(points)
+    poly_id,polylineCurve = drawCurve(polylineCurve)
+    return poly_id,polylineCurve
 
-  def _drawAngleTab(self,flatVerts,angle):
+  def _drawAngleTab(self,flatVerts,angle,xForm=None):
     '''
     draw a truncated tab in the style of pepakura:
     constant tabWidth, constant inner angles
@@ -366,9 +377,9 @@ class FlatEdge():
 
       points = [pntA,pntB,pntC,pntD]
 
-    polyline = Rhino.Geometry.Polyline(points)
-    poly_id,polyline = drawPolyline(polyline)
-    return poly_id
+    polylineCurve =  getPolylineCurve(points)
+    poly_id,polylineCurve = drawCurve(polylineCurve)
+    return poly_id,polylineCurve
 
   def test_drawAngleTab(self):
     print "MEOW"
@@ -524,7 +535,6 @@ class FlatEdge():
     else:
       print "cow"
       return self.offsetLine
-
 
   def getConnectToFace(self,flatFaces,mesh):
     return flatFaces[getOtherFaceIdx(self.edgeIdx,self.fromFace,mesh)]
@@ -916,8 +926,6 @@ class FlatFace():
     pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
     rs.AddTextDot(str(i),pos)
 
-
-
   '''DRAWING'''
 
   def drawNetFace(self,net):
@@ -967,12 +975,9 @@ class FlatFace():
       points = [lineA.From,lineA.To,lineB.To,lineB.From,lineA.From]
     else:
       points = [lineA.From,lineA.To,lineB.From,lineB.To,lineA.From]
-    polyline = Rhino.Geometry.Polyline(points)
-    poly_id,polyline = drawPolyline(polyline)
-    self.geom.append(poly_id)
-
-
-
+    polylineCurve = getPolylineCurve(points)
+    curve_id,polylineCurve = drawCurve(polylineCurve)
+    self.geom.append(curve_id)
 
   def drawInnerface(self,flatVerts,ratio=.33):
     #TODO: UNfinished function

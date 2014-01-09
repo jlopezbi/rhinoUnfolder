@@ -86,6 +86,15 @@ def drawPolyline(polyline,color=(0,0,0,0),arrowType='None'):
   poly_id = scriptcontext.doc.Objects.AddPolyline(polyline,attr)
   return poly_id,polyline
 
+def drawCurve(curve,color=(0,0,0,0),arrowType='None'):
+  a,r,g,b = color
+  attr = setAttrColor(a,r,g,b)
+  if arrowType:
+    attr = setAttrArrow(attr,arrowType)
+    
+  curve_id = scriptcontext.doc.Objects.AddCurve(curve,attr)
+  return curve_id,curve
+
 def drawVector(vector,startPnt,color=(0,0,0,0),arrowType='EndArrowhead'):
   startPnt = Rhino.Geometry.Point3d(startPnt)
   endPnt = startPnt+vector 

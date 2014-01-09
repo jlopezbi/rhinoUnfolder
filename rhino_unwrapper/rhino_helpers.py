@@ -220,6 +220,10 @@ def getMedianEdgeLen(mesh):
 
 '''CURVE INFO'''
 
+def getPolylineCurve(points):
+  polyline = Rhino.Geometry.Polyline(points)
+  return Rhino.Geometry.PolylineCurve(polyline)
+
 def checkOrientationXYplaneCurve(polyline):
   '''
   ASSUMES POLYLINE IS parallel to XY PLANE!
