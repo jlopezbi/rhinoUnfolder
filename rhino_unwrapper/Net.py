@@ -70,7 +70,6 @@ class Net():
     flatEdgeCut.pair = newNetEdgeIdx
     flatEdgeCut.tabFaceCenter = self.flatFaces[segmentFace].getCenterPoint(self.flatVerts)
     flatEdgeCut.drawNetEdge(self)
-    #flatEdgeCut.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
   def translateSegment(self,segment,xForm):
@@ -210,18 +209,6 @@ class Net():
     else:
       print "made segment group of" + str(grouped) +" elements"
 
-  def drawEdge(self,netEdge):
-    collection = []
-    collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
-    if netEdge.type=='cut':
-        collection.append(netEdge.drawTab(self))
-        collection.append(netEdge.drawOffset(self,self.buckleVals[netEdge.fromFace],self.buckleScale))
-        if netEdge.hasTab:
-          pass
-        else:
-          collection.append(netEdge.drawFaceHole(self,self.holeRadius))
-    return collection
-
   def drawEdges(self,netGroupName):
     '''
     draw all edge geometry for the net
@@ -236,7 +223,6 @@ class Net():
         #netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
       fromFace = netEdge.fromFace
       buckleVal = self.buckleVals[fromFace]
-      #subCollection = self.drawEdge(netEdge)
       subCollection = netEdge.drawNetEdge(self)
       for item in subCollection:
         collection.append(item)
