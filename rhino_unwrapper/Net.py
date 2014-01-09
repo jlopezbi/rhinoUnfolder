@@ -68,7 +68,9 @@ class Net():
     newFlatEdge.tabFaceCenter = self.flatFaces[nonSegmentFace].getCenterPoint(self.flatVerts)
     self.flatFaces[segmentFace].resetFlatEdges(newFlatEdge)
     flatEdgeCut.pair = newNetEdgeIdx
-    flatEdgeCut.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
+    flatEdgeCut.tabFaceCenter = self.flatFaces[segmentFace].getCenterPoint(self.flatVerts)
+    flatEdgeCut.drawNetEdge(self)
+    #flatEdgeCut.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
     self.resetSegment(mesh,dataMap,changedVertPairs,segment)
 
   def translateSegment(self,segment,xForm):

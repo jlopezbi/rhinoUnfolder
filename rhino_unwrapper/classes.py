@@ -115,6 +115,7 @@ class FlatEdge():
 
   def drawNetEdge(self,net):
     '''
+    Highest level drawing: draws all geometry associated with edge
     Assumes that all flatEdge geom has already been removed
     Draws all geometry for netEdge:
       -edgeLine
