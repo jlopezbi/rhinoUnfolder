@@ -218,9 +218,6 @@ class Net():
     '''
     collection = []
     for netEdge in self.flatEdges:
-
-      #if netEdge.type=='cut':
-        #netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
       fromFace = netEdge.fromFace
       buckleVal = self.buckleVals[fromFace]
       subCollection = netEdge.drawNetEdge(self)
@@ -231,7 +228,9 @@ class Net():
   def drawFaces(self,netGroupName):
     collection = []
     for face in self.flatFaces:
-      collection.append(face.draw(self.flatVerts))
+      #collection.append(face.draw(self.flatVerts))
+      #collection.append(face.drawNetFace(self))
+      collection.append(face._drawBuckleFace(self))
     createGroup(netGroupName,collection)
 
 

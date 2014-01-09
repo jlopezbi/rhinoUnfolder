@@ -15,14 +15,24 @@ class FlatVert():
   def hasSamePoint(self,point):
     return approxEqual(self.point.X,point.X) and approxEqual(self.point.Y,point.Y)
 
-  def translate(self,xForm):
-    self.point.Transform(xForm)
+  def translate(self,xForm,copy=False):
+    '''
+    translate the flatVert's point by xForm, if copy=True: simply return a new transformed point
+    '''
+    if copy:
+      newPnt = Rhino.Geometry.Point3d(self.point)
+      newPnt.Transform(xForm)
+      return newPnt
+    else:
+      self.point.Transform(xForm)
+      return self.point
 
 class FlatEdge():
   def __init__(self,_edgeIdx,vertI,vertJ): 
     self.edgeIdx = _edgeIdx #edgeIdx in mesh
     self.I = vertI #netVertIdx
     self.J = vertJ #netVertIdx
+    #self.reverseOrderForNet = reverseOrderForNet #ordering for the net and the mesh may not be the same. so store it
     
     self.line = None
     self.line_id = None
@@ -176,6 +186,9 @@ class FlatEdge():
     draw line that is offset from this edge by an amount proportional to the buckleVal and
     the len of the neighboring edge (for QUAD FACES)
     add the new points to this flatEdge for later use
+    output:
+      lineGuid = globally unique identifier for the line
+      line = the Rhino.Geometry.Line instance which was added to the document
     '''
     buckleVal = net.buckleVals[self.fromFace]
     scale = net.buckleScale
@@ -194,6 +207,8 @@ class FlatEdge():
     xForm = Rhino.Geometry.Transform.Translation(offsetVec)
 
     lineGuid,line =  self.translateEdgeLine(xForm,True)
+    self.offsetXForm = xForm
+    self.offsetLine = line #save this line to this flatEdge for later use
     return lineGuid
     
 
@@ -499,6 +514,18 @@ class FlatEdge():
     pass
 
   '''GET INFO'''
+  def getOffsetCorrectOrientation(self):
+    '''
+    assumes that an offset line has been created ya
+    ''' 
+    if self.reverseOrderForNet==True:
+      print "meow"
+      return Rhino.Geometry.Line(self.offsetLine.To,self.offsetLine.From)
+    else:
+      print "cow"
+      return self.offsetLine
+
+
   def getConnectToFace(self,flatFaces,mesh):
     return flatFaces[getOtherFaceIdx(self.edgeIdx,self.fromFace,mesh)]
 
@@ -762,7 +789,7 @@ class FlatEdge():
 
   def getOppositeFlatEdge(self,net):
     '''
-    get the opposite flatEdge (QUADS)
+    get the opposite flatEdge (ONLY QUADS!)
     '''
     verts = self.getNetVerts()
     flatFace = net.flatFaces[self.fromFace]
@@ -772,7 +799,7 @@ class FlatEdge():
     for flatEdge in flatEdges:
       if flatEdge.I not in verts and flatEdge.J not in verts:
         return flatEdge
-    print "could not find opposite flatEdg for face: " + str(self.fromFace)
+    print "Possibly a triangular face: could not find opposite flatEdge for face: " + str(self.fromFace)
     return -1
 
   def getNeighborFlatVert(self,net,face=None):
@@ -818,10 +845,13 @@ def test_FlatEdge():
 class FlatFace():
   #does not store meshFace because position in list determines this
   def __init__(self,_vertices,_fromFace):
-    self.vertices = _vertices # a list of netVerts
+    self.vertices = _vertices # a list of netVerts in consistant order (CW or CCW)
     self.flatEdges = []
     self.fromFace = _fromFace
     self.centerPoint = None
+
+    self.polyline = None
+    self.geom = [] #all geometry drawn in associated with this face
 
   '''GET PROPERTIES'''
 
@@ -834,6 +864,13 @@ class FlatFace():
   def getFlatVertForTVert(self,tVert,flatVerts):
     assert(tVert in self.vertices.keys())
     return flatVerts[tVert][self.vertices[tVert]]
+
+  def getCutEdgesSet(self):
+    cutEdges = set()
+    for flatEdge in self.flatEdges:
+      if flatEdge.type == 'cut':
+        cutEdges.update([flatEdge])
+    return cutEdges
 
   def getCenterPoint(self,flatVerts,getNew=False):
     if getNew:
@@ -879,16 +916,66 @@ class FlatFace():
     pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
     rs.AddTextDot(str(i),pos)
 
+
+
   '''DRAWING'''
 
-  def draw(self,flatVerts):
+  def drawNetFace(self,net):
+    '''
+    HIGHEST level face drawing
+    '''
+    flatVerts = net.flatVerts
     polyline = self.getPolyline(flatVerts)
-    #remove 'EndArrowhead' to stop displaying orientatio of face
+    #remove 'EndArrowhead' to stop displaying orientation of face
     poly_id,polyline = drawPolyline(polyline,[0,0,0,0],'EndArrowhead')
     self.poly_id = poly_id
     self.polyline = polyline
+    self.geom.append(poly_id)
+
+    self._drawBuckleFace(net)
+
+  def _drawBuckleFace(self,net):
+    '''
+    assumes that offset on edge have already been created
+    '''
+    cutEdgesSet = self.getCutEdgesSet()
+    for cutEdge in cutEdgesSet:
+      oppositeEdge = cutEdge.getOppositeFlatEdge(net)
+      if oppositeEdge.type == 'cut' or oppositeEdge.type == 'naked':
+        # lineA = cutEdge.getOffsetCorrectOrientation()
+        # lineB = oppositeEdge.getOffsetCorrectOrientation()
+
+        lineA = cutEdge.offsetLine
+        lineB = oppositeEdge.offsetLine
+        self._drawOffsetFaceFromTwoLines(lineA,lineB) #w
+        return
+    return
+
+  def _drawOffsetFaceFromTwoLines(self,lineA,lineB):
+    '''
+    assumes CW face winding
+    '''
+    #  A.To     B.To
+    #   |        |  
+    #   |        |
+    #  A.From   B.From
+
+    diagLineA = Rhino.Geometry.Line(lineA.From,lineB.To)
+    diagLineB = Rhino.Geometry.Line(lineB.From,lineA.To)
+    intersection = checkIfIntersecting(diagLineA,diagLineB)
+    if intersection:
+      points = [lineA.From,lineA.To,lineB.To,lineB.From,lineA.From]
+    else:
+      points = [lineA.From,lineA.To,lineB.From,lineB.To,lineA.From]
+    polyline = Rhino.Geometry.Polyline(points)
+    poly_id,polyline = drawPolyline(polyline)
+    self.geom.append(poly_id)
+
+
+
 
   def drawInnerface(self,flatVerts,ratio=.33):
+    #TODO: UNfinished function
     '''draw a inset face'''
     self.getCenterPoint(flatVerts)
     centerVec = Rhino.Geometry.Vector3d(self.centerPoint)

@@ -218,7 +218,48 @@ def getMedianEdgeLen(mesh):
   edgeLens = getEdgeLengths(mesh)
   return getMedian(edgeLens)
 
-'''UNCATEGORIZED'''
+'''CURVE INFO'''
+
+def checkOrientationXYplaneCurve(polyline):
+  '''
+  ASSUMES POLYLINE IS parallel to XY PLANE!
+  '''
+  polyline = Rhino.Geometry.PolylineCurve(polyline)
+  identityXForm = Rhino.Geometry.Transform.Identity
+  orientation = polyline.ClosedCurveOrientation(identityXForm)
+  #print str(type(orientation))
+  #print orientation
+  # 0 = undifined
+  # 1 = CW
+  # 2 = CCW
+  if orientation==Rhino.Geometry.CurveOrientation.Undefined:
+    print "no orientation avalable"
+  elif orientation==Rhino.Geometry.CurveOrientation.Clockwise:
+    print "CW"
+  elif orientation==Rhino.Geometry.CurveOrientation.CounterClockwise:
+    print "CWW"
+  else:
+    print "orientation failed:",
+    print orientation
+
+def checkIfIntersecting(lineA,lineB,intersection_tolerance=.001,overlap_tolerance=0.0):
+  '''
+  ouput:
+    result = intersection boolean (True if intersection, False if no)
+    paramA = param on lineA that is closest to lineB (intersection pnt)
+    paramB = param on lineA that is closest to lineA (intersection pnt)
+  '''
+  lineCurveA = Rhino.Geometry.LineCurve(lineA)
+  lineCurveB = Rhino.Geometry.LineCurve(lineB)
+
+  intersectEvents = Rhino.Geometry.Intersect.Intersection.CurveCurve(lineCurveA,lineCurveB,intersection_tolerance, overlap_tolerance)
+  if not intersectEvents: return
+  if len(intersectEvents)>0:
+    return True
+  else:
+    return False
+
+  return didIntersect,paramA,paramB
 
 '''VECTORS'''
 

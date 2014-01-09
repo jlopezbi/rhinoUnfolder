@@ -76,6 +76,7 @@ def _layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,use
     meshI,meshJ = getTVertsForEdge(mesh,edge)
     netI = mapping[meshI]
     netJ = mapping[meshJ]
+    #reverseOrderForNet = flipEdgeOrder((netI,netJ),netVerts)
     flatEdge = FlatEdge(edge,netI,netJ) 
     flatEdge.fromFace = basisInfo[0] #since faces have direct mapping this fromFace corresponds
                                      #to both the netFace and meshFace
@@ -138,7 +139,7 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
   '''
 
   faceTVerts = getTVertsForFace(mesh,face)
-  netVerts = []
+  netVerts = [] #must have consistent ordering!
   hopMeshVerts = []
   mapping = {}
 
@@ -170,11 +171,28 @@ def assignFlatVerts(mesh,dataMap,net,hopEdge,face,xForm):
         pass
   return netVerts,mapping
 
+def flipEdgeOrder(netVertPair,netVertsOrdered):
+  #TODO: make more robust and generalizable
+  '''
+  given a tuple netVertPair, correct its order according to netVertsOrdered
+  ouput:
+    reverseOrderForNet => Flase if edge order is fine with netFace, True if the order must be reveresed
+  '''
 
+  elemA,elemB = netVertPair
+  assert(elemA in netVertsOrdered and elemB in netVertsOrdered), "one of two elements not in ordered set"
+  idxA = netVertsOrdered.index(elemA)
+  idxB = netVertsOrdered.index(elemB)
+  assert(idxA!=idxB)
+  if idxA<idxB:
+    return False
+  else:
+    return True
+
+#unused
 def getNetEdges(mesh,edge,netVerts,dataMap):
   I,J = getTVertsForEdge(mesh,edge)
   vertI = dataMap.get
-
 
 def transformPoint(mesh,tVert,xForm):
   '''
