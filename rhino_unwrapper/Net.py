@@ -44,6 +44,10 @@ class Net():
     self.leaders = leader
 
   def findSegment(self,flatEdgeCut,face):
+    '''
+    output:
+      returns a list of faces that are the segment
+    '''
     assert(flatEdgeCut.type == 'fold')
     island = self.getGroupForMember(face)
     self.removeFaceConnection(flatEdgeCut)
@@ -197,12 +201,16 @@ class Net():
     
     
   '''DRAWING'''
-  def redrawSegment(self,translatedEdges):
+  def redrawSegment(self,translatedEdges,segmentFaces):
     group = rs.AddGroup()
     geom = []
     for netEdge in translatedEdges:
       netEdge.clearAllGeom()
       geom.append(netEdge.drawNetEdge(self))
+    for face in segmentFaces:
+      pass
+      face.clearAllGeom()
+      #flatFace = self.flatFaces[face]
     grouped =  rs.AddObjectsToGroup(geom,group)
     if grouped==None: 
       print "failed to make segment group"

@@ -47,12 +47,12 @@ def RunCommand():
         face = flatEdge.getFaceFromPoint(net,point) #the face on segment side of the picked edge
         print "face: ",
         print face
-        segment = net.findSegment(flatEdge,face)
+        segmentFaces = net.findSegment(flatEdge,face)
         # print "segment: ",
         # print segment
-        net.copyAndReasign(mesh,dataMap,flatEdge,edgeIdx,segment,face)
-        translatedEdges = net.translateSegment(segment,xForm)
-        net.redrawSegment(translatedEdges)
+        net.copyAndReasign(mesh,dataMap,flatEdge,edgeIdx,segmentFaces,face)
+        translatedEdges = net.translateSegment(segmentFaces,xForm)
+        net.redrawSegment(translatedEdges,segmentFaces)
         #net.updateCutEdge(flatEdge)
       
 

@@ -861,7 +861,7 @@ class FlatFace():
     self.centerPoint = None
 
     self.polyline = None
-    self.geom = [] #all geometry drawn in associated with this face
+    self.geom = [] #each geomElement is a tuple (geom,geom_id)
 
   '''GET PROPERTIES'''
 
@@ -927,6 +927,17 @@ class FlatFace():
     rs.AddTextDot(str(i),pos)
 
   '''DRAWING'''
+  def clearAllGeom(self):
+    '''
+    delete all geom saved in self.geom
+    '''
+
+    if len(self.geom)>0:
+      rs.DeleteObjects(self.geom)
+
+  def _addGeom(self,guid):
+    assert(str(type(guid))== "<type 'Guid'>"), "attempt to added not guid geom"
+    self.geom.append(guid)
 
   def drawNetFace(self,net):
     '''
@@ -938,7 +949,8 @@ class FlatFace():
     poly_id,polyline = drawPolyline(polyline,[0,0,0,0],'EndArrowhead')
     self.poly_id = poly_id
     self.polyline = polyline
-    self.geom.append(poly_id)
+    #self.geom.append(poly_id)
+    self._addGeom(poly_id)
 
     self._drawBuckleFace(net)
 
@@ -977,7 +989,8 @@ class FlatFace():
       points = [lineA.From,lineA.To,lineB.From,lineB.To,lineA.From]
     polylineCurve = getPolylineCurve(points)
     curve_id,polylineCurve = drawCurve(polylineCurve)
-    self.geom.append(curve_id)
+    #self.geom.append(curve_id)
+    self._append(curve_id)
 
   def drawInnerface(self,flatVerts,ratio=.33):
     #TODO: UNfinished function
@@ -988,6 +1001,12 @@ class FlatFace():
       vert = self.vertices[i]
       self.getInnerPoint(flatVerts,vert)
       #TODO: finish up this function
+  
+  '''TRANSLATION'''
+  def translate(self,xForm):
+    pass
+
+
 
   '''SEGMENTATION'''
 
