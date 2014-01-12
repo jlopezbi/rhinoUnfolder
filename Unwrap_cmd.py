@@ -18,7 +18,7 @@ def RunCommand():
   holeRadius = 0.125/2.0
   tabAngle = math.pi/4.0 #45deg
   buckleScale = .2
-  drawTabs = True
+  drawTabs = False
   drawFaceHoles = False 
 
   targetVec = Rhino.Geometry.Vector3d(0,0,1)

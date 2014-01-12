@@ -148,15 +148,14 @@ class FlatEdge():
     self._addGeom(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
     #geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
     #ASSUME: that each face has at least one fold edge (could not be true because of user-cuts or
-    #segmentation)
-    if self.hasOffset==False:
-      if self.type=='fold':
-        offsetXForm,lineGuid,oppositeEdge = self._drawOffset(net)
-        oppositeEdge._drawOffset(net)
-        oppositeEdge.hasOffset= True
-        self.hasOffset = True
-
-    
+    #segmentation)  
+    '''
+    if self.type=='fold' or self.type=='naked':
+      offsetXForm,lineGuid,oppositeEdge = self._drawOffset(net)
+      oppositeEdge._drawOffset(net)
+      oppositeEdge.hasOffset= True
+      self.hasOffset = True 
+    '''
     if net.drawTabs and self.type=='cut':
       polyGuid,polyCurve = self.drawTab(net)
       if self.hasOffset:
@@ -201,7 +200,7 @@ class FlatEdge():
     line_id,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
     return line_id
 
-  def _drawOffset(self,net):
+  def _drawOffset(self,net,flatface):
     '''
     draw line that is offset from this edge by an amount proportional to the buckleVal and
     the len of the neighboring edge (for QUAD FACES)
@@ -211,9 +210,30 @@ class FlatEdge():
       line = the Rhino.Geometry.Line instance which was added to the document
       oppositeEdge = the oppositeEdge from this edge which was used to draw the offset
     '''
-    buckleVal = net.buckleVals[self.fromFace]
+    xForm,lineGuid = self._getOffsetEdgeLine(net,flatface)
+    return 
+
+  def _getOffsetEdgeLine(self,net,flatface,draw=False):
+    xForm = self._computeOffsetXForm(net,flatface)
+    copy = True
+    lineGuid,line =  self._translateEdgeLine(net,xForm,draw,copy)
+    if lineGuid:
+      self._addGeom(lineGuid)
+    self.offsetXForm = xForm
+    self.offsetLine = line #save this line to this flatEdge for later use
+    return xForm,line,lineGuid
+
+
+  def _computeOffsetXForm(self,net,flatFace):
+    '''
+    compute offset xForm for this edge, given a flatface (fold edges have two flatFaces)
+    ouput:
+      xForm = transform for this edge line
+    '''
+    print flatFace.fromFace
+    buckleVal = net.buckleVals[flatFace.fromFace]
     scale = net.buckleScale
-    oppositeEdge = self.getOppositeFlatEdge(net)
+    oppositeEdge = self.getOppositeFlatEdge(net,flatFace)
     assert(oppositeEdge!=-1),"did not find oppositeEdge (maybe triangle face)"
 
     oppositeMidPnt = oppositeEdge.getMidPoint(net.flatVerts)
@@ -227,11 +247,14 @@ class FlatEdge():
 
     xForm = Rhino.Geometry.Transform.Translation(offsetVec)
 
-    lineGuid,line =  self.translateEdgeLine(net,xForm,True)
-    self._addGeom(lineGuid)
-    self.offsetXForm = xForm
-    self.offsetLine = line #save this line to this flatEdge for later use
-    return xForm,lineGuid,oppositeEdge
+    if xForm:
+      return xForm
+    else:
+      print "did not create xForm in _computeOffsetXForm"
+      return
+
+
+
 
   def _addGeom(self,guid):
     assert(str(type(guid))== "<type 'Guid'>"), "attempt to added not guid geom"
@@ -257,17 +280,32 @@ class FlatEdge():
     if self.tabFaceCenter!=None:
       self.tabFaceCenter.Transform(xForm)
 
-  def translateEdgeLine(self,net,xForm,copy=False):
+  def _translateEdgeLine(self,net,xForm,draw=False,copy=False,):
+    '''
+    translates this edgeLine by xForm
+    input:
+      net = instance of Net()
+      xForm = transform to translate edge line by 
+      draw = boolean deciding wether or not to draw the translated edgeLine
+      copy = boolean deciding wether to make a copy, i.e. preserve the original edgeline, or
+             to replace it
+    ouput:
+      lineGuid = guid for the new geometry (None if no geometry added (draw=False))
+      line = a Rhino.Geometry.Line instance; the translated line
+    '''
     originalLine = self.getEdgeLine(net)
+    lineGuid = None
     if copy:
       line = Rhino.Geometry.Line(originalLine.From,originalLine.To) #make copy of edge line
       line.Transform(xForm)
-      lineGuid = scriptcontext.doc.Objects.AddLine(line)
+      if draw:
+        lineGuid = scriptcontext.doc.Objects.AddLine(line)
 
     else:
       line = originalLine
       line.Transform(xForm)
-      lineGuid = scriptcontext.doc.Objects.Replace(self.line_id,originalLine)
+      if draw:
+        lineGuid = scriptcontext.doc.Objects.Replace(self.line_id,originalLine)
 
     return lineGuid,line
 
@@ -807,12 +845,12 @@ class FlatEdge():
       if flatEdge.I in verts or flatEdge.J in verts:
         return flatEdge
 
-  def getOppositeFlatEdge(self,net):
+  def getOppositeFlatEdge(self,net,flatFace):
     '''
     get the opposite flatEdge (ONLY QUADS!)
+    for the given face (fold edges have two faces)
     '''
     verts = self.getNetVerts()
-    flatFace = net.flatFaces[self.fromFace]
     flatEdges = copy.copy(flatFace.flatEdges)
     flatEdges.remove(self)
     #assert(len(flatEdges)<4), "getOppositeFlatEdge only works for quad faces; face " + str(self.fromFace)+ " is a triangle"
@@ -867,7 +905,7 @@ class FlatFace():
   def __init__(self,_vertices,_fromFace):
     self.vertices = _vertices # a list of netVerts in consistant order (CW or CCW)
     self.flatEdges = []
-    self.fromFace = _fromFace
+    self.fromFace = _fromFace #
     self.centerPoint = None
 
     self.polyline = None
@@ -980,7 +1018,7 @@ class FlatFace():
     '''
     cutEdgesSet = self._getCutEdgesSet()
     for cutEdge in cutEdgesSet:
-      oppositeEdge = cutEdge.getOppositeFlatEdge(net)
+      oppositeEdge = cutEdge.getOppositeFlatEdge(net,self)
       if oppositeEdge.type == 'cut' or oppositeEdge.type == 'naked':
         # lineA = cutEdge.getOffsetCorrectOrientation()
         # lineB = oppositeEdge.getOffsetCorrectOrientation()
@@ -999,14 +1037,15 @@ class FlatFace():
     foldEdgeSet = self._getFoldEdgeSet()
     assert(len(foldEdgeSet)>=1), "no fold edges for this face!"
     for foldEdge in foldEdgeSet:
-      oppositeEdge = foldEdge.getOppositeFlatEdge(net)
-      if oppositeEdge.type == 'fold' or oppositeEdge.type == 'naked':
-        lineA,lineB = foldEdge.offsetLine,oppositeEdge.offsetLine
-        return self._drawOffsetFaceFromTwoLines(lineA,lineB)
+      oppositeEdge = foldEdge.getOppositeFlatEdge(net,self)
+      #if oppositeEdge.type == 'fold' or oppositeEdge.type == 'naked':
+      xFormA,lineA,lineGuidA = foldEdge._getOffsetEdgeLine(net,self,True)
+      xFormB,lineB,lineGuidB = oppositeEdge._getOffsetEdgeLine(net,self,True)
+      return self._drawOffsetFaceFromTwoLines(lineA,lineB)
     #if face only has one fold edge:
     if len(foldEdgeSet)==1:
       foldEdge = foldEdgeSet[0]
-      oppositeEdge = foldEdge.getOppositeFlatEdge(net)
+      oppositeEdge = foldEdge.getOppositeFlatEdge(net,self)
       lineA,lineB = foldEdge.offsetLine,oppositeEdge.offsetLine
 
 

@@ -210,6 +210,7 @@ class Net():
     for face in segmentFaces:
       flatFace = self.flatFaces[face]
       flatFace.clearAllGeom()
+      geom.append(flatFace.drawNetFace(self))
       
     grouped =  rs.AddObjectsToGroup(geom,group)
     if grouped==None: 

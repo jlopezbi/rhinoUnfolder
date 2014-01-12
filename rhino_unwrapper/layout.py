@@ -66,6 +66,8 @@ def _layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap,use
   '''
   xForm = getTransform(basisInfo,toBasis,mesh)
   netVerts,mapping = assignFlatVerts(mesh,dataMap,net,hopEdge,basisInfo[0],xForm)
+  if fromFace==None:
+    fromFace = basisInfo[0]
   flatFace = FlatFace(netVerts,fromFace)
   net.flatFaces[basisInfo[0]] = flatFace
   if hopEdge!=None:
