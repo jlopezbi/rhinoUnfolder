@@ -55,6 +55,9 @@ class FlatEdge():
     self.distI = None
     self.distJ = None
 
+    '''BUCKEL HACK FOR LG'''
+    self.hasOffset = False
+
   def reset(self,oldVert,newVert):
     if self.I==oldVert:
       self.I=newVert
@@ -107,6 +110,13 @@ class FlatEdge():
     pointJ = flatVerts[self.J].point
     return Rhino.Geometry.Vector3d(pointJ-pointI)
 
+  def getEdgeLine(self,net):
+    if self.line==None:
+      pntI,pntJ = self.getCoordinates(net.flatVerts)
+      return Rhino.Geometry.Line(pntI,pntJ)
+    else:
+      return self.line
+
   '''DRAWING'''
   def clearAllGeom(self):
     '''
@@ -137,21 +147,25 @@ class FlatEdge():
     geom = self.geom
     self._addGeom(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
     #geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
-    didOffset = False
-    if self.type=='cut' or self.type=='naked':
-      offsetXForm,lineGuid = self._drawOffset(net)
-      self._addGeom(lineGuid)
-      didOffset = True
+    #ASSUME: that each face has at least one fold edge (could not be true because of user-cuts or
+    #segmentation)
+    if self.hasOffset==False:
+      if self.type=='fold':
+        offsetXForm,lineGuid,oppositeEdge = self._drawOffset(net)
+        oppositeEdge._drawOffset(net)
+        oppositeEdge.hasOffset= True
+        self.hasOffset = True
 
-    if self.type=='cut':
-        if net.drawTabs:
-          polyGuid,polyCurve = self.drawTab(net)
-          if didOffset:
-            polyCurve.Transform(offsetXForm)
-            scriptcontext.doc.Objects.Replace(polyGuid,polyCurve)
-          self._addGeom(polyGuid)
-        if net.drawFaceHoles:
-          self._addGeom(self.drawFaceHole(net))
+    
+    if net.drawTabs and self.type=='cut':
+      polyGuid,polyCurve = self.drawTab(net)
+      if self.hasOffset:
+        polyCurve.Transform(self.offsetXForm)
+        scriptcontext.doc.Objects.Replace(polyGuid,polyCurve)
+      self._addGeom(polyGuid)
+
+    if net.drawFaceHoles:
+      self._addGeom(self.drawFaceHole(net))
     
     grouped =  rs.AddObjectsToGroup(geom,group)
     return geom
@@ -195,12 +209,13 @@ class FlatEdge():
     output:
       lineGuid = globally unique identifier for the line
       line = the Rhino.Geometry.Line instance which was added to the document
+      oppositeEdge = the oppositeEdge from this edge which was used to draw the offset
     '''
     buckleVal = net.buckleVals[self.fromFace]
     scale = net.buckleScale
     oppositeEdge = self.getOppositeFlatEdge(net)
-    if oppositeEdge==-1:
-      pass
+    assert(oppositeEdge!=-1),"did not find oppositeEdge (maybe triangle face)"
+
     oppositeMidPnt = oppositeEdge.getMidPoint(net.flatVerts)
     midPnt = self.getMidPoint(net.flatVerts)
     faceVec = getVectorForPoints(oppositeMidPnt,midPnt)
@@ -212,10 +227,11 @@ class FlatEdge():
 
     xForm = Rhino.Geometry.Transform.Translation(offsetVec)
 
-    lineGuid,line =  self.translateEdgeLine(xForm,True)
+    lineGuid,line =  self.translateEdgeLine(net,xForm,True)
+    self._addGeom(lineGuid)
     self.offsetXForm = xForm
     self.offsetLine = line #save this line to this flatEdge for later use
-    return xForm,lineGuid
+    return xForm,lineGuid,oppositeEdge
 
   def _addGeom(self,guid):
     assert(str(type(guid))== "<type 'Guid'>"), "attempt to added not guid geom"
@@ -241,21 +257,20 @@ class FlatEdge():
     if self.tabFaceCenter!=None:
       self.tabFaceCenter.Transform(xForm)
 
-  def translateEdgeLine(self,xForm,copy=False):
-    if self.line != None:
-      if copy:
-        line = Rhino.Geometry.Line(self.line.From,self.line.To) #make copy of edge line
-        line.Transform(xForm)
-        lineGuid = scriptcontext.doc.Objects.AddLine(line)
+  def translateEdgeLine(self,net,xForm,copy=False):
+    originalLine = self.getEdgeLine(net)
+    if copy:
+      line = Rhino.Geometry.Line(originalLine.From,originalLine.To) #make copy of edge line
+      line.Transform(xForm)
+      lineGuid = scriptcontext.doc.Objects.AddLine(line)
 
-      else:
-        line = self.line
-        line.Transform(xForm)
-        lineGuid = scriptcontext.doc.Objects.Replace(self.line_id,line)
+    else:
+      line = originalLine
+      line.Transform(xForm)
+      lineGuid = scriptcontext.doc.Objects.Replace(self.line_id,originalLine)
 
-      return lineGuid,line
-    print "did not succesfully translate edge line!"
-    return None,None
+    return lineGuid,line
+
 
   def translateTabFaceCenter(self,xForm):
     if self.tabFaceCenter!=None:
@@ -735,11 +750,6 @@ class FlatEdge():
     z = cross.Z #(pos and neg)
     return  z > 0 
 
-  def getEdgeLine(self,net):
-    pntI,pntJ = self.getCoordinates(net.flatVerts)
-    return Rhino.Geometry.Line(pntI,pntJ)
-
-
   def getTabAngles(self,mesh,currFaceIdx,xForm):
     #WORKING AWAY FROM THIS: data is implicit in 
     edge = self.edgeIdx
@@ -875,12 +885,19 @@ class FlatFace():
     assert(tVert in self.vertices.keys())
     return flatVerts[tVert][self.vertices[tVert]]
 
-  def getCutEdgesSet(self):
+  def _getCutEdgesSet(self):
     cutEdges = set()
     for flatEdge in self.flatEdges:
       if flatEdge.type == 'cut':
         cutEdges.update([flatEdge])
     return cutEdges
+
+  def _getFoldEdgeSet(self):
+    foldEdges = set()
+    for flatEdge in self.flatEdges:
+      if flatEdge.type == 'fold':
+        foldEdges.update([flatEdge])
+    return foldEdges
 
   def getCenterPoint(self,flatVerts,getNew=False):
     if getNew:
@@ -931,7 +948,6 @@ class FlatFace():
     '''
     delete all geom saved in self.geom
     '''
-
     if len(self.geom)>0:
       rs.DeleteObjects(self.geom)
 
@@ -946,19 +962,23 @@ class FlatFace():
     flatVerts = net.flatVerts
     polyline = self.getPolyline(flatVerts)
     #remove 'EndArrowhead' to stop displaying orientation of face
+    '''
     poly_id,polyline = drawPolyline(polyline,[0,0,0,0],'EndArrowhead')
     self.poly_id = poly_id
     self.polyline = polyline
     #self.geom.append(poly_id)
     self._addGeom(poly_id)
+    '''
 
-    self._drawBuckleFace(net)
+    #self._drawBuckleFace(net)
+    self._drawBuckleFaceAlongFold(net)
 
   def _drawBuckleFace(self,net):
     '''
     assumes that offset on edge have already been created
+    DRAWS PERPEDNDICULAR TO FOLD DIRECITON
     '''
-    cutEdgesSet = self.getCutEdgesSet()
+    cutEdgesSet = self._getCutEdgesSet()
     for cutEdge in cutEdgesSet:
       oppositeEdge = cutEdge.getOppositeFlatEdge(net)
       if oppositeEdge.type == 'cut' or oppositeEdge.type == 'naked':
@@ -970,6 +990,25 @@ class FlatFace():
         self._drawOffsetFaceFromTwoLines(lineA,lineB) #w
         return
     return
+
+  def _drawBuckleFaceAlongFold(self,net):
+    '''
+    assumes that offset on edge have already been created
+    DRAWS ALONG TO FOLD DIRECITON
+    '''
+    foldEdgeSet = self._getFoldEdgeSet()
+    assert(len(foldEdgeSet)>=1), "no fold edges for this face!"
+    for foldEdge in foldEdgeSet:
+      oppositeEdge = foldEdge.getOppositeFlatEdge(net)
+      if oppositeEdge.type == 'fold' or oppositeEdge.type == 'naked':
+        lineA,lineB = foldEdge.offsetLine,oppositeEdge.offsetLine
+        return self._drawOffsetFaceFromTwoLines(lineA,lineB)
+    #if face only has one fold edge:
+    if len(foldEdgeSet)==1:
+      foldEdge = foldEdgeSet[0]
+      oppositeEdge = foldEdge.getOppositeFlatEdge(net)
+      lineA,lineB = foldEdge.offsetLine,oppositeEdge.offsetLine
+
 
   def _drawOffsetFaceFromTwoLines(self,lineA,lineB):
     '''
@@ -990,7 +1029,8 @@ class FlatFace():
     polylineCurve = getPolylineCurve(points)
     curve_id,polylineCurve = drawCurve(polylineCurve)
     #self.geom.append(curve_id)
-    self._append(curve_id)
+    self._addGeom(curve_id)
+    return curve_id
 
   def drawInnerface(self,flatVerts,ratio=.33):
     #TODO: UNfinished function

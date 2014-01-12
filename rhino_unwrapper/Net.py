@@ -208,9 +208,9 @@ class Net():
       netEdge.clearAllGeom()
       geom.append(netEdge.drawNetEdge(self))
     for face in segmentFaces:
-      pass
-      face.clearAllGeom()
-      #flatFace = self.flatFaces[face]
+      flatFace = self.flatFaces[face]
+      flatFace.clearAllGeom()
+      
     grouped =  rs.AddObjectsToGroup(geom,group)
     if grouped==None: 
       print "failed to make segment group"
@@ -238,7 +238,8 @@ class Net():
     for face in self.flatFaces:
       #collection.append(face.draw(self.flatVerts))
       #collection.append(face.drawNetFace(self))
-      collection.append(face._drawBuckleFace(self))
+      #collection.append(face._drawBuckleFace(self))
+      collection.append(face.drawNetFace(self))
     createGroup(netGroupName,collection)
 
 
