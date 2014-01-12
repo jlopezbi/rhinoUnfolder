@@ -55,6 +55,25 @@ class Net():
     self.updateIslands(group,leader,face)
     return group[leader[face]]
 
+  def updateIslands(self,newGroups,newLeaders,face):
+    #get rid of old island
+    leader = self.leaders[face]
+    del self.groups[leader]
+
+    for group in newGroups.items():
+      self.groups[group[0]] = group[1]
+    for leader in newLeaders.items():
+      self.leaders[leader[0]] = leader[1]
+
+  def getGroupForMember(self,member):
+    if member not in self.leaders.keys():
+      print "face not in leaders: ",
+      print member
+      return
+    leader = self.leaders[member]
+    return self.groups[leader]
+
+
   def copyAndReasign(self,mesh,dataMap,flatEdgeCut,edgeIdx,segment,segmentFace):
     '''
     input:
@@ -92,6 +111,9 @@ class Net():
     return translatedEdges
 
   def removeFaceConnection(self,flatEdgeCut):
+    '''
+    why is this necessary??
+    '''
     faceA = flatEdgeCut.fromFace
     faceB = flatEdgeCut.toFace
     netFaceA = self.flatFaces[faceA]
@@ -169,24 +191,8 @@ class Net():
             #assert(flatEdge.fromFace in segment), "flatEdge not in segment"
             flatEdge.reset(oldVert,newVert)
 
-  def getGroupForMember(self,member):
-    if member not in self.leaders.keys():
-      print "face not in leaders: ",
-      print member
-      return
-    leader = self.leaders[member]
-    return self.groups[leader]
 
-  def updateIslands(self,newGroups,newLeaders,face):
-    #get rid of old island
-    leader = self.leaders[face]
-    del self.groups[leader]
-
-    for group in newGroups.items():
-      self.groups[group[0]] = group[1]
-    for leader in newLeaders.items():
-      self.leaders[leader[0]] = leader[1]
-
+  
 
   '''SELECTION'''
   def getFlatEdgeForLine(self,value):

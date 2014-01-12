@@ -230,8 +230,7 @@ class FlatEdge():
     ouput:
       xForm = transform for this edge line
     '''
-    print flatFace.fromFace
-    buckleVal = net.buckleVals[flatFace.fromFace]
+    buckleVal = net.buckleVals[flatFace.faceIdx]
     scale = net.buckleScale
     oppositeEdge = self.getOppositeFlatEdge(net,flatFace)
     assert(oppositeEdge!=-1),"did not find oppositeEdge (maybe triangle face)"
@@ -902,10 +901,11 @@ def test_FlatEdge():
 
 class FlatFace():
   #does not store meshFace because position in list determines this
-  def __init__(self,_vertices,_fromFace):
+  def __init__(self,_vertices,_fromFace,_faceIdx):
     self.vertices = _vertices # a list of netVerts in consistant order (CW or CCW)
     self.flatEdges = []
-    self.fromFace = _fromFace #
+    self.faceIdx = _faceIdx
+    self.fromFace = _fromFace #face adacent to this face which preceded this face in layout
     self.centerPoint = None
 
     self.polyline = None
