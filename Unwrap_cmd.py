@@ -19,7 +19,7 @@ def RunCommand():
   tabAngle = math.pi/4.0 #45deg
   buckleScale = .2
   drawTabs = False
-  drawFaceHoles = False 
+  drawFaceHoles = False
 
   targetVec = Rhino.Geometry.Vector3d(0,0,1)
   mesh = getMesh("Select mesh to unwrap")

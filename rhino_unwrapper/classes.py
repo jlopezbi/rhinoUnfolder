@@ -200,19 +200,6 @@ class FlatEdge():
     line_id,line = drawLine(points,color,'None') #EndArrowhead StartArrowhead
     return line_id
 
-  def _drawOffset(self,net,flatface):
-    '''
-    draw line that is offset from this edge by an amount proportional to the buckleVal and
-    the len of the neighboring edge (for QUAD FACES)
-    add the new points to this flatEdge for later use
-    output:
-      lineGuid = globally unique identifier for the line
-      line = the Rhino.Geometry.Line instance which was added to the document
-      oppositeEdge = the oppositeEdge from this edge which was used to draw the offset
-    '''
-    xForm,lineGuid = self._getOffsetEdgeLine(net,flatface)
-    return 
-
   def _getOffsetEdgeLine(self,net,flatface,draw=False):
     xForm = self._computeOffsetXForm(net,flatface)
     copy = True

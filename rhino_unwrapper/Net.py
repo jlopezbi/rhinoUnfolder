@@ -73,7 +73,6 @@ class Net():
     leader = self.leaders[member]
     return self.groups[leader]
 
-
   def copyAndReasign(self,mesh,dataMap,flatEdgeCut,edgeIdx,segment,segmentFace):
     '''
     input:
