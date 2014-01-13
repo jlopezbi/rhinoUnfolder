@@ -26,6 +26,10 @@ def getMesh(message=None):
     return mesh
 
 def getUserCuts(display=True):
+  '''
+  ouput:
+    cuts = set of meshe edgeIdxs that the user selected as cuts
+  '''
   cuts = set()
   color = (0,255,0,255)
   isChain = False
@@ -62,9 +66,8 @@ def getUserCuts(display=True):
         drawnEdges.update(displayMeshEdges(mesh,color,cuts,"cuts"))
           
     elif edgeIdx == -1:
-      print("enter:")
+      print("pressed enter while in getUserCuts():")
       break
-
 
   return cuts    
 

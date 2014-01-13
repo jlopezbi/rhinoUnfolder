@@ -228,7 +228,9 @@ class FlatEdge():
     lengthFace = faceVec.Length
 
     faceVec.Unitize()
-    offsetVec = faceVec*(scale*buckleVal*lengthFace/2.0) #half for each side
+    lenOffset = (lengthFace*buckleVal)/2.0 
+    #buckle val is a percentage increase in len. divide by two for each side
+    offsetVec = faceVec*lenOffset
     #drawVector(offsetVec,midPnt,(0,255,255,255))
 
     xForm = Rhino.Geometry.Transform.Translation(offsetVec)
@@ -722,7 +724,7 @@ class FlatEdge():
     '''return the face that corresponds to the point that a use seleceted to translate the segment to
     '''
     #TODO: fails for horizontal lines :(
-    assert(self.type =='fold')
+    assert(self.type =='fold' or self.type == 'contested'), "selected edge was not of type 'fold' or 'contested'"
     faceA = self.fromFace
     faceB = self.toFace
     leftA = self.testFacesIsLeft(net,faceA)
@@ -1026,8 +1028,8 @@ class FlatFace():
     for foldEdge in foldEdgeSet:
       oppositeEdge = foldEdge.getOppositeFlatEdge(net,self)
       #if oppositeEdge.type == 'fold' or oppositeEdge.type == 'naked':
-      xFormA,lineA,lineGuidA = foldEdge._getOffsetEdgeLine(net,self,True)
-      xFormB,lineB,lineGuidB = oppositeEdge._getOffsetEdgeLine(net,self,True)
+      xFormA,lineA,lineGuidA = foldEdge._getOffsetEdgeLine(net,self)
+      xFormB,lineB,lineGuidB = oppositeEdge._getOffsetEdgeLine(net,self)
       return self._drawOffsetFaceFromTwoLines(lineA,lineB)
     #if face only has one fold edge:
     if len(foldEdgeSet)==1:

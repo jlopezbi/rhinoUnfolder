@@ -28,6 +28,7 @@ def unwrap(mesh,userCuts,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,dra
   
   '''VISUALZE UNFOLDING ON MESH'''
   #visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
+  #TODO: only draws to default layer (set so that it draws... no matter what?, new layer?, current layer?)
   visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"cuts")
   #visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
 

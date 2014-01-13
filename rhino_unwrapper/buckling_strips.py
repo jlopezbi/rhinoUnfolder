@@ -32,6 +32,7 @@ def displayScaledNormals(mesh,values):
   #of the face normal to the target Vec
   for i in range(mesh.Faces.Count):
     faceNormal = mesh.FaceNormals[i] 
+    faceNormal.Unitize()
     displayVec = faceNormal.Multiply(faceNormal,values[i])
     faceCenter = mesh.Faces.GetFaceCenter(i) #Point3d
     newLoc = rs.VectorAdd(faceCenter, displayVec)
@@ -121,28 +122,54 @@ def angleBetweenVectors(targetVec,vector):
 def normalizeBuckleToEdgeLen(mesh,edgeIdx,buckleFactor):
   edgeLen = getEdgeLen(edgeIdx,mesh)
   return edgeLen*buckleFactor
+
+def getAngles(mesh,targetVec):
+  angles = {}
+  minAngle = float('inf')
+  maxAngle = float('-inf')
+  for i in range(mesh.Faces.Count):
+    faceNormal = mesh.FaceNormals[i]
+    angle  = angleBetweenVectors(targetVec,faceNormal)
+    if angle < minAngle:
+      minAngle = angle
+    elif angle>maxAngle:
+      maxAngle = angle
+    angles[i] = angle
+  return angles,minAngle,maxAngle
+
+
   
-def mapAngleToRange(angle):
+def mapAngleToRange(angle,buckleRange,angleDomain):
   #angle is in range [0,pi], however is treated as [0,pi/2]
   #domain is a tuple: (lower,upper)
-  normalDomain = (1,0)
-  angleDomain = (0,math.pi/3.6) #NOTE: this range is tuned to spcific mesh!!!
-  return (angle-normalDomain[0])*(normalDomain[1]-normalDomain[0])/(angleDomain[1]-angleDomain[0])+normalDomain[0]
+  #angleDomain = (0,math.pi/3.6) #NOTE: this range is tuned to spcific mesh!!!
+  A,B = angleDomain
+  C,D = buckleRange
 
-def assignValuesToFaces(targetVec,mesh):
+  return ((angle-A)/(B-A) * (D-C) + C)
+
+
+def assignValuesToFaces(targetVec,buckleRange,mesh):
   '''
+  USED IN UNWRAP
   ouput:
     values = dict, where: key = faceIdx, item = bucklingScore (0-1) for that face
   '''
 
   values = {}
+  angles,minAngle,maxAngle = getAngles(mesh,targetVec)
+  angleRange = (minAngle,maxAngle)
   for i in range(mesh.Faces.Count):
     faceNormal = mesh.FaceNormals[i] 
-    angle = angleBetweenVectors(targetVec,faceNormal)
-    val = mapAngleToRange(angle) #maps to (0,1)
+    angle = angles[i]
+    val = mapAngleToRange(angle,buckleRange,angleRange)
     if val<0:
       rs.AddSphere(mesh.Faces.GetFaceCenter(i),.3)
     values[i] = val
+
+  print 'kapow'
+  print values[0]
+
   return values
 
 def getMesh(message=None):

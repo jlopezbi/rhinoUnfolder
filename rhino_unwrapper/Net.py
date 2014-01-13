@@ -48,7 +48,7 @@ class Net():
     output:
       returns a list of faces that are the segment
     '''
-    assert(flatEdgeCut.type == 'fold')
+    assert(flatEdgeCut.type =='fold' or flatEdgeCut.type == 'contested'), "selected edge was not of type 'fold' or 'contested'"
     island = self.getGroupForMember(face)
     self.removeFaceConnection(flatEdgeCut)
     group,leader = segmentIsland(self.flatFaces,island)
