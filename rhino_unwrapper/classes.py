@@ -961,14 +961,18 @@ class FlatFace():
     props = self.getProps(flatVerts)
     return props.Area
 
-  def getInnerPoint(self,flatVerts,vert):
+  def getInnerPoint(self,flatVerts,vert,ratio):
     cornerVec = Rhino.Geometry.Vector3d(flatVerts[vert].point)
+    self.getCenterPoint(flatVerts)
+    centerVec = Rhino.Geometry.Vector3d(self.centerPoint)
+    
     vec = Rhino.Geometry.Vector3d(centerVec-cornerVec)
     length = vec.Length
     if not vec.Unitize(): return
     vec = vec.Multiply(vec,length*ratio)
     pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
-    rs.AddTextDot(str(i),pos)
+    #rs.AddTextDot(str(i),pos)
+    return rs.AddPoint(pos)
 
   '''DRAWING'''
   def clearAllGeom(self):
@@ -998,7 +1002,8 @@ class FlatFace():
     '''
 
     #self._drawBuckleFace(net)
-    self._drawBuckleFaceAlongFold(net)
+    #self._drawBuckleFaceAlongFold(net)
+    self._drawInnerface(flatVerts,.33)
 
   def _drawBuckleFace(self,net):
     '''
@@ -1060,14 +1065,12 @@ class FlatFace():
     self._addGeom(curve_id)
     return curve_id
 
-  def drawInnerface(self,flatVerts,ratio=.33):
+  def _drawInnerface(self,flatVerts,ratio=.33):
     #TODO: UNfinished function
     '''draw a inset face'''
-    self.getCenterPoint(flatVerts)
-    centerVec = Rhino.Geometry.Vector3d(self.centerPoint)
     for i in range(len(self.vertices)):
       vert = self.vertices[i]
-      self.getInnerPoint(flatVerts,vert)
+      pnt_id = self.getInnerPoint(flatVerts,vert,ratio)
       #TODO: finish up this function
   
   '''TRANSLATION'''
