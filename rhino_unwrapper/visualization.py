@@ -87,6 +87,8 @@ def drawPolyline(polyline,color=(0,0,0,0),arrowType='None'):
   return poly_id,polyline
 
 def drawCurve(curve,color=(0,0,0,0),arrowType='None'):
+  '''adds curve object to document
+  '''
   a,r,g,b = color
   attr = setAttrColor(a,r,g,b)
   if arrowType:

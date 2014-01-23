@@ -324,8 +324,9 @@ class FlatEdge():
     #     scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
       #return self._drawTruncatedTab(net)
-      poly_id,polylineCurve = self._drawAngleTab(net.flatVerts,net.tabAngle)
-      return poly_id,polylineCurve
+      #poly_id,polylineCurve = self._drawAngleTab(net.flatVerts,net.tabAngle)
+      curve_id,curve = self._drawSmoothAngleTab(net.flatVerts,net.tabAngle)
+      return curve_id,curve
       #return self._drawTriTab(net)
     else:
       return self._drawQuadTab(net.flatVerts)
@@ -364,7 +365,40 @@ class FlatEdge():
     poly_id,polylineCurve = drawCurve(polylineCurve)
     return poly_id,polylineCurve
 
-  def _drawAngleTab(self,flatVerts,angle,xForm=None):
+  def _drawCurveTab(self,flatVerts):
+    '''
+    draw a smooth tab made of a simple nurbs curve
+    '''
+    #     T
+    #      
+    # B----------C
+    # |          |
+    # A          D
+
+    pntA,pntD = self.getCoordinates(flatVerts)
+    pntT = self.tabFaceCenter
+    assert(pntT!=None), "need a tabFaceCenter to make a tab"
+
+    vecDiag = Rhino.Geometry.Vector3d(pntT-pntA)
+    vecEdge = Rhino.Geometry.Vector3d(pntD-pntA)
+
+
+    vecClosestPnt = projectVector(vecDiag,vecEdge)
+    vecPerp = Rhino.Geometry.Vector3d(vecDiag - vecClosestPnt)
+    vecPerp.Unitize()
+    vecTabWidth = vecPerp*self.tabWidth
+
+    pntB = Rhino.Geometry.Point3d(vecTabWidth+pntA)
+    pntC = Rhino.Geometry.Point3d(vecTabWidth+pntD)
+
+    points = [pntA,pntB,pntC,pntD]
+
+    curve = getNurbsCurve(points)
+    curve_id,curve = drawCurve(curve)
+    return curve_id,curve
+
+    
+  def _getAngleTabPoints(self,flatVerts,angle,xForm=None):
     '''
     draw a truncated tab in the style of pepakura:
     constant tabWidth, constant inner angles
@@ -417,10 +451,19 @@ class FlatEdge():
       pntC = Rhino.Geometry.Point3d(pntD+vecC)
 
       points = [pntA,pntB,pntC,pntD]
+    return points
 
+  def _drawAngleTab(self,flatVerts,angle,xForm=None):
+    points = self._getAngleTabPoints(flatVerts,angle,xForm)
     polylineCurve =  getPolylineCurve(points)
     poly_id,polylineCurve = drawCurve(polylineCurve)
     return poly_id,polylineCurve
+
+  def _drawSmoothAngleTab(self,flatVerts,angle,xForm=None):
+    points = self._getAngleTabPoints(flatVerts,angle,xForm)
+    curve = getNurbsCurve(points)
+    curve_id,curve = drawCurve(curve)
+    return curve_id,curve
 
   def test_drawAngleTab(self):
     print "MEOW"
@@ -965,14 +1008,14 @@ class FlatFace():
     cornerVec = Rhino.Geometry.Vector3d(flatVerts[vert].point)
     self.getCenterPoint(flatVerts)
     centerVec = Rhino.Geometry.Vector3d(self.centerPoint)
-    
+
     vec = Rhino.Geometry.Vector3d(centerVec-cornerVec)
     length = vec.Length
     if not vec.Unitize(): return
     vec = vec.Multiply(vec,length*ratio)
     pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
     #rs.AddTextDot(str(i),pos)
-    return rs.AddPoint(pos)
+    return Rhino.Geometry.Point3d(pos)
 
   '''DRAWING'''
   def clearAllGeom(self):
@@ -1003,7 +1046,7 @@ class FlatFace():
 
     #self._drawBuckleFace(net)
     #self._drawBuckleFaceAlongFold(net)
-    self._drawInnerface(flatVerts,.33)
+    self._drawInnerface(flatVerts,.5)
 
   def _drawBuckleFace(self,net):
     '''
@@ -1068,10 +1111,14 @@ class FlatFace():
   def _drawInnerface(self,flatVerts,ratio=.33):
     #TODO: UNfinished function
     '''draw a inset face'''
+    points = []
     for i in range(len(self.vertices)):
       vert = self.vertices[i]
-      pnt_id = self.getInnerPoint(flatVerts,vert,ratio)
-      #TODO: finish up this function
+      point = self.getInnerPoint(flatVerts,vert,ratio)
+      points.append(point)
+    points.append(points[0])
+    rs.AddPolyline(points)
+
   
   '''TRANSLATION'''
   def translate(self,xForm):

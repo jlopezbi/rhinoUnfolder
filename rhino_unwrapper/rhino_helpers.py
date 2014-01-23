@@ -224,6 +224,11 @@ def getPolylineCurve(points):
   polyline = Rhino.Geometry.Polyline(points)
   return Rhino.Geometry.PolylineCurve(polyline)
 
+def getNurbsCurve(points,degree=3):
+  if len(points)<4:
+    degree = 2
+  return Rhino.Geometry.NurbsCurve.Create(False,degree,points)
+
 def checkOrientationXYplaneCurve(polyline):
   '''
   ASSUMES POLYLINE IS parallel to XY PLANE!
@@ -264,6 +269,12 @@ def checkIfIntersecting(lineA,lineB,intersection_tolerance=.001,overlap_toleranc
     return False
 
   return didIntersect,paramA,paramB
+
+def filletPolyline(points):
+  '''
+  assumes that points form a closed polygon
+  '''
+  pass
 
 '''VECTORS'''
 
