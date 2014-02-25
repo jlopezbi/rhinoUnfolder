@@ -6,6 +6,9 @@ import rhinoscriptsyntax as rs
 import math
 
 class Net():
+  #TODO: net perhaps contains instances of the class island?
+    #island would store: group name, members (faces) in island, and have methods like
+    #segment, redraw, translate, group
   def __init__(self,mesh,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,drawFaceHoles):
     self.holeRadius = holeRadius #holes used for fastening joinery
     self.tabAngle = tabAngle #innner tab angle for all tabs in net
@@ -211,11 +214,15 @@ class Net():
     geom = []
     for netEdge in translatedEdges:
       netEdge.clearAllGeom()
-      geom.append(netEdge.drawNetEdge(self))
+      geom.extend(netEdge.drawNetEdge(self))
+
+    #TODO: make face drawing dependent on a boolean net.drawFaces
+    '''
     for face in segmentFaces:
       flatFace = self.flatFaces[face]
       flatFace.clearAllGeom()
       geom.append(flatFace.drawNetFace(self))
+    '''
       
     grouped =  rs.AddObjectsToGroup(geom,group)
     if grouped==None: 
@@ -248,4 +255,7 @@ class Net():
       collection.append(face.drawNetFace(self))
     createGroup(netGroupName,collection)
 
+class island():
+  def __init__(self,etc):
+    pass
 

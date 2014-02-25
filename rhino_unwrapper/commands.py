@@ -35,7 +35,8 @@ def unwrap(mesh,userCuts,holeRadius,tabAngle,buckleScale,buckleVals,drawTabs,dra
   '''DRAW NET'''
   netGroupName = "net1"
   net.drawEdges(netGroupName)
-  net.drawFaces(netGroupName)
+ 
+  #net.drawFaces(netGroupName)
   #net.drawHoles(netGroupName)
   
 

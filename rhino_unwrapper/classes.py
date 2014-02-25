@@ -144,7 +144,6 @@ class FlatEdge():
       -holes
     '''
     group = rs.AddGroup() # create a sub-group for each edge
-    geom = self.geom
     self._addGeom(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
     #geom.append(self.drawEdgeLine(net.flatVerts,net.angleThresh,net.mesh))
     #ASSUME: that each face has at least one fold edge (could not be true because of user-cuts or
@@ -165,7 +164,7 @@ class FlatEdge():
 
     if net.drawFaceHoles:
       self._addGeom(self.drawFaceHole(net))
-    
+    geom = self.geom
     grouped =  rs.AddObjectsToGroup(geom,group)
     return geom
 
@@ -324,8 +323,8 @@ class FlatEdge():
     #     scriptcontext.doc.Objects.Delete(guid,True)
     if len(self.tabAngles)<1:
       #return self._drawTruncatedTab(net)
-      #poly_id,polylineCurve = self._drawAngleTab(net.flatVerts,net.tabAngle)
-      curve_id,curve = self._drawSmoothAngleTab(net.flatVerts,net.tabAngle)
+      curve_id,curve = self._drawAngleTab(net.flatVerts,net.tabAngle)
+      #curve_id,curve = self._drawSmoothAngleTab(net.flatVerts,net.tabAngle)
       return curve_id,curve
       #return self._drawTriTab(net)
     else:
@@ -973,11 +972,11 @@ class FlatFace():
     if getNew:
       self.centerPoint=None
     if self.centerPoint==None:
-      flatVerts = self.getFlatVerts(flatVerts)
+      verts = self.getFlatVerts(flatVerts)
       nVerts = len(self.vertices)
       sumX = 0.0
       sumY = 0.0
-      for flatVert in flatVerts:
+      for flatVert in verts:
         point = flatVert.point
         sumX += point.X
         sumY += point.Y
@@ -1004,18 +1003,7 @@ class FlatFace():
     props = self.getProps(flatVerts)
     return props.Area
 
-  def getInnerPoint(self,flatVerts,vert,ratio):
-    cornerVec = Rhino.Geometry.Vector3d(flatVerts[vert].point)
-    self.getCenterPoint(flatVerts)
-    centerVec = Rhino.Geometry.Vector3d(self.centerPoint)
-
-    vec = Rhino.Geometry.Vector3d(centerVec-cornerVec)
-    length = vec.Length
-    if not vec.Unitize(): return
-    vec = vec.Multiply(vec,length*ratio)
-    pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
-    #rs.AddTextDot(str(i),pos)
-    return Rhino.Geometry.Point3d(pos)
+ 
 
   '''DRAWING'''
   def clearAllGeom(self):
@@ -1036,17 +1024,19 @@ class FlatFace():
     flatVerts = net.flatVerts
     polyline = self.getPolyline(flatVerts)
     #remove 'EndArrowhead' to stop displaying orientation of face
-    '''
-    poly_id,polyline = drawPolyline(polyline,[0,0,0,0],'EndArrowhead')
+    
+
+    poly_id,polyline = drawPolyline(polyline,[0,100,50,0],'EndArrowhead')
     self.poly_id = poly_id
     self.polyline = polyline
-    #self.geom.append(poly_id)
     self._addGeom(poly_id)
-    '''
+
+    
 
     #self._drawBuckleFace(net)
     #self._drawBuckleFaceAlongFold(net)
-    self._drawInnerface(flatVerts,.5)
+    curve_id = self._drawInnerface(poly_id,polyline,.5)
+    self._addGeom(curve_id)
 
   def _drawBuckleFace(self,net):
     '''
@@ -1108,16 +1098,28 @@ class FlatFace():
     self._addGeom(curve_id)
     return curve_id
 
-  def _drawInnerface(self,flatVerts,ratio=.33):
+  def _drawInnerface(self,poly_id,polyline,ratio=.33):
     #TODO: UNfinished function
     '''draw a inset face'''
     points = []
-    for i in range(len(self.vertices)):
-      vert = self.vertices[i]
-      point = self.getInnerPoint(flatVerts,vert,ratio)
+    polyVerts = rs.PolylineVertices(poly_id)
+    centerPnt  = polyline.CenterPoint()
+    for cornerPnt in polyVerts:
+      point = self.getInnerPoint(centerPnt,cornerPnt,ratio)
       points.append(point)
-    points.append(points[0])
-    rs.AddPolyline(points)
+    return rs.AddPolyline(points)
+
+  def getInnerPoint(self,centerPnt,cornerPnt,ratio):
+    cornerVec = Rhino.Geometry.Vector3d(cornerPnt)
+    centerVec = Rhino.Geometry.Vector3d(centerPnt)
+
+    vec = Rhino.Geometry.Vector3d(centerVec-cornerVec)
+    length = vec.Length
+    if not vec.Unitize(): return
+    vec = vec.Multiply(vec,length*ratio)
+    pos = Rhino.Geometry.Vector3d.Add(cornerVec,vec)
+    #rs.AddTextDot(str(i),pos)
+    return Rhino.Geometry.Point3d(pos)
 
   
   '''TRANSLATION'''

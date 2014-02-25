@@ -21,6 +21,7 @@ def RunCommand():
   buckleRange = (1,0.001) #percent increase in face for buckling
   drawTabs = True
   drawFaceHoles = False
+  drawFaces = False
 
   targetVec = Rhino.Geometry.Vector3d(0,0,1)
   mesh = getMesh("Select mesh to unwrap")
@@ -29,14 +30,18 @@ def RunCommand():
   mesh.FaceNormals.ComputeFaceNormals()
   mesh.FaceNormals.UnitizeFaceNormals()
 
-  '''
+  #Use this to get user cuts and hard code that cut-set for debugging
   userCuts = getUserCuts(True)
   if userCuts == None: return
   print "user cuts:"
   print userCuts
-  '''
+  
 
-  userCuts = set([2, 4, 6, 8, 10, 12, 14, 15, 18, 20, 22, 23, 24, 26, 27, 28, 34, 36, 38, 40, 43, 44, 46, 50, 51, 55, 57, 59, 62, 64, 65, 68, 69, 71, 73, 75, 77, 78, 82, 83, 86, 89, 91, 94, 96, 98, 103, 105, 107, 108, 111, 112, 115, 117, 118, 120, 122, 125, 128, 130, 132, 134, 136, 140, 142, 145, 147, 150, 151, 153, 156, 157, 159, 161, 162, 164, 168, 170, 173, 175, 177, 179, 180, 181, 183, 185, 186, 188, 191, 193, 194, 196, 198, 199, 201, 203, 204, 206, 211, 213, 215, 217, 218, 219, 221, 223, 224, 226, 228, 231])
+  #userCuts = set([0, 1, 2, 4, 6, 7, 8, 9, 10, 11, 12, 15, 17, 20, 23, 27, 28, 30, 33, 35, 36, 37, 39, 41, 43, 47, 49, 52, 53, 54, 57, 59, 62, 65, 69, 72, 75, 77, 78, 80, 82, 85, 88, 91, 93, 95, 97, 100, 102, 104, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 128, 131, 132, 134, 138, 141, 142, 144, 146, 147, 149, 153, 156, 158, 159, 160, 163, 165, 167, 170, 171, 172, 175, 176, 178, 179, 180, 183, 184, 185, 186, 188, 189, 190, 192, 195, 197, 198, 199, 200, 201, 202])
+  
+  
+
+  
   
 
   

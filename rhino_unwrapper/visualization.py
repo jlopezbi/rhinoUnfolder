@@ -191,8 +191,47 @@ def drawNet(flatEdgePairs):
 
   return netGroupName
 
+def drawDualOfMesh(mesh,distance):
+  group = rs.AddGroup()
+  geom = []
+  for edge in range(mesh.TopologyEdges.Count):
+    faces = getFacesForEdge(mesh, edge)
+    if len(faces)>1:    
 
-#def drawNetAsMesh(flatEdgePairs)
+      #pntA = mesh.Faces.GetFaceCenter(faces[0])
+      #pntB = mesh.Faces.GetFaceCenter(faces[1])
+
+      # geom.append(rs.AddLine(pntA,pntB))
+      geom.append(drawDualMeshCurve(mesh,faces[0],faces[1],distance))
+
+  rs.AddObjectsToGroup(geom,group)
+
+def drawDualMeshCurve(mesh,face1,face2,distance=1):
+    '''
+    draw a nurbs curve from 4 points
+    '''
+  
+    # B----------C
+    # |          |  distance
+    # A          D
+
+    mesh.FaceNormals.UnitizeFaceNormals()
+    pntA = mesh.Faces.GetFaceCenter(face1)
+    pntD = mesh.Faces.GetFaceCenter(face2)
+    
+    vecB = Rhino.Geometry.Vector3d(mesh.FaceNormals[face1])
+    vecC = Rhino.Geometry.Vector3d(mesh.FaceNormals[face2])
+    
+    vecB = vecB*distance
+    vecC = vecC*distance
+
+    pntB = Rhino.Geometry.Point3d(vecB+pntA)
+    pntC = Rhino.Geometry.Point3d(vecC+pntD)
+
+    points = [pntA,pntB,pntC,pntD]
+    curve = getNurbsCurve(points)
+    curve_id,curve = drawCurve(curve)
+    return curve_id
 
 
 
