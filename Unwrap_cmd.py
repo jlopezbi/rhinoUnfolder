@@ -1,38 +1,43 @@
-from rhino_unwrapper.commands import unwrap
-from rhino_unwrapper.visualization import displayMeshEdges
-from rhino_unwrapper.rhino_inputs import *
-from rhino_unwrapper import weight_functions
+import rhino_unwrapper.commands as cm
+import rhino_unwrapper.rhino_inputs as ri
+import rhino_unwrapper.weight_functions as wf
+import inspect
 
-# -RunPythonScript ResetEngine RhinoUnwrapper.Unwrap_cmd
+reload(wf)
+reload(ri)
+reload(cm)
 
-from inspect import getmembers, isfunction, isclass
+
 
 def all_weight_functions():
-  return [m for m in getmembers(weight_functions, isfunction)]
+  return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
+
 
 __commandname__ = "Unwrap"
 
 def RunCommand():
   holeRadius = 0.125/2.0
-  mesh = getMesh("Select mesh to unwrap")
+  mesh = ri.getMesh("Select mesh to unwrap")
   if not mesh: return
   mesh.Normals.ComputeNormals()
 
-  userCuts = getUserCuts(True)
+  userCuts = ri.getUserCuts(True)
   if userCuts == None: return
 
-  weightFunction = getOption(all_weight_functions(), "WeightFunction")
+  print all_weight_functions()
+  weightFunction = ri.getOptions_dict(all_weight_functions())
 
   if mesh and weightFunction:
-    dataMap,net,foldList = unwrap(mesh, userCuts, holeRadius, weightFunction)
+    dataMap,net,foldList = cm.unwrap(mesh, userCuts, holeRadius, weightFunction)
     net.findInitalSegments()
+    net.drawEdges("net1")
   #Get 
 
   while True:
-    flatEdge,idx,strType = getNewEdge("select new edge on net or mesh",net,dataMap)
+    flatEdge,idx,strType = ri.getNewEdge("select new edge on net or mesh",net,dataMap)
     if strType == 'fold':
       basePoint = flatEdge.getMidPoint(net.flatVerts)
-      xForm,point = getUserTranslate("Pick point to translate segment to",basePoint)
+      xForm,point = ri.getUserTranslate("Pick point to translate segment to",basePoint)
       if xForm and point:
         face = flatEdge.getFaceFromPoint(net,point)
         print "face: ",

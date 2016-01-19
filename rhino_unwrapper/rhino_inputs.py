@@ -66,8 +66,24 @@ def getUserCuts(display=True):
       break
 
 
-  return cuts    
+  return cuts 
 
+def getOptions_dict(options_dict):
+  # Eventually would be nice to distiguish between cancel and enter keys
+  texts = options_dict.keys()
+  result = rs.ListBox(texts,message="select weight function",title="Title")
+  option = texts[0]
+  if result:
+    option = result
+  else:
+    print "defualt"
+  return options_dict[option]
+
+def test_getOptionsRS():
+  options = dict([("Three",3),("One",1),("Two",2)])
+  print getOptions_dict(options)
+
+# DEPRICATED FOR NOW
 def getOption(options, option_name, message=None):
   '''
     options = list of tuples (name, value)
@@ -76,7 +92,7 @@ def getOption(options, option_name, message=None):
   '''
   getter = Rhino.Input.Custom.GetOption()
   getter.SetCommandPrompt(message)
-  getter.AcceptNothing(True)
+  #getter.AcceptNothing(True)
 
   option_name = filter(str.isalnum, option_name)
 
@@ -85,6 +101,9 @@ def getOption(options, option_name, message=None):
   getter.SetDefaultInteger(0)
 
   getValue = getter.Get()
+  print getter.CommandResult()
+
+  
 
   if getter.GotDefault() == True:
     option = options[0][1] #default is the first function in weight_functions.py
@@ -97,6 +116,12 @@ def getOption(options, option_name, message=None):
     return
 
   return option
+
+def test_getOption():
+  options = [("One",1),("Two",2),("Three",3)]
+  name = "TestOptiosn" 
+  chosenOption = getOption(options,name,"This is a Test Options Thing")
+  print chosenOption
 
 def getNewEdge(message,net,dataMap):
   ge = Rhino.Input.Custom.GetObject()
@@ -146,7 +171,6 @@ def getMeshEdge(message,isChain,angle):
   ge.AddOptionDouble("maxAngle", dblOption)
   ge.AddOptionToggle("chainSelect", boolOption)
   
-  ge.Get()
   edgeIdx = None
   mesh = None
   while True:
@@ -199,3 +223,7 @@ def getUserTranslate(message,basePoint):
 
   xForm = Rhino.Geometry.Transform.Translation(vec)
   return xForm,point
+
+if __name__=="__main__":
+  test_getOptionsRS()
+  #test_getOption()

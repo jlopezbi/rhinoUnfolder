@@ -6,6 +6,10 @@ from classes import FlatEdge
 from Map import Map
 from Net import Net
 
+"""
+what if this was a class? Unwrapper.
+The unwrapper would create the net.
+"""
 def unwrap(mesh, userCuts,holeRadius, weightFunction=weight_functions.edgeAngle):
   mesh.FaceNormals.ComputeFaceNormals() 
   meshDual = traversal.buildMeshGraph(mesh, userCuts, weightFunction)
@@ -16,11 +20,11 @@ def unwrap(mesh, userCuts,holeRadius, weightFunction=weight_functions.edgeAngle)
   
 
   #visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
-  visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"cuts")
+  #visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"cuts")
   #visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
 
-  netGroupName = "net1"
-  net.drawEdges(netGroupName)
+  #netGroupName = "net1"
+  #net.drawEdges(netGroupName)
   #net.drawHoles(netGroupName)
   #net.drawFaces(netGroupName)
 

@@ -1,11 +1,14 @@
 from segmentation import segmentIsland
 from rhino_helpers import createGroup,getEdgesForVert
-from classes import FlatVert,FlatEdge
+from FlatGeom import FlatVert,FlatEdge
 import Rhino
 import rhinoscriptsyntax as rs
 import math
 
 class Net():
+  """ What does a net do?, slash know about?
+      => it stores the mesh that is the net. In fact perhaps should just use rhino's mesh! but lets save that for later
+  """
   def __init__(self,mesh,holeRadius):
     self.holeRadius = holeRadius
     self.flatVerts = []
@@ -190,6 +193,9 @@ class Net():
     
 
   '''DRAWING'''
+  """
+  I think flatEdges should know how to drawthemselves! not the net!
+  """
   def drawEdge(self,netEdge):
     collection = []
     collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))
