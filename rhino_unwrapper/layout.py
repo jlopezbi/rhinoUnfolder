@@ -1,8 +1,12 @@
 
 from transformations import *
-from classes import FlatVert, FlatEdge, FlatFace
-from Net import Net
+from FlatGeom import FlatVert, FlatEdge, FlatFace
+import net as nt
 from Map import Map
+
+reload(nt)
+
+""" Layout and Unwrap sound like the same thing!"""
 
 def initBasisInfo(mesh, origin):
   faceIdx = 0
@@ -16,14 +20,14 @@ def layoutMesh(foldList, mesh,holeRadius):
   basisInfo = initBasisInfo(mesh, origin)
   toBasis = origin
 
-  net = Net(mesh,holeRadius)
+  net = nt.Net(mesh,holeRadius)
   dataMap = Map(mesh)
   net,dataMap = layoutFace(None,None,basisInfo,foldList,mesh,toBasis,net,dataMap)
   return net,dataMap
 
 
 def layoutFace(fromFace,hopEdge,basisInfo,foldList,mesh,toBasis,net,dataMap):
-  ''' Recurse through faces, hopping along fold edges
+  ''' Recursive Function to traverse through faces, hopping along fold edges
     input:
       depth = recursion level
       basisInfo = (faceIdx,edgeIdx,tVertIdx) information required to make basis

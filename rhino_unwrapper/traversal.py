@@ -1,4 +1,3 @@
-import rhinoscriptsyntax as rs
 
 def getSpanningKruskal(graph,mesh):
 

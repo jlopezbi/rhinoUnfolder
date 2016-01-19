@@ -196,6 +196,10 @@ class Net():
   """
   I think flatEdges should know how to drawthemselves! not the net!
   """
+  def drawEdges_simple(self):
+    for netEdge in self.flatEdges:
+      netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
+
   def drawEdge(self,netEdge):
     collection = []
     collection.append(netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh))

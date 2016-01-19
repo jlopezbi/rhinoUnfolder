@@ -9,6 +9,7 @@ reload(cm)
 
 
 
+
 def all_weight_functions():
   return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
 
@@ -30,7 +31,7 @@ def RunCommand():
   if mesh and weightFunction:
     dataMap,net,foldList = cm.unwrap(mesh, userCuts, holeRadius, weightFunction)
     net.findInitalSegments()
-    net.drawEdges("net1")
+    net.drawEdges_simple()
   #Get 
 
   while True:

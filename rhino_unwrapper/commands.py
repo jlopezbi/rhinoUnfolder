@@ -2,9 +2,8 @@ import visualization
 import layout
 import traversal
 import weight_functions
-from classes import FlatEdge
+from FlatGeom import FlatEdge
 from Map import Map
-from Net import Net
 
 """
 what if this was a class? Unwrapper.
