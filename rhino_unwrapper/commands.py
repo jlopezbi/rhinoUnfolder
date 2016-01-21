@@ -2,8 +2,8 @@ import visualization
 import layout
 import traversal
 import weight_functions
-from FlatGeom import FlatEdge
 from Map import Map
+
 
 """
 what if this was a class? Unwrapper.

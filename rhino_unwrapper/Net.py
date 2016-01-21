@@ -1,6 +1,7 @@
 from segmentation import segmentIsland
 from rhino_helpers import createGroup,getEdgesForVert
-from FlatGeom import FlatVert,FlatEdge
+from FlatGeom import FlatVert
+#import flatEdge as fe
 import Rhino
 import rhinoscriptsyntax as rs
 import math
@@ -99,7 +100,7 @@ class Net():
   def makeNewEdge(self,dataMap,changedVertPairs,meshEdge,idx,face):
     newVertI = changedVertPairs[0][0]
     newVertJ = changedVertPairs[1][0]
-    newFlatEdge = FlatEdge(meshEdge,newVertI,newVertJ)
+    newFlatEdge = fe.FlatEdge(meshEdge,newVertI,newVertJ)
     newFlatEdge.fromFace = face
     newFlatEdge.type = 'cut'
     #newFlatEdge.hasTab = True
