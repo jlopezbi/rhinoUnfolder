@@ -1,10 +1,12 @@
-from segmentation import segmentIsland
+import segmentation as sg
 from rhino_helpers import createGroup,getEdgesForVert
 from FlatGeom import FlatVert
 #import flatEdge as fe
 import Rhino
 import rhinoscriptsyntax as rs
 import math
+
+reload(sg)
 
 class Net():
   """ What does a net do?, slash know about?
@@ -30,7 +32,7 @@ class Net():
 
   '''SEGMENTATION'''
   def findInitalSegments(self):
-    group,leader = segmentIsland(self.flatFaces,[])
+    group,leader = sg.segmentIsland(self.flatFaces,[])
     self.groups = group
     self.leaders = leader
 

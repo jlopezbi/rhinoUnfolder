@@ -1,7 +1,7 @@
 from UnionFind import UnionFind
 
 def segmentIsland(flatFaces,island):
-  sets = UnionFind(True)
+  sets = UnionFind()
   if len(island)==0:
     island = range(len(flatFaces))
   for face in island:

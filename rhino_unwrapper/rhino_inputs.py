@@ -3,7 +3,7 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
 import math
-from FlatGeom import FlatEdge
+#import FlatEdge as fe
 from rhino_helpers import getChain
 from visualization import displayMeshEdges
 
