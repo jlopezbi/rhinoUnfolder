@@ -12,6 +12,10 @@ reload(sg)
 class Net():
     """ What does a net do?, slash know about?
         => it stores the mesh that is the net. In fact perhaps should just use rhino's mesh! but lets save that for later
+    Right now the net does this:
+        * Segmentation
+            * Selection
+        * Display
     """
 
     def __init__(self, mesh, holeRadius):
@@ -65,7 +69,7 @@ class Net():
     def translateSegment(self, segment, xForm):
         # TODO: make a more efficent version of this, would be easier if half-edge or
         # winged edge mesh. H-E: could traverse edges recursively, first going to sibling h-edge
-        # stopping when the edge points to no other edge(naked),or to a face not in the segment,or
+        # Sstopping when the edge points to no other edge(naked),or to a face not in the segment,or
         # if the h-edge is part of the user-selected edge to be cut
         group = rs.AddGroup()
 

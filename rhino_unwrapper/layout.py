@@ -17,6 +17,8 @@ class UnFolder(object):
     """
 
     def __init__(self):
+        # If this calss has no attributes need it be a class? Why not just a
+        # bunch  of functions in a module?
         pass
 
     def initBasisInfo(self, mesh, origin):

@@ -92,6 +92,7 @@ class FlatEdge():
                 color = (0, 237, 43, 120)  # red
                 if self.hasTab:
                     color = (0, 255, 0, 255)  # magenta
+                    self.drawTab(flatVerts)
             elif self.type == 'naked':
                 color = (0, 55, 156, 196)  # blue
             points = self.getCoordinates(flatVerts)
@@ -134,16 +135,16 @@ class FlatEdge():
 
     '''JOINERY'''
 
-    def drawTab(self, net):
+    def drawTab(self, flatVerts):
         '''outputs guid for polyline'''
         if len(self.geom) > 0:
             for guid in self.geom:
                 scriptcontext.doc.Objects.Delete(guid, True)
         if len(self.tabAngles) < 1:
-            return self.drawTruncatedTab(net)
+            return self.drawTruncatedTab(flatVerts)
             # return self.drawTriTab(net)
         else:
-            return self.drawQuadTab(net.flatVerts)
+            return self.drawQuadTab(flatVerts)
 
     def drawQuadTab(self, flatVerts):
         pntA, pntD = self.getCoordinates(flatVerts)
@@ -179,13 +180,11 @@ class FlatEdge():
         self.geom.append(polyGuid)
         return polyGuid
 
-    def drawTruncatedTab(self, net):
+    def drawTruncatedTab(self, flatVerts):
         '''
         draw a truncated tab using the drawing style of triTab, but with an offset-line intersection
         '''
         tabLen = self.tabWidth
-        flatVerts = net.flatVerts
-        flatFaces = net.flatFaces
         I, J = self.getCoordinates(flatVerts)
         K = self.tabFaceCenter
         if self.tabFaceCenter is None:  # this is ahack: TODO: if a new cut edge is created, give it a tabFaceCenter
@@ -202,7 +201,7 @@ class FlatEdge():
             intersectPntI = offsetLine.PointAt(aI)
             intersectPntJ = offsetLine.PointAt(aJ)
 
-            shorterThanTab = self.checkIfShortTab(net)
+            shorterThanTab = self.checkIfShortTab(flatVerts)
             if shorterThanTab == 1:
                 # flip order to avoid self-intersction
                 points = [I, intersectPntJ, intersectPntI, J]
@@ -226,9 +225,9 @@ class FlatEdge():
 
         return polyGuid
 
-    def checkIfShortTab(self, net):
+    def checkIfShortTab(self, flatVerts):
         center = self.tabFaceCenter
-        edgeLine = self.getEdgeLine(net)
+        edgeLine = self.getEdgeLine(flatVerts)
         closestPnt = edgeLine.ClosestPoint(center, True)
         vec = Rhino.Geometry.Point3d.Subtract(center, closestPnt)
         lenVec = vec.Length
@@ -540,8 +539,8 @@ class FlatEdge():
         neighbors = list(tVertsFace - tVertsEdge)
         return neighbors[0]  # arbitrarily return first tVert
 
-    def getEdgeLine(self, net):
-        pntI, pntJ = self.getCoordinates(net.flatVerts)
+    def getEdgeLine(self, flatVerts):
+        pntI, pntJ = self.getCoordinates(flatVerts)
         return Rhino.Geometry.Line(pntI, pntJ)
 
     def getTabFaceCenter(self, mesh, currFace, xForm):
