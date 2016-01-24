@@ -272,9 +272,9 @@ class FlatEdge():
     def getConnectToFace(self, flatFaces, mesh):
         return flatFaces[getOtherFaceIdx(self.edgeIdx, self.fromFace, mesh)]
 
-    def drawFaceHole(self, net, holeRadius):
-        pntA, pntC = self.getCoordinates(net.flatVerts)
-        pntB = net.flatFaces[self.fromFace].getCenterPoint(net.flatVerts, True)
+    def drawFaceHole(self, flatVerts,flatFaces, holeRadius):
+        pntA, pntC = self.getCoordinates(flatVerts)
+        pntB = flatFaces[self.fromFace].getCenterPoint(flatVerts, True)
         pnts = [pntA, pntB, pntC, pntA]
         polyline = Rhino.Geometry.PolylineCurve(pnts)
         props = Rhino.Geometry.AreaMassProperties.Compute(polyline)

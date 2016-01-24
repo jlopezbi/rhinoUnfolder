@@ -1,12 +1,13 @@
 import segmentation as sg
 from rhino_helpers import createGroup, getEdgesForVert
 from FlatGeom import FlatVert
-#import flatEdge as fe
+import FlatEdge as fe
 import Rhino
 import rhinoscriptsyntax as rs
 import math
 
 reload(sg)
+reload(fe)
 
 
 class Net():
@@ -47,7 +48,7 @@ class Net():
         assert(flatEdgeCut.type == 'fold')
         island = self.getGroupForMember(face)
         self.removeFaceConnection(flatEdgeCut)
-        group, leader = segmentIsland(self.flatFaces, island)
+        group, leader = sg.segmentIsland(self.flatFaces, island)
         self.updateIslands(group, leader, face)
         return group[leader[face]]
 
@@ -81,8 +82,9 @@ class Net():
                 netEdge.clearAllGeom()
                 netEdge.translateGeom(movedNetVerts, self.flatVerts, xForm)
 
-                geom = self.drawEdge(netEdge)
-                rs.AddObjectsToGroup(geom, group)
+                netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
+                #rs.AddObjectsToGroup(geom, group)
+
 
                 # if netEdge.type=='cut':
                 #   #TODO: perhaps user input for hole parameters?
@@ -215,7 +217,8 @@ class Net():
         for netEdge in self.flatEdges:
             netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.mesh)
 
-    def drawEdge(self, netEdge):
+    def _drawEdge(self, netEdge):
+        # DEPRICATE! thus the _
         collection = []
         collection.append(
             netEdge.drawEdgeLine(
