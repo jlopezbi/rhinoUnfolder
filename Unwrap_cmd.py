@@ -38,8 +38,6 @@ def RunCommand():
         net.findInitalSegments()
         net.drawEdges_simple()
     #Get 
-    print "got to here"
-    """
 
     while True:
         flatEdge,idx,strType = ri.getNewEdge("select new edge on net or mesh",net,dataMap)
@@ -65,11 +63,6 @@ def RunCommand():
         #   #print('invalid selection')
         elif strType == 'exit':
             break
-            """
-
-
-
-
 
 
 # def RunCommand( is_interactive ):

@@ -9,26 +9,26 @@ from Map import Map
 what if this was a class? Unwrapper.
 The unwrapper would create the net.
 """
-def unwrap(mesh, userCuts,holeRadius, weightFunction=weight_functions.edgeAngle):
-  mesh.FaceNormals.ComputeFaceNormals() 
-  meshDual = traversal.buildMeshGraph(mesh, userCuts, weightFunction)
-  foldList = traversal.getSpanningKruskal(meshDual,mesh)
-  cutList = traversal.getCutList(mesh,foldList)
-  net,dataMap = layout.layoutMesh(foldList, mesh,holeRadius)
 
-  
 
-  #visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
-  #visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"cuts")
-  #visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
+def unwrap(mesh, userCuts, holeRadius,
+           weightFunction=weight_functions.edgeAngle):
+    mesh.FaceNormals.ComputeFaceNormals()
+    meshDual = traversal.buildMeshGraph(mesh, userCuts, weightFunction)
+    foldList = traversal.getSpanningKruskal(meshDual, mesh)
+    cutList = traversal.getCutList(mesh, foldList)
+    net, dataMap = layout.layoutMesh(foldList, mesh, holeRadius)
 
-  #netGroupName = "net1"
-  #net.drawEdges(netGroupName)
-  #net.drawHoles(netGroupName)
-  #net.drawFaces(netGroupName)
+    # visualization.displayMeshEdges(mesh,(0,255,0,255),userCuts,"userCuts")
+    # visualization.displayMeshEdges(mesh,(0,255,0,0),cutList,"cuts")
+    # visualization.displayMeshEdges(mesh,(0,0,255,0),foldList,"foldEdges")
 
-  #FlatEdge.drawEdges(flatVerts,flatEdgesSimple,netGroupName)
-  #FlatEdge.drawTabs(flatVerts,flatEdgesSimple,netGroupName,)
-  
-  return dataMap,net,foldList  
+    #netGroupName = "net1"
+    # net.drawEdges(netGroupName)
+    # net.drawHoles(netGroupName)
+    # net.drawFaces(netGroupName)
 
+    # FlatEdge.drawEdges(flatVerts,flatEdgesSimple,netGroupName)
+    # FlatEdge.drawTabs(flatVerts,flatEdgesSimple,netGroupName,)
+
+    return dataMap, net, foldList
