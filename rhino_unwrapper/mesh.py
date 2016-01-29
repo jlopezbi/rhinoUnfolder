@@ -2,10 +2,10 @@ import Rhino
 
 class Mesh(object):
     """
-    Mesh is a class that keeps track of a rhino mesh specfically for unfolding
+    Does custom queiries on a mesh that make layout easy
     """
 
-    def __init__(self,mesh)
+    def __init__(self,mesh):
         self.mesh = mesh
 
     def getOtherFaceIdx(self,edgeIdx, faceIdx):
@@ -29,7 +29,7 @@ class Mesh(object):
         assert(newFaceIdx != faceIdx), "getOtherFaceIdx(): newFaceIdx == faceIdx!"
         return newFaceIdx
 
-    def getTVertsForVert(tVert):
+    def getTVertsForVert(self,tVert):
         arrTVerts = self.mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
         listVerts = convertArray(arrTVerts)
         if tVert in listVerts:
@@ -37,7 +37,7 @@ class Mesh(object):
         return listVerts
 
 
-    def getEdgesForVert(tVert):
+    def getEdgesForVert(self,tVert):
         # not implimented in rhinoCommon! ::::(
         # rather inefficient
         neighVerts = self.getTVertsForVert(tVert)
@@ -50,7 +50,7 @@ class Mesh(object):
                 edges.append(edge)
         return edges
 
-    def getEdgeForTVertPair(tVertA, tVertB, facesVertA=None):
+    def getEdgeForTVertPair(self,tVertA, tVertB, facesVertA=None):
         if facesVertA is None:
             facesVertA = self.getFacesForVert(self.mesh, tVertA)
         facesVertB = set(self.getFacesForVert(self.mesh, tVertB))
@@ -72,15 +72,15 @@ class Mesh(object):
                     return edge
         return      
 
-    def getFacesForVert(tVert):
+    def getFacesForVert(self,tVert):
         arrfaces = self.mesh.TopologyVertices.ConnectedFaces(tVert)
         return convertArray(arrfaces)
 
-    def getTVertsForEdge(edge):
+    def getTVertsForEdge(self,edge):
         vertPair = self.mesh.TopologyEdges.GetTopologyVertices(edge)
         return [vertPair.I, vertPair.J]
 
-    def getFacesForEdge(edgeIndex):
+    def getFacesForEdge(self,edgeIndex):
         '''
         returns an array of indices of the faces connected to a given edge
         if the array has only one face this indicates it is a naked edge
@@ -95,7 +95,7 @@ class Mesh(object):
         return faceIdxs
 
 
-    def getChain(edge, angleTolerance):
+    def getChain(self,edge, angleTolerance):
         '''
         gets chains extending from both ends of a given edge,
         using angleTolerance as stopping criterion
@@ -108,7 +108,7 @@ class Mesh(object):
         chain.append(edge)
         return chain
 
-    def getTangentEdge(edge, tVert, angleTolerance, chain):
+    def getTangentEdge(self,edge, tVert, angleTolerance, chain):
         '''
         return edge that is closest in angle, or none if none
         of the edges are within angleTolerance
@@ -132,12 +132,12 @@ class Mesh(object):
             nextTVert = self.getOtherTVert(self.mesh, newEdge, tVert)
             return self.getTangentEdge(newEdge, nextTVert, angleTolerance, chain)
 
-    def getOtherTVert(edge, tVert):
+    def getOtherTVert(self,edge, tVert):
         tVerts = self.getTVertsForEdge(edge)
         tVerts.remove(tVert)
         return tVerts[0]
 
-    def getDistanceToEdge(edge, point):
+    def getDistanceToEdge(self,edge, point):
         '''
         edge = Topology edgeIdx in mesh
         point = Point3d to get distance to edge
@@ -145,29 +145,29 @@ class Mesh(object):
         edgeLine = self.mesh.TopologyEdges.EdgeLine(edge)
         return edgeLine.DistanceTo(point, True)
 
-    def getEdgeVector(edgeIdx):
+    def getEdgeVector(self,edgeIdx):
         edgeLine = self.mesh.TopologyEdges.EdgeLine(edgeIdx)
         # Vector3d
         vec = edgeLine.Direction
         return vec
 
-    def getPointsForEdge(edgeIdx):
+    def getPointsForEdge(self,edgeIdx):
         tVertI, tVertJ = self.getTVertsForEdge(self.mesh, edgeIdx)
         pntI = self.mesh.TopologyVertices.Item[tVertI]
         pntJ = self.mesh.TopologyVertices.Item[tVertJ]
         return [pntI, pntJ]
     
-    def getEdgeLen(edgIdx):
+    def getEdgeLen(self,edgIdx):
         edgeLine = self.mesh.TopologyEdges.EdgeLine(edgeIdx)
         return edgeLine.Length
 
-    def compareEdgeAngle(edge, tVert, neighEdge):
+    def compareEdgeAngle(self,edge, tVert, neighEdge):
         vecBase = getOrientedVector(self.mesh, edge, tVert, True)
         vecCompare = getOrientedVector(self.mesh, neighEdge, tVert, False)
         angle = Rhino.Geometry.Vector3d.VectorAngle(vecBase, vecCompare)
         return angle
 
-    def getEdgeLengths():
+    def getEdgeLengths(self):
         edgeLens = []
         for i in range(self.mesh.TopologyEdges.Count):
             edgeLine = self.mesh.TopologyEdges.EdgeLine(i)
@@ -175,11 +175,11 @@ class Mesh(object):
             edgeLens.append(edgeLen)
         return edgeLens
 
-    def getMedianEdgeLen():
+    def getMedianEdgeLen(self):
         edgeLens = self.getEdgeLengths(self.mesh)
         return getMedian(edgeLens)
 
-    def getTVertsForFace(faceIdx):
+    def getTVertsForFace(self,faceIdx):
         '''
         list of 4 values if quad, 3 values if triangle
         '''
@@ -187,7 +187,7 @@ class Mesh(object):
         tVerts = convertArray(arrTVerts)
         return uniqueList(tVerts)
 
-    def getFaceEdges(faceIdx):
+    def getFaceEdges(self,faceIdx):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
         return convertArray(arrFaceEdges)
 

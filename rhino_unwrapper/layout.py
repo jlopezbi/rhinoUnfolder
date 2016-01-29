@@ -29,6 +29,7 @@ class UnFolder(object):
         return initBasisInfo
 
     def unfold(self, mesh, userCuts, weightFunction, holeRadius):
+        #### MAIN FUNCTION ####
         mesh.FaceNormals.ComputeFaceNormals()
         meshDual = tr.buildMeshGraph(mesh, userCuts, weightFunction)
         foldList = tr.getSpanningKruskal(meshDual, mesh)

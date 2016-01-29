@@ -2,13 +2,15 @@ import rhino_unwrapper.commands as cm
 import rhino_unwrapper.layout as la
 import rhino_unwrapper.rhino_inputs as ri
 import rhino_unwrapper.weight_functions as wf
+import rhino_unwrapper.mesh as m
 import inspect
 
 
-reload(wf)
-reload(ri)
 reload(cm)
 reload(la)
+reload(ri)
+reload(wf)
+reload(m)
 
 
 
@@ -37,7 +39,6 @@ def RunCommand():
         dataMap,net,foldList = unfolder.unfold(mesh,userCuts,weightFunction,holeRadius)
         net.findInitalSegments()
         net.drawEdges_simple()
-    #Get 
 
     while True:
         flatEdge,idx,strType = ri.getNewEdge("select new edge on net or mesh",net,dataMap)
