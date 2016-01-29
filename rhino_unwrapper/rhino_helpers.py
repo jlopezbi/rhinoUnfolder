@@ -24,6 +24,7 @@ def convertArray(array):
     return pyList
 
 
+#COPIED
 def getOtherFaceIdx(edgeIdx, faceIdx, mesh):
     connectedFaces = getFacesForEdge(mesh, edgeIdx)
     assert(faceIdx in connectedFaces), "faceIdx not in faces associated with edge"
@@ -55,7 +56,7 @@ def getCenterPointLine(line):
 
 '''VERT INFO'''
 
-
+# COPIED
 def getTVertsForVert(mesh, tVert):
     arrTVerts = mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
     listVerts = convertArray(arrTVerts)
@@ -64,6 +65,7 @@ def getTVertsForVert(mesh, tVert):
     return listVerts
 
 
+#COPIED
 def getEdgesForVert(mesh, tVert):
     # not implimented in rhinoCommon! ::::(
     # rather inefficient
@@ -77,7 +79,7 @@ def getEdgesForVert(mesh, tVert):
             edges.append(edge)
     return edges
 
-
+#COPIED
 def getEdgeForTVertPair(mesh, tVertA, tVertB, facesVertA=None):
     if facesVertA is None:
         facesVertA = getFacesforVert(mesh, tVertA)
@@ -100,19 +102,19 @@ def getEdgeForTVertPair(mesh, tVertA, tVertB, facesVertA=None):
                 return edge
     return
 
-
+# Copied
 def getFacesforVert(mesh, tVert):
     arrfaces = mesh.TopologyVertices.ConnectedFaces(tVert)
     return convertArray(arrfaces)
 
 ''' EDGE INFO'''
 
-
+# Copied
 def getTVertsForEdge(mesh, edge):
     vertPair = mesh.TopologyEdges.GetTopologyVertices(edge)
     return [vertPair.I, vertPair.J]
 
-
+#Copied
 def getFacesForEdge(mesh, edgeIndex):
     '''
     returns an array of indices of the faces connected to a given edge
@@ -127,7 +129,7 @@ def getFacesForEdge(mesh, edgeIndex):
 
     return faceIdxs
 
-
+# Copied
 def getChain(mesh, edge, angleTolerance):
     '''
     gets chains extending from both ends of a given edge,
@@ -141,7 +143,7 @@ def getChain(mesh, edge, angleTolerance):
     chain.append(edge)
     return chain
 
-
+#copied
 def getTangentEdge(mesh, edge, tVert, angleTolerance, chain):
     '''
     return edge that is closest in angle, or none if none
@@ -167,6 +169,7 @@ def getTangentEdge(mesh, edge, tVert, angleTolerance, chain):
         return getTangentEdge(mesh, newEdge, nextTVert, angleTolerance, chain)
 
 
+#copied
 def getDistanceToEdge(mesh, edge, point):
     '''
     edge = Topology edgeIdx in mesh
@@ -175,39 +178,39 @@ def getDistanceToEdge(mesh, edge, point):
     edgeLine = mesh.TopologyEdges.EdgeLine(edge)
     return edgeLine.DistanceTo(point, True)
 
-
+# copied
 def getEdgeVector(mesh, edgeIdx):
     edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
     # Vector3d
     vec = edgeLine.Direction
     return vec
 
-
+#copied
 def getOtherTVert(mesh, edge, tVert):
     tVerts = getTVertsForEdge(mesh, edge)
     tVerts.remove(tVert)
     return tVerts[0]
 
-
+#copied
 def getPointsForEdge(mesh, edgeIdx):
     tVertI, tVertJ = getTVertsForEdge(mesh, edgeIdx)
     pntI = mesh.TopologyVertices.Item[tVertI]
     pntJ = mesh.TopologyVertices.Item[tVertJ]
     return [pntI, pntJ]
 
-
+#copied
 def getEdgeLen(edgIdx, mesh):
     edgeLine = mesh.TopologyEdges.EdgeLine(edgeIdx)
     return edgeLine.Length
 
-
+#copied
 def compareEdgeAngle(mesh, edge, tVert, neighEdge):
     vecBase = getOrientedVector(mesh, edge, tVert, True)
     vecCompare = getOrientedVector(mesh, neighEdge, tVert, False)
     angle = Rhino.Geometry.Vector3d.VectorAngle(vecBase, vecCompare)
     return angle
 
-
+#copied
 def getEdgeLengths(mesh):
     edgeLens = []
     for i in range(mesh.TopologyEdges.Count):
@@ -220,6 +223,7 @@ def getEdgeLengths(mesh):
 '''FACE INFO'''
 
 
+#copied
 def getTVertsForFace(mesh, faceIdx):
     '''
     list of 4 values if quad, 3 values if triangle
@@ -228,7 +232,7 @@ def getTVertsForFace(mesh, faceIdx):
     tVerts = convertArray(arrTVerts)
     return uniqueList(tVerts)
 
-
+#copied
 def getFaceEdges(faceIdx, mesh):
     arrFaceEdges = mesh.TopologyEdges.GetEdgesForFace(faceIdx)
     return convertArray(arrFaceEdges)
@@ -236,6 +240,7 @@ def getFaceEdges(faceIdx, mesh):
 '''MESH INFO'''
 
 
+#copied
 def getMedianEdgeLen(mesh):
     edgeLens = getEdgeLengths(mesh)
     return getMedian(edgeLens)

@@ -1,7 +1,7 @@
 from transformations import *
 from FlatGeom import FlatVert, FlatFace
 import FlatEdge as fe
-import net as nt
+import Net as nt
 import traversal as tr
 from Map import Map
 

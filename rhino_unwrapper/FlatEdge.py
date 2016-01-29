@@ -141,9 +141,11 @@ class FlatEdge():
             for guid in self.geom:
                 scriptcontext.doc.Objects.Delete(guid, True)
         if len(self.tabAngles) < 1:
+            print "truncated tab"
             return self.drawTruncatedTab(flatVerts)
             # return self.drawTriTab(net)
         else:
+            print "quadtab"
             return self.drawQuadTab(flatVerts)
 
     def drawQuadTab(self, flatVerts):
@@ -544,6 +546,7 @@ class FlatEdge():
         return Rhino.Geometry.Line(pntI, pntJ)
 
     def getTabFaceCenter(self, mesh, currFace, xForm):
+        # NOTE appears to be failing for orthogonal geom
         otherFace = getOtherFaceIdx(self.edgeIdx, currFace, mesh)
         if otherFace is not None and otherFace != -1:
             faceCenter = mesh.Faces.GetFaceCenter(otherFace)
