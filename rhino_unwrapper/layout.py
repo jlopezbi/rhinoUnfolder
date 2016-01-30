@@ -28,25 +28,24 @@ class UnFolder(object):
         initBasisInfo = (faceIdx, edgeIdx, tVertIdx)
         return initBasisInfo
 
-    def unfold(self, mesh, userCuts, weightFunction, holeRadius):
+    def unfold(self, myMesh, userCuts, weightFunction, holeRadius):
         #### MAIN FUNCTION ####
-        mesh.FaceNormals.ComputeFaceNormals()
-        meshDual = tr.buildMeshGraph(mesh, userCuts, weightFunction)
-        foldList = tr.getSpanningKruskal(meshDual, mesh)
-        cutList = tr.getCutList(mesh, foldList)
+        meshDual = tr.buildMeshGraph(myMesh.mesh, userCuts, weightFunction)
+        foldList = tr.getSpanningKruskal(meshDual, myMesh.mesh)
+        cutList = tr.getCutList(myMesh.mesh, foldList)
 
         origin = rs.WorldXYPlane()
-        basisInfo = self.initBasisInfo(mesh, origin)
+        basisInfo = self.initBasisInfo(myMesh.mesh, origin)
         toBasis = origin
 
-        net = nt.Net(mesh, holeRadius)
-        dataMap = Map(mesh)
+        net = nt.Net(myMesh.mesh, holeRadius)
+        dataMap = Map(myMesh.mesh)
         net, dataMap = self.layoutFace(
-            None, None, basisInfo, foldList, mesh, toBasis, net, dataMap)
+            None, None, basisInfo, foldList, myMesh, toBasis, net, dataMap)
         return dataMap, net, foldList
 
     def layoutFace(self, fromFace, hopEdge, basisInfo,
-                   foldList, mesh, toBasis, net, dataMap):
+                   foldList, myMesh, toBasis, net, dataMap):
         ''' Recursive Function to traverse through faces, hopping along fold edges
             input:
                 depth = recursion level
@@ -57,14 +56,14 @@ class UnFolder(object):
             out/in:
                 flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
         '''
-        xForm = getTransform(basisInfo, toBasis, mesh)
+        xForm = getTransform(basisInfo, toBasis, myMesh.mesh)
         netVerts, mapping = self.assignFlatVerts(
-            mesh, dataMap, net, hopEdge, basisInfo[0], xForm)
+            myMesh, dataMap, net, hopEdge, basisInfo[0], xForm)
         net.flatFaces[basisInfo[0]] = FlatFace(netVerts, fromFace)
 
-        faceEdges = getFaceEdges(basisInfo[0], mesh)
+        faceEdges = myMesh.getFaceEdges(basisInfo[0])
         for edge in faceEdges:
-            meshI, meshJ = getTVertsForEdge(mesh, edge)
+            meshI, meshJ = myMesh.getTVertsForEdge(edge)
             netI = mapping[meshI]
             netJ = mapping[meshJ]
             flatEdge = fe.FlatEdge(edge, netI, netJ)
@@ -75,7 +74,7 @@ class UnFolder(object):
             if edge in foldList:
                 if not self.alreadyBeenPlaced(edge, dataMap.meshEdges):
 
-                    newBasisInfo = self.getNewBasisInfo(basisInfo, edge, mesh)
+                    newBasisInfo = self.getNewBasisInfo(basisInfo, edge, myMesh.mesh)
                     newToBasis = getBasisFlat(flatEdge, net.flatVerts)
 
                     flatEdge.type = "fold"
@@ -86,12 +85,12 @@ class UnFolder(object):
                     # RECURSE
                     recurse = True
                     net, dataMap = self.layoutFace(
-                        basisInfo[0], flatEdge, newBasisInfo, foldList, mesh, newToBasis, net, dataMap)
+                        basisInfo[0], flatEdge, newBasisInfo, foldList, myMesh, newToBasis, net, dataMap)
 
             else:
                 if len(dataMap.meshEdges[edge]) == 0:
                     flatEdge.type = "naked"
-                    flatEdge.getTabFaceCenter(mesh, basisInfo[0], xForm)
+                    flatEdge.getTabFaceCenter(myMesh.mesh, basisInfo[0], xForm)
 
                     netEdge = net.addEdge(flatEdge)
                     dataMap.updateEdgeMap(edge, netEdge)
@@ -101,7 +100,7 @@ class UnFolder(object):
 
                     # flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
                     # flatEdge.setTabSide(net)
-                    if flatEdge.getTabFaceCenter(mesh, basisInfo[0], xForm):
+                    if flatEdge.getTabFaceCenter(myMesh.mesh, basisInfo[0], xForm):
                         flatEdge.hasTab = True
 
                     netEdge = net.addEdge(flatEdge)
@@ -121,7 +120,7 @@ class UnFolder(object):
         a list of netVerts
         '''
 
-        faceTVerts = getTVertsForFace(mesh, face)
+        faceTVerts = mesh.getTVertsForFace(face)
         netVerts = []
         hopMeshVerts = []
         mapping = {}
@@ -139,7 +138,7 @@ class UnFolder(object):
             if tVert not in seen:  # avoid duplicates (triangle faces)
                 seen.append(tVert)
                 if tVert not in hopMeshVerts:
-                    point = self.transformPoint(mesh, tVert, xForm)
+                    point = self.transformPoint(mesh.mesh, tVert, xForm)
                     flatVert = FlatVert(tVert, point)
                     netVert = net.addVert(flatVert)
                     dataMap.meshVerts[tVert].append(netVert)
@@ -155,7 +154,7 @@ class UnFolder(object):
         return netVerts, mapping
 
     def getNetEdges(self, mesh, edge, netVerts, dataMap):
-        I, J = getTVertsForEdge(mesh, edge)
+        I, J = mesh.getTVertsForEdge(edge)
         vertI = dataMap.get
 
     def transformPoint(self, mesh, tVert, xForm):

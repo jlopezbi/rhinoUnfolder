@@ -1,4 +1,4 @@
-import Rhino
+from rhino_helpers import *
 
 class Mesh(object):
     """
@@ -7,6 +7,7 @@ class Mesh(object):
 
     def __init__(self,mesh):
         self.mesh = mesh
+        self.mesh.FaceNormals.ComputeFaceNormals()
 
     def getOtherFaceIdx(self,edgeIdx, faceIdx):
         connectedFaces = self.getFacesForEdge(self.mesh, edgeIdx)

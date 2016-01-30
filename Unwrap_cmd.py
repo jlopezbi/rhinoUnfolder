@@ -5,14 +5,11 @@ import rhino_unwrapper.weight_functions as wf
 import rhino_unwrapper.mesh as m
 import inspect
 
-
 reload(cm)
 reload(la)
 reload(ri)
 reload(wf)
 reload(m)
-
-
 
 
 def all_weight_functions():
@@ -25,7 +22,7 @@ def RunCommand():
     holeRadius = 0.125/2.0
     mesh = ri.getMesh("Select mesh to unwrap")
     if not mesh: return
-    mesh.Normals.ComputeNormals()
+    myMesh = m.Mesh(mesh)
 
     userCuts = ri.getUserCuts(True)
     if userCuts == None: return
@@ -36,7 +33,7 @@ def RunCommand():
     if mesh and weightFunction:
 
         unfolder = la.UnFolder()
-        dataMap,net,foldList = unfolder.unfold(mesh,userCuts,weightFunction,holeRadius)
+        dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius)
         net.findInitalSegments()
         net.drawEdges_simple()
 
