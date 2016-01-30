@@ -32,8 +32,6 @@ def getCenterPointLine(line):
     point = Rhino.Geometry.Point3d(cenX, cenY, cenZ)
     return point
 
-'''UNCATEGORIZED'''
-
 
 def getOffset(points, testPoint, distance, towards, axis=(0, 0, 1)):
     '''

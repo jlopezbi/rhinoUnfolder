@@ -54,6 +54,7 @@ class Net():
 
     def copyAndReasign(self, mesh, dataMap, flatEdgeCut, idx, segment, face):
         flatEdgeCut.type = 'cut'
+        flatEdgeCut.hasTab = True
         flatEdgeCut.resetFromFace(face)
         changedVertPairs = self.makeNewNetVerts(dataMap, flatEdgeCut)
         newEdge = self.makeNewEdge(
@@ -82,7 +83,7 @@ class Net():
                 netEdge.clearAllGeom()
                 netEdge.translateGeom(movedNetVerts, self.flatVerts, xForm)
 
-                netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mesh)
+                #netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mes
                 #rs.AddObjectsToGroup(geom, group)
 
 
@@ -95,12 +96,7 @@ class Net():
         group = rs.AddGroup()
         geom = []
         for netEdge in translatedEdges:
-            geom.append(self.drawEdge(netEdge))
-        grouped = rs.AddObjectsToGroup(geom, group)
-        if grouped is None:
-            print "failed to make segment group"
-        else:
-            print "made segment group of" + str(grouped) + " elements"
+            netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.mesh)
 
     def removeFaceConnection(self, flatEdgeCut):
         faceA = flatEdgeCut.fromFace
