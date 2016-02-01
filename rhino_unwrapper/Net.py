@@ -1,5 +1,5 @@
 import segmentation as sg
-from rhino_helpers import createGroup, getEdgesForVert
+from rhino_helpers import createGroup 
 from FlatGeom import FlatVert
 import FlatEdge as fe
 import Rhino
@@ -19,13 +19,13 @@ class Net():
         * Display
     """
 
-    def __init__(self, mesh, holeRadius):
+    def __init__(self, myMesh, holeRadius):
         self.holeRadius = holeRadius
         self.flatVerts = []
         self.flatEdges = []
-        self.flatFaces = [None] * mesh.Faces.Count
+        self.flatFaces = [None] * myMesh.mesh.Faces.Count
         self.angleThresh = math.radians(3.3)
-        self.mesh = mesh
+        self.myMesh = myMesh
 
         #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
 
@@ -52,7 +52,7 @@ class Net():
         self.updateIslands(group, leader, face)
         return group[leader[face]]
 
-    def copyAndReasign(self, mesh, dataMap, flatEdgeCut, idx, segment, face):
+    def copyAndReasign(self, dataMap, flatEdgeCut, idx, segment, face):
         flatEdgeCut.type = 'cut'
         flatEdgeCut.hasTab = True
         flatEdgeCut.resetFromFace(face)
@@ -64,9 +64,9 @@ class Net():
             idx,
             face)
         flatEdgeCut.pair = newEdge
-        flatEdgeCut.drawEdgeLine(self.flatVerts, self.angleThresh, self.mesh)
+        flatEdgeCut.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
         # flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
-        self.resetSegment(mesh, dataMap, changedVertPairs, segment)
+        self.resetSegment(dataMap, changedVertPairs, segment)
 
     def translateSegment(self, segment, xForm):
         # TODO: make a more efficent version of this, would be easier if half-edge or
@@ -96,7 +96,7 @@ class Net():
         group = rs.AddGroup()
         geom = []
         for netEdge in translatedEdges:
-            netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.mesh)
+            netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
 
     def removeFaceConnection(self, flatEdgeCut):
         faceA = flatEdgeCut.fromFace
@@ -136,9 +136,9 @@ class Net():
         dataMap.updateVertMap(flatJ.tVertIdx, newNetJ)
         return [(newNetI, oldNetI), (newNetJ, oldNetJ)]
 
-    def resetSegment(self, mesh, dataMap, changedVertPairs, segment):
+    def resetSegment(self, dataMap, changedVertPairs, segment):
         self.resetFaces(changedVertPairs, segment)
-        self.resetEdges(mesh, dataMap, changedVertPairs, segment)
+        self.resetEdges(dataMap, changedVertPairs, segment)
 
     def resetFaces(self, changedVertPairs, segment):
         # REPLACE: this is slow hack
@@ -155,7 +155,7 @@ class Net():
                 verts.insert(index, newVertJ)  # does order matter? yes
                 verts.pop(index + 1)
 
-    def resetEdges(self, mesh, dataMap, changedVertPairs, segment):
+    def resetEdges(self, dataMap, changedVertPairs, segment):
         '''
         reset all edges touching the newely added vertices
         '''
@@ -163,8 +163,10 @@ class Net():
         for pair in changedVertPairs:
             newVert, oldVert = pair
             tVert = self.flatVerts[newVert].tVertIdx
+            print "Tvert:",
+            print tVert
             # in original mesh,eventually use he-mesh
-            edges = getEdgesForVert(mesh, tVert)
+            edges = self.myMesh.getEdgesForVert(tVert)
             for edge in edges:
                 netEdges = dataMap.getNetEdges(edge)
                 for netEdge in netEdges:
@@ -211,7 +213,7 @@ class Net():
 
     def drawEdges_simple(self):
         for netEdge in self.flatEdges:
-            netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.mesh)
+            netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
 
     def _drawEdge(self, netEdge):
         # DEPRICATE! thus the _

@@ -24,7 +24,7 @@ def RunCommand():
     if not mesh: return
     myMesh = m.Mesh(mesh)
 
-    userCuts = ri.getUserCuts(True)
+    userCuts = ri.getUserCuts(myMesh)
     if userCuts == None: return
 
     print all_weight_functions()
@@ -49,7 +49,7 @@ def RunCommand():
                 segment = net.findSegment(flatEdge,face)
                 # print "segment: ",
                 # print segment
-                net.copyAndReasign(mesh,dataMap,flatEdge,idx,segment,face)
+                net.copyAndReasign(dataMap,flatEdge,idx,segment,face)
                 translatedEdges = net.translateSegment(segment,xForm)
                 net.redrawSegment(translatedEdges)
                 #net.updateCutEdge(flatEdge)

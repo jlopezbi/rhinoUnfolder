@@ -62,28 +62,20 @@ class FlatEdge():
     def getTVerts(self, mesh):
         return getTVertsForEdge(mesh, self.edgeIdx)
 
-    def getMeshAngle(self, mesh):
-        '''get angle of the corresponding mesh edge'''
+    def getMeshAngle(self, myMesh):
+        '''get dihedral angle of the corresponding mesh edge'''
         if self.angle is None:
-            edge = self.edgeIdx
-            faceIdxs = getFacesForEdge(mesh, edge)
-            if (len(faceIdxs) == 2):
-                faceNorm0 = mesh.FaceNormals.Item[faceIdxs[0]]
-                faceNorm1 = mesh.FaceNormals.Item[faceIdxs[1]]
-                self.angle = Rhino.Geometry.Vector3d.VectorAngle(
-                    faceNorm0, faceNorm1)
-                return self.angle
-            else:
-                return None
+            self.angle = myMesh.getEdgeAngle(self.edgeIdx)
+            return self.angle
         else:
             return self.angle
 
     '''DRAWING'''
 
-    def drawEdgeLine(self, flatVerts, angleThresh, mesh):
+    def drawEdgeLine(self, flatVerts, angleThresh, myMesh):
         if self.type is not None:
             if self.type == 'fold':
-                if self.getMeshAngle(mesh) >= angleThresh:
+                if self.getMeshAngle(myMesh) >= angleThresh:
                     color = (0, 49, 224, 61)  # green
                 else:
                     # bluegreyish for no crease lines
@@ -545,11 +537,15 @@ class FlatEdge():
         pntI, pntJ = self.getCoordinates(flatVerts)
         return Rhino.Geometry.Line(pntI, pntJ)
 
-    def getTabFaceCenter(self, mesh, currFace, xForm):
+    def getTabFaceCenter(self, myMesh, currFace, xForm):
         # NOTE appears to be failing for orthogonal geom
-        otherFace = getOtherFaceIdx(self.edgeIdx, currFace, mesh)
+        '''
+        This function works in the context of layout, where xForms are being
+        created
+        '''
+        otherFace = myMesh.getOtherFaceIdx(self.edgeIdx, currFace)
         if otherFace is not None and otherFace != -1:
-            faceCenter = mesh.Faces.GetFaceCenter(otherFace)
+            faceCenter = myMesh.mesh.Faces.GetFaceCenter(otherFace)
             faceCenter.Transform(xForm)
             faceCenter.Z = 0.0  # this results in small error, TODO: change to more robust method
             self.tabFaceCenter = faceCenter
@@ -559,7 +555,7 @@ class FlatEdge():
             return True
 
     def getTabAngles(self, mesh, currFaceIdx, xForm):
-        # WORKING AWAY FROM THIS: data is implicit in
+        # WORKING AWAY FROM THIS: data is implicit in tabFace center
         edge = self.edgeIdx
         otherFace = getOtherFaceIdx(edge, currFaceIdx, mesh)
 

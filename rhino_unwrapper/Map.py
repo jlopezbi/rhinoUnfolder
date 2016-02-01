@@ -1,18 +1,17 @@
 # Map
-from rhino_helpers import getTVertsForEdge
 
 
 class Map(object):
     """Map:a class for keeping track of the relation between the net and the mesh"""
 
-    def __init__(self, mesh):
+    def __init__(self, myMesh):
         #super(Map, self).__init__()
         self.meshVerts = {}
         self.meshEdges = {}
         self.meshFaces = {}
-        for i in xrange(mesh.TopologyVertices.Count):
+        for i in xrange(myMesh.mesh.TopologyVertices.Count):
             self.meshVerts[i] = []
-        for j in xrange(mesh.TopologyEdges.Count):
+        for j in xrange(myMesh.mesh.TopologyEdges.Count):
             self.meshEdges[j] = []
         # faces do not need to be lists, since each meshFace has one netFace
 
@@ -37,8 +36,8 @@ class Map(object):
     def getNetEdges(self, meshEdge):
         return self.meshEdges[meshEdge]
 
-    def getRecentNetVertsForEdge(self, mesh, edge):
-        meshI, meshJ = getTVertsForEdge(mesh, edge)
+    def getRecentNetVertsForEdge(self, myMesh, edge):
+        meshI, meshJ = myMesh.getTVertsForEdge(edge)
         netI = self.getRecentNetVert(meshI)
         netJ = self.getRecentNetVert(meshJ)
         return netI, netJ

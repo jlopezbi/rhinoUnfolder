@@ -10,7 +10,7 @@ class Mesh(object):
         self.mesh.FaceNormals.ComputeFaceNormals()
 
     def getOtherFaceIdx(self,edgeIdx, faceIdx):
-        connectedFaces = self.getFacesForEdge(self.mesh, edgeIdx)
+        connectedFaces = self.getFacesForEdge(edgeIdx)
         assert(faceIdx in connectedFaces), "faceIdx not in faces associated with edge"
 
         if len(connectedFaces) != 2:
@@ -42,23 +42,23 @@ class Mesh(object):
         # not implimented in rhinoCommon! ::::(
         # rather inefficient
         neighVerts = self.getTVertsForVert(tVert)
-        facesVert = set(self.getFacesForVert(self.mesh, tVert))
+        facesVert = set(self.getFacesForVert(tVert))
         edges = []
         for neighVert in neighVerts:
 
-            edge = getEdgeForTVertPair(self.mesh, tVert, neighVert, facesVert)
+            edge = self.getEdgeForTVertPair(tVert, neighVert, facesVert)
             if edge:
                 edges.append(edge)
         return edges
 
     def getEdgeForTVertPair(self,tVertA, tVertB, facesVertA=None):
         if facesVertA is None:
-            facesVertA = self.getFacesForVert(self.mesh, tVertA)
-        facesVertB = set(self.getFacesForVert(self.mesh, tVertB))
+            facesVertA = self.getFacesForVert(tVertA)
+        facesVertB = set(self.getFacesForVert(tVertB))
         facePair = list(facesVertA.intersection(facesVertB))
         if len(facePair) == 2:
-            edgesA = set(self.getFaceEdges(facePair[0], self.mesh))
-            edgesB = set(self.getFaceEdges(facePair[1], self.mesh))
+            edgesA = set(self.getFaceEdges(facePair[0]))
+            edgesB = set(self.getFaceEdges(facePair[1]))
             edge = edgesA.intersection(edgesB)
             if len(edge) == 0:
                 print "probably encountered naked edge in chain selection"
@@ -72,6 +72,20 @@ class Mesh(object):
                 if tVertB in tVerts and tVertA in tVerts:
                     return edge
         return      
+
+    def getEdgeAngle(self,edge):
+        '''
+        get dihedral angle of a given edge in the mesh
+        '''
+        faceIdxs = self.getFacesForEdge(edge)
+        if (len(faceIdxs)==2):
+            faceNormA = self.mesh.FaceNormals.Item[faceIdxs[0]]
+            faceNormB = self.mesh.FaceNormals.Item[faceIdxs[1]]
+            return Rhino.Geometry.Vector3d.VectorAngle(faceNormA,faceNormB)
+        else:
+            pass
+
+                
 
     def getFacesForVert(self,tVert):
         arrfaces = self.mesh.TopologyVertices.ConnectedFaces(tVert)

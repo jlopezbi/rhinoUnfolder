@@ -3,8 +3,6 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
 import math
-#import FlatEdge as fe
-from rhino_helpers import getChain
 from visualization import displayMeshEdges
 
 
@@ -27,7 +25,8 @@ def getMesh(message=None):
         return mesh
 
 
-def getUserCuts(display=True):
+def getUserCuts(myMesh):
+    display = True # show selected cut edges
     cuts = set()
     color = (0, 255, 0, 255)
     isChain = False
@@ -46,7 +45,7 @@ def getUserCuts(display=True):
             #print("selected: valid edgeIdx")
             if edgeIdx not in cuts:
                 if isChain:
-                    cuts.update(getChain(mesh, edgeIdx, angleTolerance))
+                    cuts.update(myMesh.getChain(edgeIdx,angleTolerance))
                 else:
                     cuts.update([edgeIdx])
             else:

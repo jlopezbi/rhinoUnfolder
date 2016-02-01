@@ -38,8 +38,8 @@ class UnFolder(object):
         basisInfo = self.initBasisInfo(myMesh.mesh, origin)
         toBasis = origin
 
-        net = nt.Net(myMesh.mesh, holeRadius)
-        dataMap = Map(myMesh.mesh)
+        net = nt.Net(myMesh, holeRadius)
+        dataMap = Map(myMesh)
         net, dataMap = self.layoutFace(
             None, None, basisInfo, foldList, myMesh, toBasis, net, dataMap)
         return dataMap, net, foldList
@@ -74,7 +74,7 @@ class UnFolder(object):
             if edge in foldList:
                 if not self.alreadyBeenPlaced(edge, dataMap.meshEdges):
 
-                    newBasisInfo = self.getNewBasisInfo(basisInfo, edge, myMesh.mesh)
+                    newBasisInfo = self.getNewBasisInfo(basisInfo, edge, myMesh)
                     newToBasis = getBasisFlat(flatEdge, net.flatVerts)
 
                     flatEdge.type = "fold"
@@ -90,7 +90,7 @@ class UnFolder(object):
             else:
                 if len(dataMap.meshEdges[edge]) == 0:
                     flatEdge.type = "naked"
-                    flatEdge.getTabFaceCenter(myMesh.mesh, basisInfo[0], xForm)
+                    flatEdge.getTabFaceCenter(myMesh, basisInfo[0], xForm)
 
                     netEdge = net.addEdge(flatEdge)
                     dataMap.updateEdgeMap(edge, netEdge)
@@ -100,7 +100,7 @@ class UnFolder(object):
 
                     # flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
                     # flatEdge.setTabSide(net)
-                    if flatEdge.getTabFaceCenter(myMesh.mesh, basisInfo[0], xForm):
+                    if flatEdge.getTabFaceCenter(myMesh, basisInfo[0], xForm):
                         flatEdge.hasTab = True
 
                     netEdge = net.addEdge(flatEdge)
@@ -166,10 +166,10 @@ class UnFolder(object):
     def alreadyBeenPlaced(self, edge, meshEdges):
         return len(meshEdges[edge]) > 0
 
-    def getNewBasisInfo(self, oldBasisInfo, testEdgeIdx, mesh):
+    def getNewBasisInfo(self, oldBasisInfo, testEdgeIdx, myMesh):
         faceIdx, edgeIdx, tVertIdx = oldBasisInfo
-        newFaceIdx = getOtherFaceIdx(testEdgeIdx, faceIdx, mesh)
+        newFaceIdx = myMesh.getOtherFaceIdx(testEdgeIdx, faceIdx)
         newEdgeIdx = testEdgeIdx
-        newTVertIdx = mesh.TopologyEdges.GetTopologyVertices(
+        newTVertIdx = myMesh.mesh.TopologyEdges.GetTopologyVertices(
             testEdgeIdx).I  # convention: useI
         return newFaceIdx, newEdgeIdx, newTVertIdx
