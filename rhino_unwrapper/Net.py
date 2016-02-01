@@ -63,6 +63,7 @@ class Net():
             idx,
             face)
         flatEdgeCut.pair = newEdge
+        flatEdgeCut.hasTab = True
         flatEdgeCut.drawEdgeLine(self.flatVerts, self.angleThresh, self.mesh)
         # flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
         self.resetSegment(mesh, dataMap, changedVertPairs, segment)
@@ -118,9 +119,8 @@ class Net():
         newFlatEdge = fe.FlatEdge(meshEdge, newVertI, newVertJ)
         newFlatEdge.fromFace = face
         newFlatEdge.type = 'cut'
-        #newFlatEdge.hasTab = True
+        newFlatEdge.hasTab = True
         newFlatEdge.pair = idx
-        #newFlatEdge.hasTab = True
         # TODO: need to set tab angles or something. NOTE: .fromFace and
         # .toFace of flatEdge referes to a MESH face!!
         netEdge = self.addEdge(newFlatEdge)
@@ -216,6 +216,10 @@ class Net():
     def drawEdges_simple(self):
         for netEdge in self.flatEdges:
             netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.mesh)
+
+
+
+
 
     def _drawEdge(self, netEdge):
         # DEPRICATE! thus the _

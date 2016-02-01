@@ -144,7 +144,8 @@ class FlatEdge():
             return self.drawTruncatedTab(flatVerts)
             # return self.drawTriTab(net)
         else:
-            return self.drawQuadTab(flatVerts)
+            return
+            #return self.drawQuadTab(flatVerts)
 
     def drawQuadTab(self, flatVerts):
         pntA, pntD = self.getCoordinates(flatVerts)
