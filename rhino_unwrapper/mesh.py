@@ -2,7 +2,8 @@ from rhino_helpers import *
 
 class Mesh(object):
     """
-    Does custom queiries on a mesh that make layout easy
+    Does custom queiries on a Rhino mesh that make layout easy
+    see http://4.rhino3d.com/5/rhinocommon/ for rhino mesh class members
     """
 
     def __init__(self,mesh):

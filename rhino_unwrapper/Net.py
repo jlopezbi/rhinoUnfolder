@@ -14,9 +14,17 @@ class Net():
     """ What does a net do?, slash know about?
         => it stores the mesh that is the net. In fact perhaps should just use rhino's mesh! but lets save that for later
     Right now the net does this:
-        * Segmentation
+        * Segmentation <= this is the main thing!
             * Selection
         * Display
+
+    Queries: (this will help determine best Data structure)
+        * for a given edge its parent face and its otherParnet face
+        * for a given cut edge, its corresponding edge
+        * for a given edge, the two sets of edges/faces/verts on either side
+        non essential:
+        * for a given edge, the corrseponding edge in the 3d mesh
+
     """
 
     def __init__(self, myMesh, holeRadius):
@@ -114,9 +122,10 @@ class Net():
         newFlatEdge = fe.FlatEdge(meshEdge, newVertI, newVertJ)
         newFlatEdge.fromFace = face
         newFlatEdge.type = 'cut'
-        #newFlatEdge.hasTab = True
+        newFlatEdge.hasTab = True
         newFlatEdge.pair = idx
-        #newFlatEdge.hasTab = True
+# This is where need to add a tabFaceCenter thing that will find the otherFace
+        # of the edge and find its center
         # TODO: need to set tab angles or something. NOTE: .fromFace and
         # .toFace of flatEdge referes to a MESH face!!
         netEdge = self.addEdge(newFlatEdge)
