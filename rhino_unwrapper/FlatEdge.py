@@ -596,3 +596,6 @@ class FlatEdge():
         else:
             print "otherFace: ",
             print otherFace
+
+
+

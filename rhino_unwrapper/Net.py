@@ -19,9 +19,9 @@ class Net():
         * Display
 
     Queries: (this will help determine best Data structure)
-        * for a given edge its parent face and its otherParnet face
+        * for a given edge its parent face and its otherParnet face (assuming a manifold edge)
         * for a given cut edge, its corresponding edge
-        * for a given edge, the two sets of edges/faces/verts on either side
+        * for a given edge, the two sets of edges/faces/verts on either side, or for a given edge, the set of edges/faces/verts on the side indicated by the user (faster)
         non essential:
         * for a given edge, the corrseponding edge in the 3d mesh
 
@@ -258,3 +258,27 @@ class Net():
         for face in self.flatFaces:
             collection.append(face.draw(self.flatVerts))
         createGroup(netGroupName, collection)
+
+class Joinery(object):
+    """
+    A class which knows how to make joinery.
+    Joinery can include: a simple cut (no joinery), tabs, holes, etc.
+    """
+
+    def __init__(self,edgePair):
+        self.edgePair = edgePair 
+
+    def display(self):
+        pass
+    
+class Crease(object):
+    """
+    A class which knows how to make creases
+    Creases include: naked edges, fold edges
+    """
+
+    def __init__(self,edge):
+        self.edge = edge
+
+    def display(self):
+        pass
