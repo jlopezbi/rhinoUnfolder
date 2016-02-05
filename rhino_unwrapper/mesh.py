@@ -17,7 +17,7 @@ class Mesh(object):
         if len(connectedFaces) != 2:
             # This is a naked edge
             #print("did not find two connected faces for edgeIdx %i, " %(edgeIdx))
-            return -1
+            return None
 
         newFaceIdx = None
         if (connectedFaces[0] == faceIdx):

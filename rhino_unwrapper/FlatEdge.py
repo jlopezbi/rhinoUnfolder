@@ -7,9 +7,11 @@ class FlatEdge():
     A FlatEdge is an edge of the net.
     It knows what kind of edge it is,
     who its vertices are and where those vertices are
+
+    EVERY single flat edge shall knowith its from face and two face!
     """
 
-    def __init__(self, edgeIdx, vertI, vertJ):
+    def __init__(self, edgeIdx, vertI, vertJ,fromFace,toFace=None):
         self.edgeIdx = edgeIdx
         self.I = vertI
         self.J = vertJ
@@ -19,8 +21,8 @@ class FlatEdge():
         self.geom = []
         self.type = None
         # faces have direct mapping (this is netFace and meshFace)
-        self.fromFace = None
-        self.toFace = None
+        self.fromFace = fromFace
+        self.toFace = toFace
         self.angle = None
 
         '''JOINERY'''
@@ -462,8 +464,43 @@ class FlatEdge():
         z = (pntA.Z + pntB.Z) / 2.0
         return Rhino.Geometry.Point3f(x, y, z)
 
-    def getFaceFromPoint(self, net, point):
+    def getFaceFromPoint(self,flatFaces,flatVerts,point):
+        """
+        the given point is assumed to be on one side of the edge or another.
+        If colinear return None
+        Otherwise return the face that is on the same side as the point
+        """
+        assert(self.type=='fold')
+        pntI,pntJ = self.getCoordinates(flatVerts)
+        selfVec = self.getEdgeVec(flatVerts)
+        pntVec = Rhino.Geometry.Vector3d(point - pntI)
+        faceA = flatFaces[self.fromFace]
+        faceB = flatFaces[self.toFace]
+        faceCenterA = faceA.getCenterPoint(flatVerts)
+        faceCenterB = faceB.getCenterPoint(flatVerts)
+        faceVecA = Rhino.Geometry.Vector3d(faceCenterA-pntI)
+        faceVecB = Rhino.Geometry.Vector3d(faceCenterB-pntI)
+        selfxPnt = Rhino.Geometry.Vector3d.CrossProduct(selfVec,pntVec) 
+        if selfxPnt.IsZero:
+            print "Point was coincident with flatEdge"
+            return None
+        selfxFaceA = Rhino.Geometry.Vector3d.CrossProduct(selfVec,faceVecA)
+        selfxFaceB = Rhino.Geometry.Vector3d.CrossProduct(selfVec,faceVecB)
+        def sign(x): return x/math.fabs(x)
+        if sign(selfxFaceA.Z) == sign(selfxFaceB.Z):
+            print "both faces on same side of edge, or both have centers coincident with edge"
+            return None
+        if sign(selfxPnt.Z) == sign(selfxFaceA.Z):
+            return self.fromFace
+        elif sign(selfxPnt.Z):
+            return self.toFace
+        else:
+            "some unforseen problem in FlatEdge.getFaceFromPoint"
+            return None
+
+    def getFaceFromPoint_Depricated(self, net, point):
         '''return the face that corresponds to the point
+        DEPRICATED
         '''
         # TODO: fails for horizontal lines :(
         assert(self.type == 'fold')

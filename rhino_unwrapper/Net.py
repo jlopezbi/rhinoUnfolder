@@ -119,8 +119,7 @@ class Net():
     def makeNewEdge(self, dataMap, changedVertPairs, meshEdge, idx, face):
         newVertI = changedVertPairs[0][0]
         newVertJ = changedVertPairs[1][0]
-        newFlatEdge = fe.FlatEdge(meshEdge, newVertI, newVertJ)
-        newFlatEdge.fromFace = face
+        newFlatEdge = fe.FlatEdge(meshEdge, newVertI, newVertJ,face)
         newFlatEdge.type = 'cut'
         newFlatEdge.hasTab = True
         newFlatEdge.pair = idx
@@ -270,6 +269,12 @@ class Joinery(object):
 
     def display(self):
         pass
+
+    def tab(self):
+        pass
+    
+    def hole(self):
+        pass
     
 class Crease(object):
     """
@@ -281,4 +286,10 @@ class Crease(object):
         self.edge = edge
 
     def display(self):
+        pass
+
+    def line(self):
+        pass
+
+    def perforation(self):
         pass

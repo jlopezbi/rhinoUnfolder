@@ -66,9 +66,8 @@ class UnFolder(object):
             meshI, meshJ = myMesh.getTVertsForEdge(edge)
             netI = mapping[meshI]
             netJ = mapping[meshJ]
-            flatEdge = fe.FlatEdge(edge, netI, netJ)
+            flatEdge = fe.FlatEdge(edge, netI, netJ,basisInfo[0])
             # since faces have direct mapping this fromFace corresponds
-            flatEdge.fromFace = basisInfo[0]
             # to both the netFace and meshFace
 
             if edge in foldList:

@@ -40,6 +40,9 @@ class FlatFace():
         return flatVerts[tVert][self.vertices[tVert]]
 
     def getCenterPoint(self, flatVerts, getNew=False):
+        """
+        assumes face is in XY Plane!
+        """
         if getNew:
             self.centerPoint = None
         if self.centerPoint is None:

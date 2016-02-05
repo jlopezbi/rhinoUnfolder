@@ -43,7 +43,7 @@ def RunCommand():
             basePoint = flatEdge.getMidPoint(net.flatVerts)
             xForm,point = ri.getUserTranslate("Pick point to translate segment to",basePoint)
             if xForm and point:
-                face = flatEdge.getFaceFromPoint(net,point)
+                face = flatEdge.getFaceFromPoint(net.flatFaces,net.flatVerts,point)
                 print "face: ",
                 print face
                 segment = net.findSegment(flatEdge,face)
