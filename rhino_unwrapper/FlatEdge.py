@@ -106,6 +106,16 @@ class FlatEdge():
     def resetFromFace(self, face):
         if self.fromFace == face:
             self.fromFace = self.toFace
+            self.toFace = face
+            
+    def getOtherFace(self,face):
+        if self.fromFace == face:
+            return self.toFace
+        elif self.toFace == face:
+            return self.fromFace
+        else:
+            return None
+
 
     def translateGeom(self, movedNetVerts, flatVerts, xForm):
         # self.translateEdgeLine(xForm)

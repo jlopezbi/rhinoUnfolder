@@ -70,7 +70,7 @@ class Net():
             changedVertPairs,
             flatEdgeCut.edgeIdx,
             idx,
-            face)
+            face,flatEdgeCut.getOtherFace(face))
         flatEdgeCut.pair = newEdge
         flatEdgeCut.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
         # flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
@@ -116,13 +116,16 @@ class Net():
         elif netFaceA.fromFace == faceB:
             netFaceA.fromFace = None
 
-    def makeNewEdge(self, dataMap, changedVertPairs, meshEdge, idx, face):
+    def makeNewEdge(self, dataMap, changedVertPairs, meshEdge, idx,
+    fromFace,toFace):
         newVertI = changedVertPairs[0][0]
         newVertJ = changedVertPairs[1][0]
-        newFlatEdge = fe.FlatEdge(meshEdge, newVertI, newVertJ,face)
+        newFlatEdge = fe.FlatEdge(meshEdge, newVertI, newVertJ,fromFace,toFace)
         newFlatEdge.type = 'cut'
         newFlatEdge.hasTab = True
         newFlatEdge.pair = idx
+        newFlatEdge.tabFaceCenter = self.flatFaces[toFace].getCenterPoint(self.flatVerts)
+        
 # This is where need to add a tabFaceCenter thing that will find the otherFace
         # of the edge and find its center
         # TODO: need to set tab angles or something. NOTE: .fromFace and
