@@ -61,7 +61,7 @@ def getUserCuts(myMesh):
                 for edgeIdx in drawnEdges.keys():
                     scriptcontext.doc.Objects.Delete(drawnEdges[edgeIdx], True)
 
-                drawnEdges.update(displayMeshEdges(mesh, color, cuts, "cuts"))
+                drawnEdges.update(myMesh.displayCutEdges(color, cuts, "cuts"))
 
         elif edgeIdx == -1:
             print("enter:")

@@ -53,19 +53,6 @@ def displayFaceIdx(mesh, face):
     rs.AddTextDot(str(face), centerPnt)
 
 
-def displayMeshEdges(mesh, color, edgeIdxs, groupName):
-    drawnEdges = {}
-    if edgeIdxs:
-        for edgeIdx in edgeIdxs:
-            tVertI, tVertJ = getTVertsForEdge(mesh, edgeIdx)
-            point3fI = mesh.TopologyVertices.Item[tVertI]
-            point3fJ = mesh.TopologyVertices.Item[tVertJ]
-            lineGuid, line = drawLine([point3fI, point3fJ], color, 'None')
-            drawnEdges[edgeIdx] = lineGuid
-
-    #name = createGroup(groupName,drawnEdges)
-
-    return drawnEdges
 
 
 def setAttrColor(a, r, g, b):

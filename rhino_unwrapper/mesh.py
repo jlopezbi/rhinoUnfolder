@@ -1,4 +1,4 @@
-from rhino_helpers import *
+from visualization import *
 
 class Mesh(object):
     """
@@ -207,5 +207,15 @@ class Mesh(object):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
         return convertArray(arrFaceEdges)
 
+    def displayCutEdges(self, color, edgeIdxs, groupName):
+        drawnEdges = {}
+        if edgeIdxs:
+            for edgeIdx in edgeIdxs:
+                tVertI, tVertJ = self.getTVertsForEdge(edgeIdx)
+                point3fI = self.mesh.TopologyVertices.Item[tVertI]
+                point3fJ = self.mesh.TopologyVertices.Item[tVertJ]
+                
+                lineGuid, line = drawLine([point3fI, point3fJ], color, 'None')
+        return drawnEdges
 
 
