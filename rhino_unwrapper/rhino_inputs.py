@@ -3,7 +3,6 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
 import math
-from visualization import displayMeshEdges
 
 
 def getMesh(message=None):

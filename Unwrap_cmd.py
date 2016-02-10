@@ -22,6 +22,8 @@ def RunCommand():
     holeRadius = 0.125/2.0
     mesh = ri.getMesh("Select mesh to unwrap")
     if not mesh: return
+    print "got a mesh: ",
+    print mesh
     myMesh = m.Mesh(mesh)
 
     userCuts = ri.getUserCuts(myMesh)
