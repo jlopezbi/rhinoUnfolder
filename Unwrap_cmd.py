@@ -33,7 +33,6 @@ def RunCommand():
     weightFunction = ri.getOptions_dict(all_weight_functions())
 
     if mesh and weightFunction:
-
         unfolder = la.UnFolder()
         dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius)
         net.findInitalSegments()

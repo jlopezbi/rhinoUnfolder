@@ -1,7 +1,5 @@
-from visualization import *
-import math
-
-
+from visualization import * 
+import math 
 class FlatEdge():
     """
     A FlatEdge is an edge of the net.

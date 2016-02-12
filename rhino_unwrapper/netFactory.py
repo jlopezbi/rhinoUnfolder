@@ -2,7 +2,7 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import random,inspect
 import weight_functions as wf
-import rhino_unwrapper.mesh as m
+import mesh as m
 import layout as la
 
 reload(wf)

@@ -1,10 +1,11 @@
-from transformations import *
 from FlatGeom import FlatVert, FlatFace
+import transformations as tf
 import FlatEdge as fe
 import Net as nt
 import traversal as tr
 from Map import Map
 
+reload(tf)
 reload(fe)
 reload(nt)
 reload(tr)
@@ -56,9 +57,9 @@ class UnFolder(object):
             out/in:
                 flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
         '''
-        xForm = getTransform(basisInfo, toBasis, myMesh.mesh)
+        xForm = tf.getTransform(basisInfo, toBasis, myMesh.mesh)
         netVerts, mapping = self.assignFlatVerts(
-            myMesh, dataMap, net, hopEdge, basisInfo[0], xForm)
+                myMesh, dataMap, net, hopEdge, basisInfo[0], xForm) #TODO: this method should probably belong to net
         net.flatFaces[basisInfo[0]] = FlatFace(netVerts, fromFace)
 
         faceEdges = myMesh.getFaceEdges(basisInfo[0])
@@ -74,7 +75,8 @@ class UnFolder(object):
                 if not self.alreadyBeenPlaced(edge, dataMap.meshEdges):
 
                     newBasisInfo = self.getNewBasisInfo(basisInfo, edge, myMesh)
-                    newToBasis = getBasisFlat(flatEdge, net.flatVerts)
+                    edgeCoords = flatEdge.getCoordinates(net.flatVerts)
+                    newToBasis = tf.getBasisFlat(edgeCoords)
 
                     flatEdge.type = "fold"
                     flatEdge.toFace = newBasisInfo[0]
@@ -172,3 +174,4 @@ class UnFolder(object):
         newTVertIdx = myMesh.mesh.TopologyEdges.GetTopologyVertices(
             testEdgeIdx).I  # convention: useI
         return newFaceIdx, newEdgeIdx, newTVertIdx
+
