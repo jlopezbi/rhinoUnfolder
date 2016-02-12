@@ -96,6 +96,10 @@ class Mesh(object):
         vertPair = self.mesh.TopologyEdges.GetTopologyVertices(edge)
         return [vertPair.I, vertPair.J]
 
+    def meshFaces(self):
+        return (self.mesh.Faces.GetFace(i) for i in
+        xrange(self.mesh.Faces.Count))
+
     def getFacesForEdge(self,edgeIndex):
         '''
         returns an array of indices of the faces connected to a given edge

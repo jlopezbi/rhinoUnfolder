@@ -145,9 +145,7 @@ class FlatEdge():
             for guid in self.geom:
                 scriptcontext.doc.Objects.Delete(guid, True)
         if len(self.tabAngles) < 1:
-            print "truncated tab"
             return self.drawTruncatedTab(flatVerts)
-            # return self.drawTriTab(net)
         else:
             print "quadtab"
             return self.drawQuadTab(flatVerts)
@@ -210,19 +208,15 @@ class FlatEdge():
             shorterThanTab = self.checkIfShortTab(flatVerts)
             if shorterThanTab == 1:
                 # flip order to avoid self-intersction
-                points = [I, intersectPntJ, intersectPntI, J]
+                points = [I, K, J]
             elif shorterThanTab == 0:
-                point = [I, K, J]
+                points = [I, K, J]
             elif shorterThanTab == -1:
                 points = [
                     I,
                     intersectPntI,
                     intersectPntJ,
                     J]  # order is as expected
-
-            lineA = Rhino.Geometry.Line(I, intersectPntI)
-            lineB = Rhino.Geometry.Line(J, intersectPntJ)
-
         else:
             points = [I, K, J]
 

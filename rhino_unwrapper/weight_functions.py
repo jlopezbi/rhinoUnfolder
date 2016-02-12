@@ -3,12 +3,12 @@ import rhinoscriptsyntax as rs
 import rhino_helpers
 
 
-def edgeAngle(mesh, edgeIndex):
-    faceIdxs = rhino_helpers.getFacesForEdge(mesh, edgeIndex)
+def edgeAngle(myMesh, edgeIndex):
+    faceIdxs = myMesh.getFacesForEdge(edgeIndex)
 
     if (len(faceIdxs) == 2):
-        faceNorm0 = mesh.FaceNormals.Item[faceIdxs[0]]
-        faceNorm1 = mesh.FaceNormals.Item[faceIdxs[1]]
+        faceNorm0 = myMesh.mesh.FaceNormals.Item[faceIdxs[0]]
+        faceNorm1 = myMesh.mesh.FaceNormals.Item[faceIdxs[1]]
         return rs.VectorAngle(faceNorm0, faceNorm1)
     else:
         return None

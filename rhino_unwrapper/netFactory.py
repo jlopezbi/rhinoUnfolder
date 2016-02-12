@@ -2,10 +2,16 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import random,inspect
 import weight_functions as wf
+import rhino_unwrapper.mesh as m
 import layout as la
 
 reload(wf)
 reload(la)
+reload(m)
+
+def all_weight_functions():
+    return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
+
 
 
 
@@ -40,6 +46,14 @@ class meshGetter(object):
         if select: rs.SelectObject(meshGuid)
         return self.getGeomFromGUID(meshGuid)
 
+    def getSelectedMesh(self):
+        selected = rs.SelectedObjects()
+        for objId in selected:
+            if rs.IsMesh(objId):
+                return self.getGeomFromGUID(objId)
+        return None
+
+
     def getGeomFromGUID(self,guid):
         obj = scriptcontext.doc.Objects.Find(guid)
         return obj.Geometry
@@ -56,15 +70,17 @@ class NetMaker(object):
 
     def makeNet(self):
         dataMap,net,foldList = unfolder.unfold(self.myMesh,self.cuts,self.weightFunc)
+        net.drawEdges_simple()
+        return net
     
-    def _getWeightFuncs(self):
-        return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
-
-
+    
 if __name__=="__main__":
     loader = fileImporter()
     getter = meshGetter()
-    mesh = getter.getRandMesh()
-    #netMaker = NetMaker(mesh)
+    myMesh = m.Mesh(getter.getSelectedMesh())
+    weightFunc = all_weight_functions()["edgeAngle"]
+    unfolder = la.UnFolder()
+    netMaker = NetMaker(myMesh,weightFunc,unfolder,None)
+    net = netMaker.makeNet()
 
 

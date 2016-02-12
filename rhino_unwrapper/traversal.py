@@ -66,17 +66,17 @@ def meshFaces(mesh):
     return (mesh.Faces.GetFace(i) for i in xrange(mesh.Faces.Count))
 
 
-def buildMeshGraph(mesh, userCuts, weight):
-    nodes = meshFaces(mesh)
+def buildMeshGraph(myMesh, userCuts, weight):
+    nodes = myMesh.meshFaces()
     edge_weights = []
-    for i in xrange(mesh.TopologyEdges.Count):
+    for i in xrange(myMesh.mesh.TopologyEdges.Count):
         if userCuts:
             if i not in userCuts:
-                edge_weights.append((i, weight(mesh, i)))
+                edge_weights.append((i, weight(myMesh, i)))
             else:
                 edge_weights.append((i, float('inf')))
         else:
-            edge_weights.append((i, weight(mesh, i)))
+            edge_weights.append((i, weight(myMesh, i)))
 
     edge_weights = sorted(edge_weights, key=lambda tup: tup[1], reverse=False)
     # sorted from smallest to greatest
