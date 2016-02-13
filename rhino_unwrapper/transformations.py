@@ -92,11 +92,7 @@ def getBasisFlat(pointPair):
     z.Unitize()
     y = Rhino.Geometry.Vector3d.CrossProduct(z, x)
     y.Unitize()
-
     assert(x.Length - 1 < .00000001), "x.Length!~=1"
     assert(y.Length - 1 < .00000001), "y.Length!~=1"
     assert(z.Length - 1 < .00000001), "z.Length!~=1"
-
     return [o, x, y, z]
-
-    pass

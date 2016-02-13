@@ -1,6 +1,31 @@
 from visualization import * 
 import math 
-class FlatEdge():
+
+class FlatEdge(object):
+    def __init__(self,elements):
+        self.meshEdgeIdx = elements['meshEdgeIdx']
+        self.vertAidx = elements['vertAidx']
+        self.vertBidx = elements['vertBidx']
+        self.fromFace = elements['fromFace']
+        self.toFace = elements['toFace']
+
+    def drawLine(self):
+        pass
+
+
+class Fold(FlatEdge):
+    def __init(self,**kwargs):
+        pass
+
+class Cut(FlatEdge):
+    def __init(self,**kwargs):
+        pass
+
+class Naked(FlatEdge):
+    def __init(self,**kwargs):
+        pass
+
+class _FlatEdge():
     """
     A FlatEdge is an edge of the net.
     It knows what kind of edge it is,
