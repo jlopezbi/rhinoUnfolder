@@ -2,70 +2,20 @@ from visualization import *
 import math 
 
 class FlatEdge(object):
-    def __init__(self,elements):
-        self.meshEdgeIdx = elements['meshEdgeIdx']
-        self.vertAidx = elements['vertAidx']
-        self.vertBidx = elements['vertBidx']
-        self.fromFace = elements['fromFace']
-        self.toFace = elements['toFace']
-
-    def drawLine(self):
-        pass
-
-
-class Fold(FlatEdge):
-    def __init(self,**kwargs):
-        pass
-
-class Cut(FlatEdge):
-    def __init(self,**kwargs):
-        pass
-
-class Naked(FlatEdge):
-    def __init(self,**kwargs):
-        pass
-
-class _FlatEdge():
-    """
-    A FlatEdge is an edge of the net.
-    It knows what kind of edge it is,
-    who its vertices are and where those vertices are
-
-    EVERY single flat edge shall knowith its from face and two face!
-    """
-
-    def __init__(self, edgeIdx, vertI, vertJ,fromFace,toFace=None):
-        self.edgeIdx = edgeIdx
-        self.I = vertI
-        self.J = vertJ
-
+    def __init__(self,**kwargs):
+        self.meshEdgeIdx = kwargs['meshEdgeIdx']
+        self.vertAidx = kwargs['vertAidx']
+        self.vertBidx = kwargs['vertBidx']
+        self.fromFace = kwargs['fromFace']
+        self.toFace = kwargs['toFace']
+        self.color = kwargs.get('color',(0,0,0,0))
         self.line = None
-        self.line_id = None
-        self.geom = []
-        self.type = None
-        # faces have direct mapping (this is netFace and meshFace)
-        self.fromFace = fromFace
-        self.toFace = toFace
-        self.angle = None
-
-        '''JOINERY'''
-        self.tabOnLeft = None  # important for general joinery drawing
-
-        '''Tabs'''
-        self.hasTab = False
-        self.tabFaceCenter = None  # point3d
-        self.tabAngles = []
-        self.tabWidth = .5  # could be standard, or based on face area
-
-        '''Holes'''
-        self.distI = None
-        self.distJ = None
 
     def reset(self, oldVert, newVert):
-        if self.I == oldVert:
-            self.I = newVert
-        elif self.J == oldVert:
-            self.J = newVert
+        if self.vertAidx == oldVert:
+            self.vertAidx = newVert
+        elif self.vertBidx == oldVert:
+            self.vertBidx = newVert
         else:
             assert(False == True), "error, flatEdge does not have oldVert"
 
@@ -74,15 +24,19 @@ class _FlatEdge():
         return [vertI.point, vertJ.point]
 
     def getFlatVerts(self, flatVerts):
-        flatVertI = flatVerts[self.I]
-        flatVertJ = flatVerts[self.J]
+        flatVertI = flatVerts[self.vertAidx]
+        flatVertJ = flatVerts[self.vertBidx]
         return (flatVertI, flatVertJ)
 
     def getFlatFace(self, flatFaces):
         return flatFaces[self.fromFace]
 
+    def getEdgeLine(self, flatVerts):
+        pntI, pntJ = self.getCoordinates(flatVerts)
+        return Rhino.Geometry.Line(pntI, pntJ)
+
     def getNetVerts(self):
-        return (self.I, self.J)
+        return (self.vertAidx, self.vertBidx)
 
     def getTVerts(self, mesh):
         return getTVertsForEdge(mesh, self.edgeIdx)
@@ -94,8 +48,6 @@ class _FlatEdge():
             return self.angle
         else:
             return self.angle
-
-    '''DRAWING'''
 
     def drawEdgeLine(self, flatVerts, angleThresh, myMesh):
         if self.type is not None:
@@ -122,8 +74,8 @@ class _FlatEdge():
         return line_id
 
     def getEdgeVec(self, flatVerts):
-        pointI = flatVerts[self.I].point
-        pointJ = flatVerts[self.J].point
+        pointI = flatVerts[self.vertAidx].point
+        pointJ = flatVerts[self.vertBidx].point
         return Rhino.Geometry.Vector3d(pointJ - pointI)
 
     def resetFromFace(self, face):
@@ -159,8 +111,155 @@ class _FlatEdge():
         if netVertJ not in movedNetVerts:
             netVertJ.translate(xForm)
             movedNetVerts.append(netVertJ)
+    def getConnectToFace(self, flatFaces, mesh):
+        return flatFaces[getOtherFaceIdx(self.edgeIdx, self.fromFace, mesh)]
 
-    '''JOINERY'''
+    def clearAllGeom(self):
+        '''
+        note: clear self.geom and self.line_id ?
+        '''
+        if self.line_id is not None:
+            scriptcontext.doc.Objects.Delete(self.line_id, True)
+            self.line_id = None
+
+        if len(self.geom) > 0:
+            for guid in self.geom:
+                scriptcontext.doc.Objects.Delete(guid, True)
+
+    def getMidPoint(self, flatVerts):
+        coordinates = self.getCoordinates(flatVerts)
+        pntA = coordinates[0]
+        pntB = coordinates[1]
+        x = (pntA.X + pntB.X) / 2.0
+        y = (pntA.Y + pntB.Y) / 2.0
+        z = (pntA.Z + pntB.Z) / 2.0
+        return Rhino.Geometry.Point3f(x, y, z)
+
+    def getFaceFromPoint(self,flatFaces,flatVerts,point):
+        """
+        the given point is assumed to be on one side of the edge or another.
+        If colinear return None
+        Otherwise return the face that is on the same side as the point
+        """
+        assert(self.type=='fold')
+        pntI,pntJ = self.getCoordinates(flatVerts)
+        selfVec = self.getEdgeVec(flatVerts)
+        pntVec = Rhino.Geometry.Vector3d(point - pntI)
+        faceA = flatFaces[self.fromFace]
+        faceB = flatFaces[self.toFace]
+        faceCenterA = faceA.getCenterPoint(flatVerts)
+        faceCenterB = faceB.getCenterPoint(flatVerts)
+        faceVecA = Rhino.Geometry.Vector3d(faceCenterA-pntI)
+        faceVecB = Rhino.Geometry.Vector3d(faceCenterB-pntI)
+        selfxPnt = Rhino.Geometry.Vector3d.CrossProduct(selfVec,pntVec) 
+        if selfxPnt.IsZero:
+            print "Point was coincident with flatEdge"
+            return None
+        selfxFaceA = Rhino.Geometry.Vector3d.CrossProduct(selfVec,faceVecA)
+        selfxFaceB = Rhino.Geometry.Vector3d.CrossProduct(selfVec,faceVecB)
+        def sign(x): return x/math.fabs(x)
+        if sign(selfxFaceA.Z) == sign(selfxFaceB.Z):
+            print "both faces on same side of edge, or both have centers coincident with edge"
+            return None
+        if sign(selfxPnt.Z) == sign(selfxFaceA.Z):
+            return self.fromFace
+        elif sign(selfxPnt.Z):
+            return self.toFace
+        else:
+            "some unforseen problem in FlatEdge.getFaceFromPoint"
+            return None
+
+
+    def testFacesIsLeft(self, net, face):
+        '''find which side the face is on relative to this edge
+        ouput: 1 for left, -1 for right, 0 for error
+        '''
+
+        testPoint = net.flatVerts[self.getNeighborFlatVert(net, face)].point
+        if not testPoint:
+            return -1
+        return self.testPointIsLeft(testPoint, net.flatVerts)
+
+    
+
+    def testPointIsLeft(self, testPoint, flatVerts):
+        '''
+        use cross product to see if testPoint is to the left of
+        the edgLine
+        returns False if co-linear. HOwever, if the mesh is triangulated
+        and has no zero-area faces this should not occur.
+        '''
+        pntA, pntB = self.getCoordinates(flatVerts)
+        vecLine = getVectorForPoints(pntA, pntB)
+        vecTest = getVectorForPoints(pntA, testPoint)  # this may be too skewed
+        cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine, vecTest)
+        z = cross.Z  # (pos and neg)
+        return z > 0
+
+    def getNeighborFlatVert(self, net, face=None):
+        '''
+        gets one of the flatVerts associated with the given
+        face, but that is not a part of this flatEdge.
+        if face==None uses the fromFace associated with this edge
+        '''
+
+        if face is None:
+            face = self.fromFace
+        tVertsEdge = set([self.vertAidx, self.vertBidx])
+        flatFace = net.flatFaces[face]
+        tVertsFace = set(flatFace.vertices)
+        neighbors = list(tVertsFace - tVertsEdge)
+        return neighbors[0]  # arbitrarily return first tVert
+
+    def getFacePoint(self, flatVerts, flatFaces):
+        return flatFaces[self.fromFace].getCenterPoint(flatVerts)
+
+    def getFacePolyline(self, net):
+        polylineCurve = net.flatFaces[
+            self.fromFace].getPolylineCurve(
+            net.flatVerts)
+        return polylineCurve
+
+    def inFace(self, net, point):
+        polylineCurve = self.getFacePolyline(net)
+        relationship = polylineCurve.Contains(point)
+        if Rhino.Geometry.PointContainment.Unset == relationship:
+            print "curve was not closed, relationship meaningless"
+            return
+        elif Rhino.Geometry.PointContainment.Inside == relationship:
+            return True
+        elif Rhino.Geometry.PointContainment.Outside == relationship:
+            return False
+        else:
+            # coincident, still leads to bad condition for holes
+            return False
+
+
+
+ 
+
+
+class Fold(FlatEdge):
+    def __init(self,**kwargs):
+        FlatEdge.__init__(self,**kwargs)
+
+class Cut(FlatEdge):
+    def __init(self,**kwargs):
+        FlatEdge.__init__(self,**kwargs)
+
+    def setTabSide(self, facePoint, flatVerts):
+        '''
+        occurs affter complete layout
+        '''
+        if self.tabOnLeft is None:
+            #testPoint = net.flatVerts[self.getNeighborFlatVert(net)].point
+            if self.testPointIsLeft(facePoint, flatVerts):
+                self.tabOnLeft = False
+            else:
+                self.tabOnLeft = True
+            return self.tabOnLeft
+        else:
+            return self.tabOnLeft
 
     def drawTab(self, flatVerts):
         '''outputs guid for polyline'''
@@ -292,8 +391,65 @@ class _FlatEdge():
         self.geom.append(hole)
         return polyGuid
 
-    def getConnectToFace(self, flatFaces, mesh):
-        return flatFaces[getOtherFaceIdx(self.edgeIdx, self.fromFace, mesh)]
+    def getTabFaceCenter(self, myMesh, currFace, xForm):
+        # NOTE appears to be failing for orthogonal geom
+        '''
+        This function works in the context of layout, where xForms are being
+        created
+        '''
+        otherFace = myMesh.getOtherFaceIdx(self.edgeIdx, currFace)
+        if otherFace is not None and otherFace != -1:
+            faceCenter = myMesh.mesh.Faces.GetFaceCenter(otherFace)
+            faceCenter.Transform(xForm)
+            faceCenter.Z = 0.0  # this results in small error, TODO: change to more robust method
+            self.tabFaceCenter = faceCenter
+        if self.tabFaceCenter is None:
+            return False
+        else:
+            return True
+
+    def getTabAngles(self, mesh, currFaceIdx, xForm):
+        # WORKING AWAY FROM THIS: data is implicit in tabFace center
+        edge = self.edgeIdx
+        otherFace = getOtherFaceIdx(edge, currFaceIdx, mesh)
+
+        if otherFace is not None:
+            faceCenter = mesh.Faces.GetFaceCenter(otherFace)  # Point3d
+            if getDistanceToEdge(mesh, edge, faceCenter) <= self.tabWidth:
+                faceCenter.Transform(xForm)
+                self.tabFaceCenter = faceCenter
+            else:
+                posVecCenter = Rhino.Geometry.Vector3d(faceCenter)
+
+                pntI, pntJ = getPointsForEdge(mesh, edge)  # Point3d
+                vecEdge = getEdgeVector(mesh, edge)  # Vector3d
+                posVecI = Rhino.Geometry.Vector3d(pntI)
+                posVecJ = Rhino.Geometry.Vector3d(pntJ)
+
+                vecI = Rhino.Geometry.Vector3d.Subtract(posVecCenter, posVecI)
+                vecJ = Rhino.Geometry.Vector3d.Subtract(posVecJ, posVecCenter)
+
+                angleI = rs.VectorAngle(vecI, vecEdge)
+                angleJ = rs.VectorAngle(vecJ, vecEdge)
+
+                self.tabAngles = [angleI, angleJ]
+
+                """
+        color = (0,0,0,0)
+        drawVector(vecI,posVecI,color)
+        drawVector(vecJ,posVecCenter,color)
+        strI = str(angleI)
+        strJ = str(angleJ)
+        rs.AddTextDot(strI,posVecI)
+        rs.AddTextDot(strJ,posVecJ)
+        print #wtf: for some reason needed this line to print below
+        print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
+        """
+        elif otherFace == -1:
+            print "was nakedEdge"
+        else:
+            print "otherFace: ",
+            print otherFace
 
     def drawFaceHole(self, flatVerts,flatFaces, holeRadius):
         pntA, pntC = self.getCoordinates(flatVerts)
@@ -350,11 +506,6 @@ class _FlatEdge():
             guid = scriptcontext.doc.Objects.AddCircle(geom[1][0])
             self.geom.append(guid)
 
-    def circleIsInFace(self, net, circle):
-        # faceForEdge =
-        # faceBoundary = net.
-        pass
-
     def getHolePoints(self, flatVerts):
         # TODO: replace this with less redundant version (iterate trhough
         # points)
@@ -363,13 +514,13 @@ class _FlatEdge():
             vecI = self.getEdgeVec(flatVerts)
             vecI.Unitize()
             vecI = vecI * self.distI
-            pointI = (flatVerts[self.I].point + vecI)
+            pointI = (flatVerts[self.vertAidx].point + vecI)
             pointI = pointI + self.holeVec
         if self.distJ != -1:
             vecJ = -1 * self.getEdgeVec(flatVerts)
             vecJ.Unitize()
             vecJ = vecJ * self.distJ
-            pointJ = (flatVerts[self.J].point + vecJ)
+            pointJ = (flatVerts[self.vertBidx].point + vecJ)
             pointJ = pointJ + self.holeVec
         return (pointI, pointJ)
 
@@ -447,219 +598,63 @@ class _FlatEdge():
         # rs.AddPoint(pntOnEdgeJ)
         return (distI, distJ, vecA)  # vecA will be used to place actually hole
 
-    def getFacePoint(self, flatVerts, flatFaces):
-        return flatFaces[self.fromFace].getCenterPoint(flatVerts)
+class Naked(FlatEdge):
+    def __init(self,**kwargs):
+        pass
 
-    def getFacePolyline(self, net):
-        polylineCurve = net.flatFaces[
-            self.fromFace].getPolylineCurve(
-            net.flatVerts)
-        return polylineCurve
+class _FlatEdge():
+    """
+    A FlatEdge is an edge of the net.
+    It knows what kind of edge it is,
+    who its vertices are and where those vertices are
 
-    def inFace(self, net, point):
-        polylineCurve = self.getFacePolyline(net)
-        relationship = polylineCurve.Contains(point)
-        if Rhino.Geometry.PointContainment.Unset == relationship:
-            print "curve was not closed, relationship meaningless"
-            return
-        elif Rhino.Geometry.PointContainment.Inside == relationship:
-            return True
-        elif Rhino.Geometry.PointContainment.Outside == relationship:
-            return False
-        else:
-            # coincident, still leads to bad condition for holes
-            return False
+    EVERY single flat edge shall knowith its from face and two face!
+    """
 
-    def clearAllGeom(self):
-        '''
-        note: clear self.geom and self.line_id ?
-        '''
-        if self.line_id is not None:
-            scriptcontext.doc.Objects.Delete(self.line_id, True)
-            self.line_id = None
+    def __init__(self, edgeIdx, vertI, vertJ,fromFace,toFace=None):
+        self.edgeIdx = edgeIdx
+        self.vertAidx = vertI
+        self.vertBidx = vertJ
 
-        if len(self.geom) > 0:
-            for guid in self.geom:
-                scriptcontext.doc.Objects.Delete(guid, True)
+        self.line = None
+        self.line_id = None
+        self.geom = []
+        self.type = None
+        # faces have direct mapping (this is netFace and meshFace)
+        self.fromFace = fromFace
+        self.toFace = toFace
+        self.angle = None
 
-    def getMidPoint(self, flatVerts):
-        coordinates = self.getCoordinates(flatVerts)
-        pntA = coordinates[0]
-        pntB = coordinates[1]
-        x = (pntA.X + pntB.X) / 2.0
-        y = (pntA.Y + pntB.Y) / 2.0
-        z = (pntA.Z + pntB.Z) / 2.0
-        return Rhino.Geometry.Point3f(x, y, z)
+        '''JOINERY'''
+        self.tabOnLeft = None  # important for general joinery drawing
 
-    def getFaceFromPoint(self,flatFaces,flatVerts,point):
-        """
-        the given point is assumed to be on one side of the edge or another.
-        If colinear return None
-        Otherwise return the face that is on the same side as the point
-        """
-        assert(self.type=='fold')
-        pntI,pntJ = self.getCoordinates(flatVerts)
-        selfVec = self.getEdgeVec(flatVerts)
-        pntVec = Rhino.Geometry.Vector3d(point - pntI)
-        faceA = flatFaces[self.fromFace]
-        faceB = flatFaces[self.toFace]
-        faceCenterA = faceA.getCenterPoint(flatVerts)
-        faceCenterB = faceB.getCenterPoint(flatVerts)
-        faceVecA = Rhino.Geometry.Vector3d(faceCenterA-pntI)
-        faceVecB = Rhino.Geometry.Vector3d(faceCenterB-pntI)
-        selfxPnt = Rhino.Geometry.Vector3d.CrossProduct(selfVec,pntVec) 
-        if selfxPnt.IsZero:
-            print "Point was coincident with flatEdge"
-            return None
-        selfxFaceA = Rhino.Geometry.Vector3d.CrossProduct(selfVec,faceVecA)
-        selfxFaceB = Rhino.Geometry.Vector3d.CrossProduct(selfVec,faceVecB)
-        def sign(x): return x/math.fabs(x)
-        if sign(selfxFaceA.Z) == sign(selfxFaceB.Z):
-            print "both faces on same side of edge, or both have centers coincident with edge"
-            return None
-        if sign(selfxPnt.Z) == sign(selfxFaceA.Z):
-            return self.fromFace
-        elif sign(selfxPnt.Z):
-            return self.toFace
-        else:
-            "some unforseen problem in FlatEdge.getFaceFromPoint"
-            return None
+        '''Tabs'''
+        self.hasTab = False
+        self.tabFaceCenter = None  # point3d
+        self.tabAngles = []
+        self.tabWidth = .5  # could be standard, or based on face area
 
-    def getFaceFromPoint_Depricated(self, net, point):
-        '''return the face that corresponds to the point
-        DEPRICATED
-        '''
-        # TODO: fails for horizontal lines :(
-        assert(self.type == 'fold')
-        faceA = self.fromFace
-        faceB = self.toFace
-        leftA = self.testFacesIsLeft(net, faceA)
-        leftB = self.testFacesIsLeft(net, faceB)
-        assert(leftA != leftB), "both faces found to be on same side of edge"
-        leftPoint = self.testPointIsLeft(point, net.flatVerts)
-        if leftA == leftPoint:
-            return faceA
-        elif leftB == leftPoint:
-            return faceB
-        print "unable to find face"
-        return
+        '''Holes'''
+        self.distI = None
+        self.distJ = None
 
-    def testFacesIsLeft(self, net, face):
-        '''find which side the face is on relative to this edge
-        ouput: 1 for left, -1 for right, 0 for error
-        '''
+    
+    '''DRAWING'''
 
-        testPoint = net.flatVerts[self.getNeighborFlatVert(net, face)].point
-        if not testPoint:
-            return -1
-        return self.testPointIsLeft(testPoint, net.flatVerts)
+    
+    '''JOINERY'''
 
-    def setTabSide(self, facePoint, flatVerts):
-        '''
-        occurs affter complete layout
-        '''
-        if self.tabOnLeft is None:
-            #testPoint = net.flatVerts[self.getNeighborFlatVert(net)].point
-            if self.testPointIsLeft(facePoint, flatVerts):
-                self.tabOnLeft = False
-            else:
-                self.tabOnLeft = True
-            return self.tabOnLeft
-        else:
-            return self.tabOnLeft
+    
 
-    def testPointIsLeft(self, testPoint, flatVerts):
-        '''
-        use cross product to see if testPoint is to the left of
-        the edgLine
-        returns False if co-linear. HOwever, if the mesh is triangulated
-        and has no zero-area faces this should not occur.
-        '''
-        pntA, pntB = self.getCoordinates(flatVerts)
-        vecLine = getVectorForPoints(pntA, pntB)
-        vecTest = getVectorForPoints(pntA, testPoint)  # this may be too skewed
-        cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine, vecTest)
-        z = cross.Z  # (pos and neg)
-        return z > 0
 
-    def getNeighborFlatVert(self, net, face=None):
-        '''
-        gets one of the flatVerts associated with the given
-        face, but that is not a part of this flatEdge.
-        if face==None uses the fromFace associated with this edge
-        '''
 
-        if face is None:
-            face = self.fromFace
-        tVertsEdge = set([self.I, self.J])
-        flatFace = net.flatFaces[face]
-        tVertsFace = set(flatFace.vertices)
-        neighbors = list(tVertsFace - tVertsEdge)
-        return neighbors[0]  # arbitrarily return first tVert
+    
 
-    def getEdgeLine(self, flatVerts):
-        pntI, pntJ = self.getCoordinates(flatVerts)
-        return Rhino.Geometry.Line(pntI, pntJ)
+    
 
-    def getTabFaceCenter(self, myMesh, currFace, xForm):
-        # NOTE appears to be failing for orthogonal geom
-        '''
-        This function works in the context of layout, where xForms are being
-        created
-        '''
-        otherFace = myMesh.getOtherFaceIdx(self.edgeIdx, currFace)
-        if otherFace is not None and otherFace != -1:
-            faceCenter = myMesh.mesh.Faces.GetFaceCenter(otherFace)
-            faceCenter.Transform(xForm)
-            faceCenter.Z = 0.0  # this results in small error, TODO: change to more robust method
-            self.tabFaceCenter = faceCenter
-        if self.tabFaceCenter is None:
-            return False
-        else:
-            return True
+        
 
-    def getTabAngles(self, mesh, currFaceIdx, xForm):
-        # WORKING AWAY FROM THIS: data is implicit in tabFace center
-        edge = self.edgeIdx
-        otherFace = getOtherFaceIdx(edge, currFaceIdx, mesh)
-
-        if otherFace is not None:
-            faceCenter = mesh.Faces.GetFaceCenter(otherFace)  # Point3d
-            if getDistanceToEdge(mesh, edge, faceCenter) <= self.tabWidth:
-                faceCenter.Transform(xForm)
-                self.tabFaceCenter = faceCenter
-            else:
-                posVecCenter = Rhino.Geometry.Vector3d(faceCenter)
-
-                pntI, pntJ = getPointsForEdge(mesh, edge)  # Point3d
-                vecEdge = getEdgeVector(mesh, edge)  # Vector3d
-                posVecI = Rhino.Geometry.Vector3d(pntI)
-                posVecJ = Rhino.Geometry.Vector3d(pntJ)
-
-                vecI = Rhino.Geometry.Vector3d.Subtract(posVecCenter, posVecI)
-                vecJ = Rhino.Geometry.Vector3d.Subtract(posVecJ, posVecCenter)
-
-                angleI = rs.VectorAngle(vecI, vecEdge)
-                angleJ = rs.VectorAngle(vecJ, vecEdge)
-
-                self.tabAngles = [angleI, angleJ]
-
-                """
-        color = (0,0,0,0)
-        drawVector(vecI,posVecI,color)
-        drawVector(vecJ,posVecCenter,color)
-        strI = str(angleI)
-        strJ = str(angleJ)
-        rs.AddTextDot(strI,posVecI)
-        rs.AddTextDot(strJ,posVecJ)
-        print #wtf: for some reason needed this line to print below
-        print( 'angleI: %.2f, angleJ: %.2f' %(angleI,angleJ) )
-        """
-        elif otherFace == -1:
-            print "was nakedEdge"
-        else:
-            print "otherFace: ",
-            print otherFace
+    
 
 
 
