@@ -1,6 +1,5 @@
 # Map
 
-
 class Map(object):
     """Map:a class for keeping track of the relation between the net and the mesh"""
 

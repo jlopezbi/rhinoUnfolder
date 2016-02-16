@@ -1,15 +1,25 @@
 from visualization import * 
 import math 
 
+def change_to_cut_edge(edge,otherEdge):
+    newEdge = CutEdge(meshEdgeIdx = edge.meshEdgeIdx,
+                      vertAidx = edge.vertAidx,
+                      vertBidx = edge.vertBidx,
+                      fromFace = edge.fromFace,
+                      toFace = edge.toFace,
+                      sibling = otherEdge)
+    return newEdge
+
 class FlatEdge(object):
     def __init__(self,**kwargs):
         self.meshEdgeIdx = kwargs['meshEdgeIdx']
         self.vertAidx = kwargs['vertAidx']
         self.vertBidx = kwargs['vertBidx']
         self.fromFace = kwargs['fromFace']
-        self.toFace = kwargs['toFace']
+        self.toFace = kwargs.get('toFace',None)
         self.color = kwargs.get('color',(0,0,0,0))
         self.line = None
+        self.line_id = None
 
     def reset(self, oldVert, newVert):
         if self.vertAidx == oldVert:
@@ -21,7 +31,7 @@ class FlatEdge(object):
 
     def getCoordinates(self, flatVerts):
         vertI, vertJ = self.getFlatVerts(flatVerts)
-        return [vertI.point, vertJ.point]
+        return (vertI.point, vertJ.point)
 
     def getFlatVerts(self, flatVerts):
         flatVertI = flatVerts[self.vertAidx]
@@ -39,17 +49,45 @@ class FlatEdge(object):
         return (self.vertAidx, self.vertBidx)
 
     def getTVerts(self, mesh):
-        return getTVertsForEdge(mesh, self.edgeIdx)
+        return getTVertsForEdge(mesh, self.meshEdgeIdx)
 
     def getMeshAngle(self, myMesh):
         '''get dihedral angle of the corresponding mesh edge'''
         if self.angle is None:
-            self.angle = myMesh.getEdgeAngle(self.edgeIdx)
+            self.angle = myMesh.getEdgeAngle(self.meshEdgeIdx)
             return self.angle
         else:
             return self.angle
 
+    def get_other_face_center(self, myMesh, currFace, xForm):
+        # NOTE appears to be failing for orthogonal geom
+        '''
+        This function works in the context of layout, where xForms are being
+        created
+        '''
+        otherFace = myMesh.getOtherFaceIdx(self.meshEdgeIdx, currFace)
+        if otherFace is not None and otherFace != -1:
+            faceCenter = myMesh.mesh.Faces.GetFaceCenter(otherFace)
+            faceCenter.Transform(xForm)
+            faceCenter.Z = 0.0  # this results in small error, TODO: change to more robust method
+            self.tabFaceCenter = faceCenter
+        if self.tabFaceCenter is None:
+            return False
+        else:
+            return True
+
+    def show_line(self,flatVerts):
+        points = self.getCoordinates(flatVerts)
+        if self.line_id is not None:
+            scriptcontext.doc.Objects.Delete(self.line_id, True)
+        line_id, line = drawLine(points, self.color, 'None')
+        self.line_id = line_id
+        self.line = line
+        return line_id
+
+
     def drawEdgeLine(self, flatVerts, angleThresh, myMesh):
+        # DEPRICATED
         if self.type is not None:
             if self.type == 'fold':
                 if self.getMeshAngle(myMesh) >= angleThresh:
@@ -112,7 +150,7 @@ class FlatEdge(object):
             netVertJ.translate(xForm)
             movedNetVerts.append(netVertJ)
     def getConnectToFace(self, flatFaces, mesh):
-        return flatFaces[getOtherFaceIdx(self.edgeIdx, self.fromFace, mesh)]
+        return flatFaces[getOtherFaceIdx(self.meshEdgeIdx, self.fromFace, mesh)]
 
     def clearAllGeom(self):
         '''
@@ -234,18 +272,14 @@ class FlatEdge(object):
             # coincident, still leads to bad condition for holes
             return False
 
-
-
- 
-
-
-class Fold(FlatEdge):
+class FoldEdge(FlatEdge):
     def __init(self,**kwargs):
         FlatEdge.__init__(self,**kwargs)
 
-class Cut(FlatEdge):
+class CutEdge(FlatEdge):
     def __init(self,**kwargs):
         FlatEdge.__init__(self,**kwargs)
+        self.sibling = kwargs['sibling']
 
     def setTabSide(self, facePoint, flatVerts):
         '''
@@ -391,26 +425,9 @@ class Cut(FlatEdge):
         self.geom.append(hole)
         return polyGuid
 
-    def getTabFaceCenter(self, myMesh, currFace, xForm):
-        # NOTE appears to be failing for orthogonal geom
-        '''
-        This function works in the context of layout, where xForms are being
-        created
-        '''
-        otherFace = myMesh.getOtherFaceIdx(self.edgeIdx, currFace)
-        if otherFace is not None and otherFace != -1:
-            faceCenter = myMesh.mesh.Faces.GetFaceCenter(otherFace)
-            faceCenter.Transform(xForm)
-            faceCenter.Z = 0.0  # this results in small error, TODO: change to more robust method
-            self.tabFaceCenter = faceCenter
-        if self.tabFaceCenter is None:
-            return False
-        else:
-            return True
-
     def getTabAngles(self, mesh, currFaceIdx, xForm):
         # WORKING AWAY FROM THIS: data is implicit in tabFace center
-        edge = self.edgeIdx
+        edge = self.meshEdgeIdx
         otherFace = getOtherFaceIdx(edge, currFaceIdx, mesh)
 
         if otherFace is not None:
@@ -598,12 +615,13 @@ class Cut(FlatEdge):
         # rs.AddPoint(pntOnEdgeJ)
         return (distI, distJ, vecA)  # vecA will be used to place actually hole
 
-class Naked(FlatEdge):
+class NakedEdge(FlatEdge):
     def __init(self,**kwargs):
-        pass
+        FlatEdge.__init__(self,**kwargs)
 
 class _FlatEdge():
     """
+    DEPRICATED
     A FlatEdge is an edge of the net.
     It knows what kind of edge it is,
     who its vertices are and where those vertices are
@@ -612,7 +630,7 @@ class _FlatEdge():
     """
 
     def __init__(self, edgeIdx, vertI, vertJ,fromFace,toFace=None):
-        self.edgeIdx = edgeIdx
+        self.meshEdgeIdx = edgeIdx
         self.vertAidx = vertI
         self.vertBidx = vertJ
 

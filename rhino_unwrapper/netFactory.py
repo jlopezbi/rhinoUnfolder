@@ -70,7 +70,7 @@ class NetMaker(object):
 
     def makeNet(self):
         dataMap,net,foldList = unfolder.unfold(self.myMesh,self.cuts,self.weightFunc)
-        net.drawEdges_simple()
+        net.draw_edges()
         return net
     
     

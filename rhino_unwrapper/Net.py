@@ -61,6 +61,7 @@ class Net():
         return group[leader[face]]
 
     def copyAndReasign(self, dataMap, flatEdgeCut, idx, segment, face):
+        # TODO: this must change because of change to cut/fold edge types
         flatEdgeCut.type = 'cut'
         flatEdgeCut.hasTab = True
         flatEdgeCut.resetFromFace(face)
@@ -222,9 +223,9 @@ class Net():
   I think flatEdges should know how to drawthemselves! not the net!
   """
 
-    def drawEdges_simple(self):
+    def draw_edges(self):
         for netEdge in self.flatEdges:
-            netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
+            netEdge.show_line(self.flatVerts)
 
     def _drawEdge(self, netEdge):
         # DEPRICATE! thus the _

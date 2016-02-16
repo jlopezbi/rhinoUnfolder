@@ -4,6 +4,8 @@ import FlatEdge as fe
 import Net as nt
 import traversal as tr
 from Map import Map
+import rhinoscriptsyntax as rs
+import Rhino
 
 reload(tf)
 reload(fe)
@@ -67,52 +69,48 @@ class UnFolder(object):
             meshI, meshJ = myMesh.getTVertsForEdge(edge)
             netI = mapping[meshI]
             netJ = mapping[meshJ]
-            flatEdge = fe.FlatEdge(edge, netI, netJ,basisInfo[0])
-            # since faces have direct mapping this fromFace corresponds
+            #flatEdge = fe.FlatEdge(meshEdgeIdx=edge, vertAidx=netI,
+                                   #vertBidx=netJ,fromFace=basisInfo[0]) # since faces have direct mapping this fromFace corresponds
             # to both the netFace and meshFace
 
             if edge in foldList:
                 if not self.alreadyBeenPlaced(edge, dataMap.meshEdges):
 
                     newBasisInfo = self.getNewBasisInfo(basisInfo, edge, myMesh)
-                    edgeCoords = flatEdge.getCoordinates(net.flatVerts)
-                    newToBasis = tf.getBasisFlat(edgeCoords)
+                    edgeCoords = (net.flatVerts[netI].point,net.flatVerts[netJ].point)
 
-                    flatEdge.type = "fold"
-                    flatEdge.toFace = newBasisInfo[0]
+                    flatEdge = fe.FoldEdge(meshEdgeIdx=edge, vertAidx=netI,
+                                   vertBidx=netJ,fromFace=basisInfo[0],toFace=newBasisInfo[0]) 
                     netEdge = net.addEdge(flatEdge)
                     dataMap.updateEdgeMap(edge, netEdge)
 
                     # RECURSE
                     recurse = True
+                    newToBasis = tf.getBasisFlat(edgeCoords)
                     net, dataMap = self.layoutFace(
                         basisInfo[0], flatEdge, newBasisInfo, foldList, myMesh, newToBasis, net, dataMap)
 
             else:
                 if len(dataMap.meshEdges[edge]) == 0:
-                    flatEdge.type = "naked"
-                    flatEdge.getTabFaceCenter(myMesh, basisInfo[0], xForm)
-
+                    flatEdge = fe.FlatEdge(meshEdgeIdx=edge, vertAidx=netI,
+                                   vertBidx=netJ,fromFace=basisInfo[0])
                     netEdge = net.addEdge(flatEdge)
                     dataMap.updateEdgeMap(edge, netEdge)
 
                 elif len(dataMap.meshEdges[edge]) == 1:
-                    flatEdge.type = "cut"
-
-                    # flatEdge.getTabAngles(mesh,basisInfo[0],xForm)
-                    # flatEdge.setTabSide(net)
-                    if flatEdge.getTabFaceCenter(myMesh, basisInfo[0], xForm):
-                        flatEdge.hasTab = True
-
+                    otherEdge = dataMap.meshEdges[edge][0]
+                    otherFace = myMesh.getOtherFaceIdx(edge,basisInfo[0])
+                    flatEdge = fe.CutEdge(meshEdgeIdx=edge,
+                                          vertAidx=netI,
+                                          vertBidx=netJ,
+                                          fromFace=basisInfo[0],
+                                          toFace=otherFace,
+                                          sibling=otherEdge)
+                    flatEdge.get_other_face_center(myMesh, basisInfo[0], xForm)
                     netEdge = net.addEdge(flatEdge)
                     dataMap.updateEdgeMap(edge, netEdge)
-                    sibling = dataMap.getSiblingNetEdge(edge, netEdge)
-                    sibFlatEdge = net.flatEdges[sibling]
-                    sibFlatEdge.type = "cut"  # make sure to set both edges to cut
-                    sibFlatEdge.hasTab = True  # make sure to set both edges to cut
-
-                    sibFlatEdge.pair = netEdge
-                    net.flatEdges[netEdge].pair = sibling
+                    sibFlatEdge = net.flatEdges[otherEdge]
+                    net.flatEdges[otherEdge] = fe.change_to_cut_edge(sibFlatEdge,netEdge)
         return net, dataMap
 
     def assignFlatVerts(self, mesh, dataMap, net, hopEdge, face, xForm):
@@ -127,7 +125,7 @@ class UnFolder(object):
         mapping = {}
 
         if hopEdge is not None:
-            netI, netJ = [hopEdge.I, hopEdge.J]
+            netI, netJ = [hopEdge.vertAidx, hopEdge.vertAidx]
             hopMeshVerts = [
                 net.flatVerts[netI].tVertIdx,
                 net.flatVerts[netJ].tVertIdx]
