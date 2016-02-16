@@ -86,8 +86,6 @@ def test_getOptionsRS():
     print getOptions_dict(options)
 
 # DEPRICATED FOR NOW
-
-
 def getOption(options, option_name, message=None):
     '''
       options = list of tuples (name, value)
@@ -120,15 +118,13 @@ def getOption(options, option_name, message=None):
 
     return option
 
-
 def test_getOption():
     options = [("One", 1), ("Two", 2), ("Three", 3)]
-    name = "TestOptiosn"
+    name = "TestOptions"
     chosenOption = getOption(options, name, "This is a Test Options Thing")
     print chosenOption
 
-
-def getNewEdge(message, net, dataMap):
+def get_new_cut(message, net, dataMap):
     ge = Rhino.Input.Custom.GetObject()
     # | is a bitwise or. documentation says can combine filters with 'bitwize combination'
     ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge | Rhino.DocObjects.ObjectType.Curve
@@ -149,12 +145,10 @@ def getNewEdge(message, net, dataMap):
         curve_id = objRef.ObjectId
         flatEdge, idx = net.getFlatEdgeForLine(curve_id)
         if flatEdge:
-            print(" corresponding to mesh edge " + str(flatEdge.edgeIdx))
-
-            return flatEdge, idx, flatEdge.type
+            print(" corresponding to mesh edge " + str(flatEdge.meshEdgeIdx))
+            return flatEdge, idx 
         else:
             print(" not corresponding to a mesh edge")
-
             return None, 'invalid'
     elif mesh:
         edgeIdx = GetEdgeIdx(objRef)
@@ -163,7 +157,6 @@ def getNewEdge(message, net, dataMap):
         return edgeIdx, flatEdge, flatEdge
 
     return flatEdge, idx, flatEdge.type
-
 
 def getMeshEdge(message, isChain, angle):
     ge = Rhino.Input.Custom.GetObject()
@@ -206,14 +199,12 @@ def getMeshEdge(message, isChain, angle):
 
     return (edgeIdx, isChain, angle, mesh)
 
-
 def GetEdgeIdx(objref):
     # Rhino.DocObjects.ObjRef .GeometryComponentIndex to
     # Rhino.Geometry.ComponentIndex
     meshEdgeIndex = objref.GeometryComponentIndex
 
     return meshEdgeIndex.Index
-
 
 def getUserTranslate(message, basePoint):
     '''

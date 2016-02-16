@@ -82,5 +82,7 @@ if __name__=="__main__":
     unfolder = la.UnFolder()
     netMaker = NetMaker(myMesh,weightFunc,unfolder,None)
     net = netMaker.makeNet()
+    print "type of flat edge 0: ",
+    print type(net.flatEdges[4])
 
 

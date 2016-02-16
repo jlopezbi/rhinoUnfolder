@@ -3,7 +3,7 @@ from rhino_helpers import *
 
 def displayTVertIdx(mesh, vert, disp=None, color=(0, 255, 0, 255)):
     if disp is None:
-        disp = vert
+       disp = vert
     point = mesh.TopologyVertices.Item[vert]
     drawTextDot(point, str(disp), color)
 

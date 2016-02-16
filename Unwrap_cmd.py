@@ -39,8 +39,10 @@ def RunCommand():
         net.drawEdges_simple()
 
     while True:
-        flatEdge,idx,strType = ri.getNewEdge("select new edge on net or mesh",net,dataMap)
-        if strType == 'fold':
+        flatEdge,idx = ri.get_new_cut("select new edge on net or mesh",net,dataMap)
+        # TODO: figure out how to check type or isinstance of flatEdge -> cut
+        # or fold
+        if type(flatEdge) == 'FlatEdge.FoldEdge':
             basePoint = flatEdge.getMidPoint(net.flatVerts)
             xForm,point = ri.getUserTranslate("Pick point to translate segment to",basePoint)
             if xForm and point:
@@ -57,13 +59,10 @@ def RunCommand():
 
 
                 #segmentNet(mesh,foldList,dataMap,net,flatEdge,face,xForm)
-        elif strType == 'cut':
+        elif type(flatEdge) == 'FlatEdge.CutEdge':
+            pass
+        elif flatEdge == None:
             break
-        # elif strType == 'invalid':
-        #   #print('invalid selection')
-        elif strType == 'exit':
-            break
-
 
 # def RunCommand( is_interactive ):
 #       mesh = rs.GetObject("Select mesh to unwrap",32,True,False)
