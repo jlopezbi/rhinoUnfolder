@@ -34,11 +34,7 @@ def RunCommand():
 
     if mesh and weightFunction:
         unfolder = la.UnFolder()
-        dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius)
-        net.findInitalSegments()
-        net.drawEdges_simple()
-
-    while True:
+        dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius) net.findInitalSegments() net.drawEdges_simple() while True:
         flatEdge,idx = ri.get_new_cut("select new edge on net or mesh",net,dataMap)
         # TODO: figure out how to check type or isinstance of flatEdge -> cut
         # or fold
