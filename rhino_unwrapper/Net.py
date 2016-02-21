@@ -24,7 +24,6 @@ class Net():
         * for a given edge, the two sets of edges/faces/verts on either side, or for a given edge, the set of edges/faces/verts on the side indicated by the user (faster)
         non essential:
         * for a given edge, the corrseponding edge in the 3d mesh
-
     """
 
     def __init__(self, myMesh, holeRadius):
@@ -53,28 +52,28 @@ class Net():
         self.leaders = leader
 
     def findSegment(self, flatEdgeCut, face):
-        assert(flatEdgeCut.type == 'fold')
         island = self.getGroupForMember(face)
         self.removeFaceConnection(flatEdgeCut)
         group, leader = sg.segmentIsland(self.flatFaces, island)
         self.updateIslands(group, leader, face)
         return group[leader[face]]
 
-    def copyAndReasign(self, dataMap, flatEdgeCut, idx, segment, face):
+    def copyAndReasign(self, dataMap, flatEdge, idx, segment, face):
         # TODO: this must change because of change to cut/fold edge types
-        flatEdgeCut.type = 'cut'
-        flatEdgeCut.hasTab = True
-        flatEdgeCut.resetFromFace(face)
-        changedVertPairs = self.makeNewNetVerts(dataMap, flatEdgeCut)
+        # GOT TO REWORK THIS ONE
+        newEdgeIdx = len(self.flatEdges)
+        resetEdge = fe.change_to_cut_edge(flatEdge,newEdgeIdx)
+        resetEdge.resetFromFace(face)
+        changedVertPairs = self.makeNewNetVerts(dataMap, flatEdge)
         newEdge = self.makeNewEdge(
             dataMap,
             changedVertPairs,
-            flatEdgeCut.edgeIdx,
+            flatEdge.edgeIdx,
             idx,
-            face,flatEdgeCut.getOtherFace(face))
-        flatEdgeCut.pair = newEdge
-        flatEdgeCut.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
-        # flatEdgeCut.drawHoles(self,connectorDist,safetyRadius,holeRadius)
+            face,flatEdge.getOtherFace(face))
+        flatEdge.pair = newEdge
+        flatEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
+        # flatEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
         self.resetSegment(dataMap, changedVertPairs, segment)
 
     def translateSegment(self, segment, xForm):
@@ -117,14 +116,17 @@ class Net():
         elif netFaceA.fromFace == faceB:
             netFaceA.fromFace = None
 
-    def makeNewEdge(self, dataMap, changedVertPairs, meshEdge, idx,
+    def makeNewEdge(self, dataMap, changedVertPairs, meshEdge, otherEdge,
     fromFace,toFace):
         newVertI = changedVertPairs[0][0]
         newVertJ = changedVertPairs[1][0]
-        newFlatEdge = fe.FlatEdge(meshEdge, newVertI, newVertJ,fromFace,toFace)
-        newFlatEdge.type = 'cut'
+        newFlatEdge = fe.CutEdge(meshEdgeIdx=meshEdge,
+                                 vertAidx=newVertI,
+                                 vertBidx=newVertJ,
+                                 fromFace=fromFace,
+                                 toFace=toFace,
+                                 sibling=otherEdge)
         newFlatEdge.hasTab = True
-        newFlatEdge.pair = idx
         newFlatEdge.tabFaceCenter = self.flatFaces[toFace].getCenterPoint(self.flatVerts)
         
 # This is where need to add a tabFaceCenter thing that will find the otherFace

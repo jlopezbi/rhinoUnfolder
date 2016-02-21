@@ -1,13 +1,13 @@
 from visualization import * 
 import math 
 
-def change_to_cut_edge(edge,otherEdge):
-    newEdge = CutEdge(meshEdgeIdx = edge.meshEdgeIdx,
-                      vertAidx = edge.vertAidx,
-                      vertBidx = edge.vertBidx,
-                      fromFace = edge.fromFace,
-                      toFace = edge.toFace,
-                      sibling = otherEdge)
+def change_to_cut_flatEdge(flatEdge,otherEdgeIdx):
+    newEdge = CutEdge(meshEdgeIdx = flatEdge.meshEdgeIdx,
+                      vertAidx = flatEdge.vertAidx,
+                      vertBidx = flatEdge.vertBidx,
+                      fromFace = flatEdge.fromFace,
+                      toFace = flatEdge.toFace,
+                      sibling = otherEdgeIdx)
     return newEdge
 
 class FlatEdge(object):
@@ -20,6 +20,14 @@ class FlatEdge(object):
         self.color = kwargs.get('color',(0,0,0,0))
         self.line = None
         self.line_id = None
+        self.post_initialize(kwargs)
+
+    def post_initialize(self,kwargs):
+        pass
+
+    def type(self):
+        #TODO: find better way
+        return 'FlatEdge'
 
     def reset(self, oldVert, newVert):
         if self.vertAidx == oldVert:
@@ -179,7 +187,6 @@ class FlatEdge(object):
         If colinear return None
         Otherwise return the face that is on the same side as the point
         """
-        assert(self.type=='fold')
         pntI,pntJ = self.getCoordinates(flatVerts)
         selfVec = self.getEdgeVec(flatVerts)
         pntVec = Rhino.Geometry.Vector3d(point - pntI)
@@ -273,13 +280,22 @@ class FlatEdge(object):
             return False
 
 class FoldEdge(FlatEdge):
-    def __init(self,**kwargs):
-        FlatEdge.__init__(self,**kwargs)
+    
+    def post_initialize(self,kwargs):
+        pass
+
+    def type(self):
+        # TODO: find better way
+        return 'FoldEdge'
 
 class CutEdge(FlatEdge):
-    def __init(self,**kwargs):
-        FlatEdge.__init__(self,**kwargs)
+
+    def post_initialize(self,kwargs):
         self.sibling = kwargs['sibling']
+
+    def type(self):
+        # TODO: find better way
+        return 'CutEdge'
 
     def setTabSide(self, facePoint, flatVerts):
         '''
@@ -616,8 +632,9 @@ class CutEdge(FlatEdge):
         return (distI, distJ, vecA)  # vecA will be used to place actually hole
 
 class NakedEdge(FlatEdge):
-    def __init(self,**kwargs):
-        FlatEdge.__init__(self,**kwargs)
+
+    def post_initialize(self,kwargs):
+        pass
 
 class _FlatEdge():
     """

@@ -34,31 +34,41 @@ def RunCommand():
 
     if mesh and weightFunction:
         unfolder = la.UnFolder()
-        dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius) net.findInitalSegments() net.drawEdges_simple() while True:
-        flatEdge,idx = ri.get_new_cut("select new edge on net or mesh",net,dataMap)
-        # TODO: figure out how to check type or isinstance of flatEdge -> cut
-        # or fold
-        if type(flatEdge) == 'FlatEdge.FoldEdge':
-            basePoint = flatEdge.getMidPoint(net.flatVerts)
-            xForm,point = ri.getUserTranslate("Pick point to translate segment to",basePoint)
-            if xForm and point:
-                face = flatEdge.getFaceFromPoint(net.flatFaces,net.flatVerts,point)
-                print "face: ",
-                print face
-                segment = net.findSegment(flatEdge,face)
-                # print "segment: ",
-                # print segment
-                net.copyAndReasign(dataMap,flatEdge,idx,segment,face)
-                translatedEdges = net.translateSegment(segment,xForm)
-                net.redrawSegment(translatedEdges)
-                #net.updateCutEdge(flatEdge)
+        dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius)
+        net.findInitalSegments() 
+        net.draw_edges() 
+
+        while True:
+            flatEdge,idx = ri.get_new_cut("select new edge on net or mesh",net,dataMap)
+            # TODO: figure out how to check type or isinstance of flatEdge -> cut
+            # or fold. Maybe avoid this completely by duck typing?
+            # would be something like flatEdge.process_selection.
+            # flatEdge.process_cut_selection. oof. or maybe that is something
+            # that the net should handle. that sounds better. temporary fix for
+            # now
+            if flatEdge.type() == 'FoldEdge':
+                basePoint = flatEdge.getMidPoint(net.flatVerts)
+                xForm,point = ri.getUserTranslate("Pick point to translate segment to",basePoint)
+                if xForm and point:
+                    face = flatEdge.getFaceFromPoint(net.flatFaces,net.flatVerts,point)
+                    print "face: ",
+                    print face
+                    segment = net.findSegment(flatEdge,face)
+                    # print "segment: ",
+                    # print segment
+                    net.copyAndReasign(dataMap,flatEdge,idx,segment,face)
+                    translatedEdges = net.translateSegment(segment,xForm)
+                    net.redrawSegment(translatedEdges)
+                    #net.updateCutEdge(flatEdge)
 
 
-                #segmentNet(mesh,foldList,dataMap,net,flatEdge,face,xForm)
-        elif type(flatEdge) == 'FlatEdge.CutEdge':
-            pass
-        elif flatEdge == None:
-            break
+                    #segmentNet(mesh,foldList,dataMap,net,flatEdge,face,xForm)
+            elif flatEdge.type() == 'CutEdge':
+                pass
+            elif flatEdge.type() == 'FoldEdge':
+                print "got fold edge"
+            elif flatEdge == None:
+                break
 
 # def RunCommand( is_interactive ):
 #       mesh = rs.GetObject("Select mesh to unwrap",32,True,False)
