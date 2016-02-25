@@ -1,7 +1,7 @@
 from visualization import * 
 import math 
 
-def change_to_cut_flatEdge(flatEdge,otherEdgeIdx):
+def change_to_cut_edge(flatEdge,otherEdgeIdx):
     newEdge = CutEdge(meshEdgeIdx = flatEdge.meshEdgeIdx,
                       vertAidx = flatEdge.vertAidx,
                       vertBidx = flatEdge.vertBidx,
@@ -20,6 +20,7 @@ class FlatEdge(object):
         self.color = kwargs.get('color',(0,0,0,0))
         self.line = None
         self.line_id = None
+        self.geom = []
         self.post_initialize(kwargs)
 
     def post_initialize(self,kwargs):
@@ -141,8 +142,9 @@ class FlatEdge(object):
     def translateGeom(self, movedNetVerts, flatVerts, xForm):
         # self.translateEdgeLine(xForm)
         self.translateNetVerts(movedNetVerts, flatVerts, xForm)
-        if self.tabFaceCenter is not None:
-            self.tabFaceCenter.Transform(xForm)
+        if self.geom:
+            for element in self.geom:
+                element.Transform(xForm)
 
     def translateEdgeLine(self, xForm):
         if self.line is not None:
@@ -157,6 +159,7 @@ class FlatEdge(object):
         if netVertJ not in movedNetVerts:
             netVertJ.translate(xForm)
             movedNetVerts.append(netVertJ)
+
     def getConnectToFace(self, flatFaces, mesh):
         return flatFaces[getOtherFaceIdx(self.meshEdgeIdx, self.fromFace, mesh)]
 
@@ -168,7 +171,7 @@ class FlatEdge(object):
             scriptcontext.doc.Objects.Delete(self.line_id, True)
             self.line_id = None
 
-        if len(self.geom) > 0:
+        if self.geom:
             for guid in self.geom:
                 scriptcontext.doc.Objects.Delete(guid, True)
 

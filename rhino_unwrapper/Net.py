@@ -68,11 +68,11 @@ class Net():
         newEdge = self.makeNewEdge(
             dataMap,
             changedVertPairs,
-            flatEdge.edgeIdx,
+            flatEdge.meshEdgeIdx,
             idx,
             face,flatEdge.getOtherFace(face))
         flatEdge.pair = newEdge
-        flatEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
+        flatEdge.show_line(self.flatVerts)
         # flatEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
         self.resetSegment(dataMap, changedVertPairs, segment)
 
@@ -101,10 +101,9 @@ class Net():
         return collection
 
     def redrawSegment(self, translatedEdges):
-        group = rs.AddGroup()
         geom = []
         for netEdge in translatedEdges:
-            netEdge.drawEdgeLine(self.flatVerts, self.angleThresh, self.myMesh)
+            netEdge.show_line(self.flatVerts)
 
     def removeFaceConnection(self, flatEdgeCut):
         faceA = flatEdgeCut.fromFace
