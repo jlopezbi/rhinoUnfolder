@@ -26,6 +26,18 @@ class FlatEdge(object):
     def post_initialize(self,kwargs):
         pass
 
+    def show(self,flatVerts):
+        pass
+
+    def show_line(self,flatVerts):
+        points = self.getCoordinates(flatVerts)
+        if self.line_id is not None:
+            scriptcontext.doc.Objects.Delete(self.line_id, True)
+        line_id, line = drawLine(points, self.color, 'None')
+        self.line_id = line_id
+        self.line = line
+        return line_id
+
     def type(self):
         #TODO: find better way
         return 'FlatEdge'
@@ -70,6 +82,7 @@ class FlatEdge(object):
 
     def get_other_face_center(self, myMesh, currFace, xForm):
         # NOTE appears to be failing for orthogonal geom
+        # NOTE perhaps should be a method only CutEdge implements?
         '''
         This function works in the context of layout, where xForms are being
         created
@@ -85,18 +98,8 @@ class FlatEdge(object):
         else:
             return True
 
-    def show_line(self,flatVerts):
-        points = self.getCoordinates(flatVerts)
-        if self.line_id is not None:
-            scriptcontext.doc.Objects.Delete(self.line_id, True)
-        line_id, line = drawLine(points, self.color, 'None')
-        self.line_id = line_id
-        self.line = line
-        return line_id
-
-
     def drawEdgeLine(self, flatVerts, angleThresh, myMesh):
-        # DEPRICATED
+        # DEPRICATED Legacy code
         if self.type is not None:
             if self.type == 'fold':
                 if self.getMeshAngle(myMesh) >= angleThresh:
@@ -138,42 +141,8 @@ class FlatEdge(object):
         else:
             return None
 
-
-    def translateGeom(self, movedNetVerts, flatVerts, xForm):
-        # self.translateEdgeLine(xForm)
-        self.translateNetVerts(movedNetVerts, flatVerts, xForm)
-        if self.geom:
-            for element in self.geom:
-                element.Transform(xForm)
-
-    def translateEdgeLine(self, xForm):
-        if self.line is not None:
-            self.line.Transform(xForm)
-            scriptcontext.doc.Objects.Replace(self.line_id, self.line)
-
-    def translateNetVerts(self, movedNetVerts, flatVerts, xForm):
-        netVertI, netVertJ = self.getFlatVerts(flatVerts)
-        if netVertI not in movedNetVerts:
-            netVertI.translate(xForm)
-            movedNetVerts.append(netVertI)
-        if netVertJ not in movedNetVerts:
-            netVertJ.translate(xForm)
-            movedNetVerts.append(netVertJ)
-
     def getConnectToFace(self, flatFaces, mesh):
         return flatFaces[getOtherFaceIdx(self.meshEdgeIdx, self.fromFace, mesh)]
-
-    def clearAllGeom(self):
-        '''
-        note: clear self.geom and self.line_id ?
-        '''
-        if self.line_id is not None:
-            scriptcontext.doc.Objects.Delete(self.line_id, True)
-            self.line_id = None
-
-        if self.geom:
-            for guid in self.geom:
-                scriptcontext.doc.Objects.Delete(guid, True)
 
     def getMidPoint(self, flatVerts):
         coordinates = self.getCoordinates(flatVerts)
@@ -282,9 +251,52 @@ class FlatEdge(object):
             # coincident, still leads to bad condition for holes
             return False
 
+
+    '''
+    TRANSLATION STUFF
+    '''
+    def translateGeom(self, movedNetVerts, flatVerts, xForm):
+        # self.translateEdgeLine(xForm)
+        self.translateNetVerts(movedNetVerts, flatVerts, xForm)
+        if self.geom:
+            for element in self.geom:
+                element.Transform(xForm)
+
+    def translateEdgeLine(self, xForm):
+        if self.line is not None:
+            self.line.Transform(xForm)
+            scriptcontext.doc.Objects.Replace(self.line_id, self.line)
+
+    def translateNetVerts(self, movedNetVerts, flatVerts, xForm):
+        netVertI, netVertJ = self.getFlatVerts(flatVerts)
+        if netVertI not in movedNetVerts:
+            netVertI.translate(xForm)
+            movedNetVerts.append(netVertI)
+        if netVertJ not in movedNetVerts:
+            netVertJ.translate(xForm)
+            movedNetVerts.append(netVertJ)
+
+    def clearAllGeom(self):
+        '''
+        note: clear self.geom and self.line_id ?
+        '''
+        if self.line_id is not None:
+            scriptcontext.doc.Objects.Delete(self.line_id, True)
+            self.line_id = None
+
+        if self.geom:
+            for guid in self.geom:
+                scriptcontext.doc.Objects.Delete(guid, True)
+
 class FoldEdge(FlatEdge):
     
     def post_initialize(self,kwargs):
+        pass
+    
+    def show(self,flatVerts):
+        self._show_crease(flatVerts)
+
+    def _show_crease(self,flatVerts):
         pass
 
     def type(self):
@@ -295,6 +307,12 @@ class CutEdge(FlatEdge):
 
     def post_initialize(self,kwargs):
         self.sibling = kwargs['sibling']
+
+    def show(self,flatVerts):
+        self._show_joinery(flatVerts)
+    
+    def _show_joinery(self,flatVerts):
+        pass
 
     def type(self):
         # TODO: find better way
