@@ -58,6 +58,24 @@ class Net():
         self.updateIslands(group, leader, face)
         return group[leader[face]]
 
+    def getGroupForMember(self, member):
+        if member not in self.leaders.keys():
+            print "face not in leaders: ",
+            print member
+            return
+        leader = self.leaders[member]
+        return self.groups[leader]
+
+    def updateIslands(self, newGroups, newLeaders, face):
+        # get rid of old island
+        leader = self.leaders[face]
+        del self.groups[leader]
+
+        for group in newGroups.items():
+            self.groups[group[0]] = group[1]
+        for leader in newLeaders.items():
+            self.leaders[leader[0]] = leader[1]
+
     def copyAndReasign(self, dataMap, flatEdge, idx, segment, face):
         # TODO: this must change because of change to cut/fold edge types
         # GOT TO REWORK THIS ONE
@@ -82,7 +100,6 @@ class Net():
         # Sstopping when the edge points to no other edge(naked),or to a face not in the segment,or
         # if the h-edge is part of the user-selected edge to be cut
         group = rs.AddGroup()
-
         collection = []
         movedNetVerts = []
         for netEdge in self.flatEdges:
@@ -90,14 +107,6 @@ class Net():
                 collection.append(netEdge)
                 netEdge.clearAllGeom()
                 netEdge.translateGeom(movedNetVerts, self.flatVerts, xForm)
-
-                #netEdge.drawEdgeLine(self.flatVerts,self.angleThresh,self.mes
-                #rs.AddObjectsToGroup(geom, group)
-
-
-                # if netEdge.type=='cut':
-                #   #TODO: perhaps user input for hole parameters?
-                #   netEdge.drawHoles(self,.1,.08,.07)
         return collection
 
     def redrawSegment(self, translatedEdges):
@@ -189,24 +198,6 @@ class Net():
                         #assert(flatEdge.fromFace in segment), "flatEdge not in segment"
                         flatEdge.reset(oldVert, newVert)
 
-    def getGroupForMember(self, member):
-        if member not in self.leaders.keys():
-            print "face not in leaders: ",
-            print member
-            return
-        leader = self.leaders[member]
-        return self.groups[leader]
-
-    def updateIslands(self, newGroups, newLeaders, face):
-        # get rid of old island
-        leader = self.leaders[face]
-        del self.groups[leader]
-
-        for group in newGroups.items():
-            self.groups[group[0]] = group[1]
-        for leader in newLeaders.items():
-            self.leaders[leader[0]] = leader[1]
-
     '''SELECTION'''
 
     def getFlatEdgeForLine(self, value):
@@ -262,39 +253,3 @@ class Net():
         for face in self.flatFaces:
             collection.append(face.draw(self.flatVerts))
         createGroup(netGroupName, collection)
-
-class Joinery(object):
-    """
-    A class which knows how to make joinery.
-    Joinery can include: a simple cut (no joinery), tabs, holes, etc.
-    """
-
-    def __init__(self,edgePair):
-        self.edgePair = edgePair 
-
-    def display(self):
-        pass
-
-    def tab(self):
-        pass
-    
-    def hole(self):
-        pass
-    
-class Crease(object):
-    """
-    A class which knows how to make creases
-    Creases include: naked edges, fold edges
-    """
-
-    def __init__(self,edge):
-        self.edge = edge
-
-    def display(self):
-        pass
-
-    def line(self):
-        pass
-
-    def perforation(self):
-        pass
