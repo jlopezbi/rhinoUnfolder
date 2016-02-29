@@ -27,6 +27,7 @@ class Net():
         non essential:
         * for a given edge, the corrseponding edge in the 3d mesh
     """
+#myMesh.mesh.Faces.Count
 
     def __init__(self, myMesh, holeRadius):
         self.holeRadius = holeRadius
@@ -190,58 +191,13 @@ class Net():
                         #assert(flatEdge.fromFace in segment), "flatEdge not in segment"
                         flatEdge.reset(oldVert, newVert)
 
-    '''SELECTION'''
-
-    def getFlatEdgeForLine(self, value):
-        # assert guid?
-        for i, flatEdge in enumerate(self.flatEdges):
-            if flatEdge.line_id == value:
-                return flatEdge, i
-        return
-
-    def getFlatEdge(self, netEdge):
-        return self.flatEdges[netEdge]
-
-    '''DRAWING'''
-    """
-  I think flatEdges should know how to drawthemselves! not the net!
-  """
-
-    def _drawEdge(self, netEdge):
-        # DEPRICATE! thus the _
-        collection = []
-        collection.append(
-            netEdge.drawEdgeLine(
-                self.flatVerts,
-                self.angleThresh,
-                self.mesh))
-        if netEdge.type == 'cut':
-            collection.append(netEdge.drawTab(self))
-            if netEdge.hasTab:
-                pass
-               # collection.append(netEdge.drawTab(self))
-            else:
-                collection.append(netEdge.drawFaceHole(self, self.holeRadius))
-        return collection
-
-    def drawEdges(self, netGroupName):
-        collection = []
-        for netEdge in self.flatEdges:
-
-            # if netEdge.type=='cut':
-            # netEdge.drawHoles(self,connectorDist,safetyRadius,holeRadius)
-
-            subCollection = self.drawEdge(netEdge)
-            for item in subCollection:
-                collection.append(item)
-        createGroup(netGroupName, collection)
 
 class Island(object):
 
     def __init__(self):
         self.flatVerts = []
         self.flatEdges = []
-        self.flatFaces = [None] * myMesh.mesh.Faces.Count
+        self.flatFaces = [None]  
 
     def addEdge(self, flatEdge):
         self.flatEdges.append(flatEdge)
@@ -261,5 +217,13 @@ class Island(object):
             collection.append(face.draw(self.flatVerts))
         createGroup(netGroupName, collection)
 
+    def getFlatEdgeForLine(self, value):
+        # assert guid?
+        for i, flatEdge in enumerate(self.flatEdges):
+            if flatEdge.line_id == value:
+                return flatEdge, i
+        return
 
+    def getFlatEdge(self, netEdge):
+        return self.flatEdges[netEdge]
 
