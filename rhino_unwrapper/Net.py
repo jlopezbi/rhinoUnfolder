@@ -11,7 +11,9 @@ reload(fe)
 
 
 class Net():
-    """ What does a net do?, slash know about?
+    """ 
+    What if Net was composed of islands?! each island has verts,edge and faces.
+    What does a net do?, slash know about?
         => it stores the mesh that is the net. In fact perhaps should just use rhino's mesh! but lets save that for later
     Right now the net does this:
         * Segmentation <= this is the main thing!
@@ -28,23 +30,13 @@ class Net():
 
     def __init__(self, myMesh, holeRadius):
         self.holeRadius = holeRadius
-        self.flatVerts = []
-        self.flatEdges = []
-        self.flatFaces = [None] * myMesh.mesh.Faces.Count
         self.angleThresh = math.radians(3.3)
         self.myMesh = myMesh
+        self.islands = []
 
         #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
 
-    def addEdge(self, flatEdge):
-        self.flatEdges.append(flatEdge)
-        return len(self.flatEdges) - 1
-
-    def addVert(self, flatVert):
-        self.flatVerts.append(flatVert)
-        return len(self.flatVerts) - 1
-
-    '''SEGMENTATION'''
+    '''SEGMENTATION, seems like should be a seperate thing!'''
 
     def findInitalSegments(self):
         group, leader = sg.segmentIsland(self.flatFaces, [])
@@ -215,10 +207,6 @@ class Net():
   I think flatEdges should know how to drawthemselves! not the net!
   """
 
-    def draw_edges(self):
-        for netEdge in self.flatEdges:
-            netEdge.show_line(self.flatVerts)
-
     def _drawEdge(self, netEdge):
         # DEPRICATE! thus the _
         collection = []
@@ -248,8 +236,30 @@ class Net():
                 collection.append(item)
         createGroup(netGroupName, collection)
 
+class Island(object):
+
+    def __init__(self):
+        self.flatVerts = []
+        self.flatEdges = []
+        self.flatFaces = [None] * myMesh.mesh.Faces.Count
+
+    def addEdge(self, flatEdge):
+        self.flatEdges.append(flatEdge)
+        return len(self.flatEdges) - 1
+
+    def addVert(self, flatVert):
+        self.flatVerts.append(flatVert)
+        return len(self.flatVerts) - 1
+
+    def draw_edges(self):
+        for netEdge in self.flatEdges:
+            netEdge.show_line(self.flatVerts)
+
     def drawFaces(self, netGroupName):
         collection = []
         for face in self.flatFaces:
             collection.append(face.draw(self.flatVerts))
         createGroup(netGroupName, collection)
+
+
+
