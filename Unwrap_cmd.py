@@ -1,12 +1,12 @@
 import rhino_unwrapper.commands as cm
-import rhino_unwrapper.layout as la
+import rhino_unwrapper.unfold as unfold
 import rhino_unwrapper.rhino_inputs as ri
 import rhino_unwrapper.weight_functions as wf
 import rhino_unwrapper.mesh as m
 import inspect
 
 reload(cm)
-reload(la)
+reload(unfold)
 reload(ri)
 reload(wf)
 reload(m)
@@ -33,7 +33,7 @@ def RunCommand():
     weightFunction = ri.getOptions_dict(all_weight_functions())
 
     if mesh and weightFunction:
-        unfolder = la.UnFolder()
+        unfolder = unfold.UnFolder()
         dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius)
         net.findInitalSegments() 
         net.draw_edges() 
@@ -51,28 +51,14 @@ def RunCommand():
                 xForm,point = ri.getUserTranslate("Pick point to translate segment to",basePoint)
                 if xForm and point:
                     face = flatEdge.getFaceFromPoint(net.flatFaces,net.flatVerts,point)
-                    print "face: ",
-                    print face
                     segment = net.findSegment(flatEdge,face)
-                    # print "segment: ",
-                    # print segment
                     net.copyAndReasign(dataMap,flatEdge,idx,segment,face)
                     translatedEdges = net.translateSegment(segment,xForm)
                     net.redrawSegment(translatedEdges)
-                    #net.updateCutEdge(flatEdge)
-
-
-                    #segmentNet(mesh,foldList,dataMap,net,flatEdge,face,xForm)
             elif flatEdge.type() == 'CutEdge':
                 pass
-            elif flatEdge.type() == 'FoldEdge':
-                print "got fold edge"
             elif flatEdge == None:
                 break
-
-# def RunCommand( is_interactive ):
-#       mesh = rs.GetObject("Select mesh to unwrap",32,True,False)
-
 
 if __name__=="__main__":
     RunCommand()
