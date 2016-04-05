@@ -21,8 +21,12 @@ class FrameTestCase(unittest.TestCase):
         #check that show() method sends correct messages
         self.frame.show()
 
-    #def test_show(self):
-        #pass
+    def test_catches_non_orthogonal(self):
+        o = Rhino.Geometry.Vector3d(1,0,0)
+        x = Rhino.Geometry.Vector3d(1,0,0)
+        z = Rhino.Geometry.Vector3d(.1,0,1)
+        self.assertRaises(AssertionError, trans.Frame.create_frame,o,x,z)
+
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(FrameTestCase)
     unittest.TextTestRunner(verbosity=2).run(suite)
