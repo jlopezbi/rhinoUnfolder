@@ -1,9 +1,43 @@
-from visualization import *
+import visualization as vis
+import scriptcontext
+import rhinoscriptsyntax as rs
+
+def make_test_mesh():
+    vertices = []
+    vertices.append((0.0,0.0,0.0))
+    vertices.append((5.0, 0.0, 0.0))
+    vertices.append((10.0, 0.0, 0.0))
+    vertices.append((0.0, 5.0, 0.0))
+    vertices.append((5.0, 5.0, 0.0))
+    vertices.append((10.0, 5.0, 0.0))
+    vertices.append((0.0, 10.0, 0.0))
+    vertices.append((5.0, 10.0, 0.0))
+    vertices.append((10.0, 10.0, 0.0))
+    faceVertices = []
+    faceVertices.append((0,1,4,4))
+    faceVertices.append((2,4,1,1))
+    faceVertices.append((0,4,3,3))
+    faceVertices.append((2,5,4,4))
+    faceVertices.append((3,4,6,6))
+    faceVertices.append((5,8,4,4))
+    faceVertices.append((6,4,7,7))
+    faceVertices.append((8,7,4,4))
+    mesh_GUID = rs.AddMesh( vertices, faceVertices )
+    obj = scriptcontext.doc.Objects.Find(mesh_GUID)
+    return Mesh(obj.Geometry)
 
 class Mesh(object):
     """
+    better names?
+    MeshQuieryer
+    MeshFinder
+    MeshElementFinder
+    MeshElementGetter
+
     Does custom queiries on a Rhino mesh that make layout easy
     see http://4.rhino3d.com/5/rhinocommon/ for rhino mesh class members
+    - queries
+    - visualizing info
     """
 
     def __init__(self,mesh):
@@ -41,7 +75,6 @@ class Mesh(object):
     def get_set_of_edges(self):
         count = self.mesh.TopologyEdges.Count
         return set(range(count))
-        
 
     def getEdgesForVert(self,tVert):
         # not implimented in rhinoCommon! ::::(
@@ -73,7 +106,7 @@ class Mesh(object):
             # naked edge
             edges = self.getFaceEdges(facePair[0], self.mesh)
             for edge in edges:
-                tVerts = self.getTVertsForEdge(self.mesh, edge)
+                tVerts = self.getTVertsForEdge(edge)
                 if tVertB in tVerts and tVertA in tVerts:
                     return edge
         return      
@@ -166,14 +199,14 @@ class Mesh(object):
         edgeLine = self.mesh.TopologyEdges.EdgeLine(edge)
         return edgeLine.DistanceTo(point, True)
 
-    def getEdgeVector(self,edgeIdx):
+    def getEdgeVector(self,edgeIdx): 
         edgeLine = self.mesh.TopologyEdges.EdgeLine(edgeIdx)
         # Vector3d
         vec = edgeLine.Direction
         return vec
 
     def getPointsForEdge(self,edgeIdx):
-        tVertI, tVertJ = self.getTVertsForEdge(self.mesh, edgeIdx)
+        tVertI, tVertJ = self.getTVertsForEdge(edgeIdx)
         pntI = self.mesh.TopologyVertices.Item[tVertI]
         pntJ = self.mesh.TopologyVertices.Item[tVertJ]
         return [pntI, pntJ]
@@ -212,15 +245,60 @@ class Mesh(object):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
         return convertArray(arrFaceEdges)
 
-    def displayCutEdges(self, color, edgeIdxs, groupName):
+class MeshDisplayer(object):
+
+    def __init__(self,meshElementFinder):
+        self.meshElementFinder = meshElementFinder
+
+    def displayTVertIdx(self,vert, disp=None, color=(0, 255, 0, 255)):
+        if disp is None:
+           disp = vert
+        point = self.meshElementFinder.mesh.TopologyVertices.Item[vert]
+        vis.drawTextDot(point, str(disp), color)
+
+
+    def displayEdgeIdx(self,line, edgeIdx, color):
+        cenX = (line.FromX + line.ToX) / 2
+        cenY = (line.FromY + line.ToY) / 2
+        cenZ = (line.FromZ + line.ToZ) / 2
+        point = Rhino.Geometry.Point3d(cenX, cenY, cenZ)
+        return vis.drawTextDot(point, str(edgeIdx), color)
+        # rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
+
+    def displayIJEdge(self, edgeIdx):
+        pntI,pntJ = self.meshElementFinder.getPointsForEdge(edgeIdx)
+        rs.AddTextDot('I', pntI)
+        rs.AddTextDot('J', pntJ)
+
+    def displayFaceIdxs(self):
+        for i,face in enumerate(meshElementFinder.meshFaces()):
+            self.displayFaceIdx(i)
+
+    def displayFaceIdx(self, face):
+        centerPnt = self.meshElementFinder.mesh.Faces.GetFaceCenter(face)
+        rs.AddTextDot(str(face), centerPnt)
+
+    '''
+    TO WORK ON
+    def displayNormals(self):
+        normLines = []
+        for i in range(mesh.FaceNormals.Count):
+            pntCenter = mesh.Faces.GetFaceCenter(i)  # Point3d
+            posVecCenter = Rhino.Geometry.Vector3d(pntCenter)
+            vecNormal = mesh.FaceNormals.Item[i]  # Vector3f
+            vecNormal.Unitize()
+            lineGuid = drawVector(vecNormal, pntCenter, (0, 0, 0, 0))
+            normLines.append(lineGuid)
+        name = createGroup('Normals', normLines)
+        return name
+    '''
+
+    def displayCutEdges(self, color, edgeIdxs):
         drawnEdges = {}
         if edgeIdxs:
             for edgeIdx in edgeIdxs:
-                tVertI, tVertJ = self.getTVertsForEdge(edgeIdx)
-                point3fI = self.mesh.TopologyVertices.Item[tVertI]
-                point3fJ = self.mesh.TopologyVertices.Item[tVertJ]
-                
-                lineGuid, line = drawLine([point3fI, point3fJ], color, 'None')
+                points = self.meshElementFinder.getPointsForEdge(edgeIdx)
+                lineGuid, line = vis.drawLine(points, color, 'None')
         return drawnEdges
 
 if __name__ == "__main__":

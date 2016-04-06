@@ -22,12 +22,13 @@ def createTransformMatrix(from_frame, to_frame):
 
     return xForm2
 
-def getBasisOnMesh(mesh_location, mesh):
-    faceIdx, edgeIdx, tVertIdx = mesh_location
-    faceTopoVerts = convertArray(mesh.Faces.GetTopologicalVertices(faceIdx))
-    assert(tVertIdx in faceTopoVerts), "prblm in getBasisOnMesh():tVert not in faceTopoVerts "
-    edgeTopoVerts = [mesh.TopologyEdges.GetTopologyVertices(
-        edgeIdx).I, mesh.TopologyEdges.GetTopologyVertices(edgeIdx).J]
+def get_frame_on_mesh(mesh_location, myMesh):
+    faceIdx, edgeIdx = mesh_location
+    face_edges = myMesh.getFaceEdges(faceIdx)
+    assert(edgeIdx in face_edges), "prblm in get_frame_on_mesh(): edgeIdx not in face_edges"
+    #assert(tVertIdx in faceTopoVerts), "prblm in getBasisOnMesh():tVert not in faceTopoVerts "
+    """
+    edgeTopoVerts = myMesh.getTVertsForEdge(edgeIdx) 
     assert(tVertIdx in edgeTopoVerts), "prblm in getBasisOnMesh():tVert not part of given edge"
 
     def getOther(tVertIdx, edgeTopoVerts):
@@ -40,15 +41,19 @@ def getBasisOnMesh(mesh_location, mesh):
             return None
 
     """U"""
-    p1 = mesh.TopologyVertices.Item[tVertIdx]
-    p2 = mesh.TopologyVertices.Item[getOther(tVertIdx, edgeTopoVerts)]
-    pU = p2 - p1
-    u = Rhino.Geometry.Vector3d(pU)
+#    p1 = myMesh.mesh.TopologyVertices.Item[tVertIdx]
+#    p2 = myMesh.mesh.TopologyVertices.Item[getOther(tVertIdx, edgeTopoVerts)]
+#    pU = p2 - p1
+#    u = Rhino.Geometry.Vector3d(pU)
+"""
+    u = myMesh.getEdgeVector(edgeIdx)
+    
     """W"""
-    w = Rhino.Geometry.Vector3d(mesh.FaceNormals.Item[faceIdx])
+    w = Rhino.Geometry.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
     """P"""
-    origin = mesh.TopologyVertices.Item[tVertIdx]
-    return Frame.create_frame(origin,u,w)
+    pntI,pntJ = myMesh.getPointsForEdge(edgeIdx)
+    origin_vec = Rhino.Geometry.Vector3d(pntI)
+    return Frame.create_frame(origin_vec,u,w)
 
 def get_net_frame(pointPair):
     pntI, pntJ = pointPair
@@ -56,6 +61,17 @@ def get_net_frame(pointPair):
     x = Rhino.Geometry.Vector3d(pntJ - pntI)
     z = rs.WorldXYPlane()[3]
     return Frame.create_frame(o,x,z)
+
+def make_origin_frame():
+    plane = rs.WorldXYPlane()
+    """
+    print "first element of worldXYplane is {}".format(type(plane[0]))
+    print "second element of worldXYplane is {}".format(type(plane[1]))
+    print "third element of worldXYplane is {}".format(type(plane[2]))
+    print "fourth element of worldXYplane is {}".format(type(plane[3]))
+    """
+    return Frame(plane[0],plane[1],plane[2],plane[3])
+
 
 #Frame = collections.namedtuple('Frame',['origin','xVec','yVec','zVec'])
 
@@ -67,7 +83,7 @@ class Frame(object):
     """
     def __init__(self,origin,xVec,yVec,zVec):
         self.origin = origin
-        self.xVec = xVec
+        self.xVec = xVec #Vector3d
         self.yVec = yVec
         self.zVec = zVec
         self.precision = .0000001
@@ -106,7 +122,6 @@ class Frame(object):
     def _check_orthogonal(self):
         xy = Rhino.Geometry.Vector3d.Multiply(self.xVec,self.yVec)
         assert(math.fabs(xy)< self.precision)
-
         yz = Rhino.Geometry.Vector3d.Multiply(self.yVec,self.xVec)
         assert(math.fabs(yz)< self.precision)
         zx = Rhino.Geometry.Vector3d.Multiply(self.zVec,self.xVec)
@@ -118,4 +133,4 @@ class Frame(object):
         assert(self.zVec.Length - 1 < .00000001), "z.Length!~=1"
 
 if __name__ == "__main__":
-    pass
+    make_origin_frame()

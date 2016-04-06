@@ -1,54 +1,8 @@
 from rhino_helpers import *
 
 
-def displayTVertIdx(mesh, vert, disp=None, color=(0, 255, 0, 255)):
-    if disp is None:
-       disp = vert
-    point = mesh.TopologyVertices.Item[vert]
-    drawTextDot(point, str(disp), color)
-
-
-def displayEdgeIdx(line, edgeIdx, color):
-    cenX = (line.FromX + line.ToX) / 2
-    cenY = (line.FromY + line.ToY) / 2
-    cenZ = (line.FromZ + line.ToZ) / 2
-    point = Rhino.Geometry.Point3d(cenX, cenY, cenZ)
-    return drawTextDot(point, str(edgeIdx), color)
-    # rs.AddTextDot(eIdx,[cenX,cenY,cenZ])
-
-
-def displayIJEdge(mesh, edgeIdx):
-    vertI, vertJ = getTVerts(edgeIdx, mesh)
-    pntI = mesh.TopologyVertices.Item[vertI]
-    pntJ = mesh.TopologyVertices.Item[vertJ]
-    rs.AddTextDot('I', pntI)
-    rs.AddTextDot('J', pntJ)
-
-
-def displayNormals(mesh):
-    normLines = []
-    for i in range(mesh.FaceNormals.Count):
-        pntCenter = mesh.Faces.GetFaceCenter(i)  # Point3d
-        posVecCenter = Rhino.Geometry.Vector3d(pntCenter)
-        vecNormal = mesh.FaceNormals.Item[i]  # Vector3f
-        vecNormal.Unitize()
-        lineGuid = drawVector(vecNormal, pntCenter, (0, 0, 0, 0))
-        normLines.append(lineGuid)
-    name = createGroup('Normals', normLines)
-    return name
-
-
 def displayVector(vector, position, color):
     endPnt = vector
-
-def displayFaceIdxs(mesh):
-    for i in xrange(mesh.Faces.Count):
-        centerPnt = mesh.Faces.GetFaceCenter(i)
-        rs.AddTextDot(str(i), centerPnt)
-
-def displayFaceIdx(mesh, face):
-    centerPnt = mesh.Faces.GetFaceCenter(face)
-    rs.AddTextDot(str(face), centerPnt)
 
 def setAttrColor(a, r, g, b):
     attr = Rhino.DocObjects.ObjectAttributes()

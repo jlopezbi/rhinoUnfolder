@@ -1,7 +1,9 @@
 import unittest
 import Rhino
 import transformations as trans
+import mesh
 reload(trans)
+reload(mesh)
 
 class FrameTestCase(unittest.TestCase):
 
@@ -39,7 +41,21 @@ class FrameTestCase(unittest.TestCase):
         bad_frame.zVec = Rhino.Geometry.Vector3d(0,0,6)
         self.assertRaises(AssertionError,bad_frame._check_unitized)
 
+class FrameOnMeshTestCase(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mesh = mesh.make_test_mesh()
+    
+    def test_get_frame_on_mesh(self):
+        mesh_location = (0,2)
+        frame = trans.get_frame_on_mesh(mesh_location,self.mesh)
+        frame.show()
+
+
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(MeshTestCase)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    suiteA = unittest.TestLoader().loadTestsFromTestCase(FrameTestCase)
+    suiteB = unittest.TestLoader().loadTestsFromTestCase(FrameOnMeshTestCase)
+    big_suite = unittest.TestSuite([suiteA,suiteB])
+    unittest.TextTestRunner(verbosity=2).run(big_suite)
 
