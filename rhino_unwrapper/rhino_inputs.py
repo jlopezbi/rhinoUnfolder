@@ -23,9 +23,9 @@ def getMesh(message=None):
     if obj:
         return mesh
 
-
 def getUserCuts(myMesh):
     display = True # show selected cut edges
+    edges = myMesh.get_set_of_edges()
     cuts = set()
     color = (0, 255, 0, 255)
     isChain = False
@@ -65,7 +65,6 @@ def getUserCuts(myMesh):
         elif edgeIdx == -1:
             print("enter:")
             break
-
     return cuts
 
 

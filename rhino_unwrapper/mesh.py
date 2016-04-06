@@ -37,7 +37,11 @@ class Mesh(object):
         if tVert in listVerts:
             listVerts = listVerts.remove(tVert)
         return listVerts
-
+    
+    def get_set_of_edges(self):
+        count = self.mesh.TopologyEdges.Count
+        return set(range(count))
+        
 
     def getEdgesForVert(self,tVert):
         # not implimented in rhinoCommon! ::::(
@@ -86,8 +90,6 @@ class Mesh(object):
         else:
             pass
 
-                
-
     def getFacesForVert(self,tVert):
         arrfaces = self.mesh.TopologyVertices.ConnectedFaces(tVert)
         return convertArray(arrfaces)
@@ -113,7 +115,6 @@ class Mesh(object):
             faceIdxs.append(arrConnFaces.GetValue(1))
 
         return faceIdxs
-
 
     def getChain(self,edge, angleTolerance):
         '''
@@ -221,5 +222,9 @@ class Mesh(object):
                 
                 lineGuid, line = drawLine([point3fI, point3fJ], color, 'None')
         return drawnEdges
+
+if __name__ == "__main__":
+    pass
+
 
 

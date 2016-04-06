@@ -3,10 +3,10 @@ import scriptcontext
 import random,inspect
 import weight_functions as wf
 import mesh as m
-import layout as la
+import unfold 
 
 reload(wf)
-reload(la)
+reload(unfold)
 reload(m)
 
 def all_weight_functions():
@@ -79,7 +79,7 @@ if __name__=="__main__":
     getter = meshGetter()
     myMesh = m.Mesh(getter.getSelectedMesh())
     weightFunc = all_weight_functions()["edgeAngle"]
-    unfolder = la.UnFolder()
+    unfolder = unfold.UnFolder()
     netMaker = NetMaker(myMesh,weightFunc,unfolder,None)
     net = netMaker.makeNet()
     print "type of flat edge 0: ",

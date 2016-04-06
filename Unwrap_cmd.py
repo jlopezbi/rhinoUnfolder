@@ -1,15 +1,15 @@
-import rhino_unwrapper.commands as cm
 import rhino_unwrapper.unfold as unfold
 import rhino_unwrapper.rhino_inputs as ri
 import rhino_unwrapper.weight_functions as wf
 import rhino_unwrapper.mesh as m
+import rhino_unwrapper.Map as mapper
 import inspect
 
-reload(cm)
 reload(unfold)
 reload(ri)
 reload(wf)
 reload(m)
+reload(mapper)
 
 
 def all_weight_functions():
@@ -31,10 +31,11 @@ def RunCommand():
 
     print all_weight_functions()
     weightFunction = ri.getOptions_dict(all_weight_functions())
+    island_creator  = unfold.IslandCreator(mapper.Map(myMesh),fold_list,myMesh)
 
     if mesh and weightFunction:
         unfolder = unfold.UnFolder()
-        dataMap,net,foldList = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius)
+        dataMap,net = unfolder.unfold(myMesh,userCuts,weightFunction,holeRadius)
         net.findInitalSegments() 
         net.draw_edges() 
 

@@ -3,87 +3,147 @@ import transformations as tf
 import FlatEdge as fe
 import Net as nt
 import traversal as tr
-from Map import Map
+import Map
+import mesh
+import rhino_inputs as ri
+import weight_functions as wf
+
 import rhinoscriptsyntax as rs
 import Rhino
+import collections,inspect
 
 reload(tf)
 reload(fe)
 reload(nt)
 reload(tr)
 
+def all_weight_functions():
+    return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
+
+class UnFolder(object):
+    """
+    UnFolder is a class that unfolds a mesh by creating a net
+    THIS IS THE NEW MAIN PLACE IN THE CODE!
+    """
+
+    def __init__(self):
+        self.myMesh  = mesh.Mesh(ri.getMesh("select mesh to unfold"))
+        self.dataMap = Map.Map(self.myMesh)
+        if not self.myMesh: return
+        self.user_cuts = ri.getUserCuts(self.myMesh)
+        if not self.user_cuts: return
+        self.weightFunction = ri.getOptions_dict(all_weight_functions())
+        if not self.weightFunction: return
+        self.dual = tr.buildMeshGraph(self.myMesh,
+                                      self.user_cuts,
+                                      self.weightFunction)
+        self.fold_list = tr.getSpanningKruskal(self.dual, self.myMesh.mesh)
+        self.cut_list = tr.getCutList(self.myMesh.mesh, self.fold_list)
+        self.net = nt.Net(self.myMesh)
+        self.islandCreator = IslandCreator(self.dataMap, self.myMesh)
+
+    def initBasisInfo(self, mesh, origin):
+        faceIdx = 0
+        edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
+        tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
+        initBasisInfo = Basis(faceIdx, edgeIdx, tVertIdx)
+        return initBasisInfo
+    
+    def make_origin_basis(self):
+        origin = rs.WorldXYPlane()
+        return Basis(origin[0],origin[1],origin[2])
+
+    def unfold(self):
+        fromBasis = self.initBasisInfo(self.myMesh.mesh, origin)
+        toBasis = self.make_origin_basis() 
+
+        # currently assumes one island makes up net
+        island = self.islandCreator.make_island(self.fold_list,fromBasis,toBasis)
+        self.net.add_island(island)
+
+if __name__ == "__main__":
+    unfolder = UnFolder()
+    unfolder.unfold()
+
+
+MeshFrame = collections.namedtuple('MeshFrame',['face','edge','tVert'])
+#Island = collections.nametuple('Island',['flatVerts','flatEdges','flatFaces'])
 
 class IslandCreator(object):
     """
     traverses a mesh to create an island
     """
-    def __init__(self):
+    def __init__(self,dataMap=None,myMesh=None):
         self.island = nt.Island()
+        self.dataMap = dataMap
+        self.myMesh = myMesh
 
-    def layoutFace(self, fromFace, hopEdge, basisInfo,
-                   foldList, myMesh, toBasis, dataMap):
+    def make_island(self,foldList,face,toBasis):
+        self.foldList = foldList
+        self.layout_face(None,None,fromBasis,toBasis)
+
+    def layout_face(self, fromFace, hopEdge, meshFrame, toBasis):
         ''' Recursive Function to traverse through faces, hopping along fold edges
             input:
                 depth = recursion level
-                basisInfo = (faceIdx,edgeIdx,tVertIdx) information required to make basis
-                foldList = list of edges that are folded
-                myMesh = a wrapper for RhinoCommon mesh, to unfold
+                meshFrame = (faceIdx,edgeIdx,tVertIdx) information required to make basis
+                self.myMesh = a wrapper for RhinoCommon mesh, to unfold
                 toBasis = basis in flat world
             out/in:
                 flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
         '''
-        xForm = tf.getTransform(basisInfo, toBasis, myMesh.mesh)
-        netVerts, mapping = self.assignFlatVerts(myMesh, dataMap, hopEdge, basisInfo[0], xForm) 
-        self.island.flatFaces[basisInfo[0]] = FlatFace(netVerts, fromFace)
+        mesh_frame = tf.getBasisOnMesh(meshFrame,self.myMesh.mesh)
+        xForm = tf.createTransformMatrix(mesh_frame, toBasis)
+        netVerts, mapping = self.assignFlatVerts(self.myMesh, self.dataMap, hopEdge,
+                                                 meshFrame.face, xForm) 
+        self.island.flatFaces[meshFrame.face] = FlatFace(netVerts, fromFace)
 
-        faceEdges = myMesh.getFaceEdges(basisInfo[0])
+        faceEdges = self.myMesh.getFaceEdges(meshFrame.face)
         for edge in faceEdges:
-            meshI, meshJ = myMesh.getTVertsForEdge(edge)
+            meshI, meshJ = self.myMesh.getTVertsForEdge(edge)
             netI = mapping[meshI]
             netJ = mapping[meshJ]
             #flatEdge = fe.FlatEdge(meshEdgeIdx=edge, vertAidx=netI,
-                                   #vertBidx=netJ,fromFace=basisInfo[0]) # since faces have direct mapping this fromFace corresponds
+                                   #vertBidx=netJ,fromFace=meshFrame[0]) # since faces have direct mapping this fromFace corresponds
             # to both the netFace and meshFace
 
-            if edge in foldList:
-                if not self.alreadyBeenPlaced(edge, dataMap.meshEdges):
+            if edge in self.foldList:
+                if not self.alreadyBeenPlaced(edge, self.dataMap.meshEdges):
 
-                    newBasisInfo = self.getNewBasisInfo(basisInfo, edge, myMesh)
+                    new_mesh_frame = self.getNewBasisInfo(meshFrame, edge, self.myMesh)
                     edgeCoords = (self.island.flatVerts[netI].point,self.island.flatVerts[netJ].point)
 
                     flatEdge = fe.FoldEdge(meshEdgeIdx=edge, vertAidx=netI,
-                                   vertBidx=netJ,fromFace=basisInfo[0],toFace=newBasisInfo[0]) 
+                                   vertBidx=netJ,fromFace=meshFrame.face,toFace=new_mesh_frame.face) 
                     netEdge = self.island.addEdge(flatEdge)
-                    dataMap.updateEdgeMap(edge, netEdge)
+                    self.dataMap.updateEdgeMap(edge, netEdge)
 
                     # RECURSE
                     recurse = True
-                    newToBasis = tf.getBasisFlat(edgeCoords)
-                    dataMap = self.layoutFace(
-                        basisInfo[0], flatEdge, newBasisInfo, foldList, myMesh, newToBasis, net, dataMap)
+                    new_net_frame = tf.get_net_frame(edgeCoords)
+                    self.dataMap = self.layout_face( meshFrame.face, flatEdge, new_mesh_frame,new_net_frame)
 
             else:
-                if len(dataMap.meshEdges[edge]) == 0:
+                if len(self.dataMap.meshEdges[edge]) == 0:
                     flatEdge = fe.FlatEdge(meshEdgeIdx=edge, vertAidx=netI,
-                                   vertBidx=netJ,fromFace=basisInfo[0])
+                                   vertBidx=netJ,fromFace=meshFrame.face)
                     netEdge = self.island.addEdge(flatEdge)
-                    dataMap.updateEdgeMap(edge, netEdge)
+                    self.dataMap.updateEdgeMap(edge, netEdge)
 
-                elif len(dataMap.meshEdges[edge]) == 1:
-                    otherEdge = dataMap.meshEdges[edge][0]
-                    otherFace = myMesh.getOtherFaceIdx(edge,basisInfo[0])
+                elif len(self.dataMap.meshEdges[edge]) == 1:
+                    otherEdge = self.dataMap.meshEdges[edge][0]
+                    otherFace = self.myMesh.getOtherFaceIdx(edge,meshFrame.face)
                     flatEdge = fe.CutEdge(meshEdgeIdx=edge,
                                           vertAidx=netI,
                                           vertBidx=netJ,
-                                          fromFace=basisInfo[0],
+                                          fromFace=meshFrame.face,
                                           toFace=otherFace,
                                           sibling=otherEdge)
-                    flatEdge.get_other_face_center(myMesh, basisInfo[0], xForm)
+                    flatEdge.get_other_face_center(self.myMesh, meshFrame.face, xForm)
                     netEdge = self.island.addEdge(flatEdge)
-                    dataMap.updateEdgeMap(edge, netEdge)
+                    self.dataMap.updateEdgeMap(edge, netEdge)
                     sibFlatEdge = self.island.flatEdges[otherEdge]
                     self.island.flatEdges[otherEdge] = fe.change_to_cut_edge(sibFlatEdge,netEdge)
-        return  dataMap
 
     def assignFlatVerts(self, mesh, dataMap,  hopEdge, face, xForm):
         '''
@@ -130,7 +190,7 @@ class IslandCreator(object):
         newEdgeIdx = testEdgeIdx
         newTVertIdx = myMesh.mesh.TopologyEdges.GetTopologyVertices(
             testEdgeIdx).I  # convention: useI
-        return newFaceIdx, newEdgeIdx, newTVertIdx
+        return Basis(newFaceIdx, newEdgeIdx, newTVertIdx)
 
     def getNetEdges(self, mesh, edge, netVerts, dataMap):
         I, J = mesh.getTVertsForEdge(edge)
@@ -146,43 +206,6 @@ class IslandCreator(object):
         return len(meshEdges[edge]) > 0
 
 
-class UnFolder(object):
-    """
-    UnFolder is a class that generates a net
-    from a mesh and a foldList
-    """
 
-    def __init__(self,net,dataMap):
-        """
-        Populates a net with islands
-        """
-        self.net = net
-        self.dataMap = dataMap
-
-    def initBasisInfo(self, mesh, origin):
-        faceIdx = 0
-        edgeIdx = mesh.TopologyEdges.GetEdgesForFace(faceIdx).GetValue(0)
-        tVertIdx = mesh.TopologyEdges.GetTopologyVertices(edgeIdx).I
-        initBasisInfo = (faceIdx, edgeIdx, tVertIdx)
-        return initBasisInfo
-
-    def unfold(self, myMesh, userCuts, weightFunction, holeRadius=10):
-        #### MAIN FUNCTION ####
-        meshDual = tr.buildMeshGraph(myMesh, userCuts, weightFunction)
-        foldList = tr.getSpanningKruskal(meshDual, myMesh.mesh)
-        cutList = tr.getCutList(myMesh.mesh, foldList)
-
-        origin = rs.WorldXYPlane()
-        basisInfo = self.initBasisInfo(myMesh.mesh, origin)
-        toBasis = origin
-
-        net = nt.Net(myMesh, holeRadius)
-        dataMap = Map(myMesh)
-        net, dataMap = self.layoutFace(
-            None, None, basisInfo, foldList, myMesh, toBasis, net, dataMap)
-        return dataMap, net, foldList
-    
-    def create_island(self,start_face,foldList,myMesh):
-        pass
 
     

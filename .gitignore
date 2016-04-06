@@ -1,4 +1,7 @@
 .DS_Store
+*.pyc
+rhino_unwrapper/*.pyc
+rhino_unwrapper/*.swp
 XformRotation.py
 csvToRhino.py
 nodeTest.xml
@@ -12,3 +15,4 @@ pickMeshEdge.py
 hawkinsLayout.py
 tests/
 ExamplesRhinoScripting/
+

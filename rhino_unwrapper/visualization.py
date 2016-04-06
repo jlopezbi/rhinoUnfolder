@@ -39,28 +39,22 @@ def displayNormals(mesh):
 
 
 def displayVector(vector, position, color):
-    endPnt = vec
-
+    endPnt = vector
 
 def displayFaceIdxs(mesh):
     for i in xrange(mesh.Faces.Count):
         centerPnt = mesh.Faces.GetFaceCenter(i)
         rs.AddTextDot(str(i), centerPnt)
 
-
 def displayFaceIdx(mesh, face):
     centerPnt = mesh.Faces.GetFaceCenter(face)
     rs.AddTextDot(str(face), centerPnt)
-
-
-
 
 def setAttrColor(a, r, g, b):
     attr = Rhino.DocObjects.ObjectAttributes()
     attr.ObjectColor = System.Drawing.Color.FromArgb(a, r, g, b)
     attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
     return attr
-
 
 def setAttrArrow(attr, strType):
     if strType == 'StartArrowhead':
@@ -74,7 +68,6 @@ def setAttrArrow(attr, strType):
     attr.ObjectDecoration = value
     return attr
 
-
 def drawPolyline(polyline, color, arrowType):
     attr = setAttrColor(color[0], color[1], color[2], color[3])
     if arrowType:
@@ -85,7 +78,6 @@ def drawPolyline(polyline, color, arrowType):
 
 def rhino_line(pntA,pntB):
     return Rhino.Geometry.Line(pntA,pntB)
-
 
 def drawLine(points, color=(0,0,0,0), arrowType='None' ):
     # points must be Point3d
@@ -106,7 +98,7 @@ def translateLine(self, xForm):
         scriptcontext.doc.Objects.Replace(self.line_id, self.line)
 
 
-def drawVector(vector, position, color):
+def drawVector(vector, position, color=[0,0,0,0]):
     pntStart = Rhino.Geometry.Point3d(position)
     vecEnd = position + vector
     pntEnd = Rhino.Geometry.Point3d(vecEnd)

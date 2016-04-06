@@ -5,13 +5,9 @@ import math
 reload(visualization)
 
 
-
 def createTransformMatrix(from_frame, to_frame):
     p, u, v, w = from_frame.get_tuple()
     o, i, j, k = to_frame.get_tuple()
-
-    o = Rhino.Geometry.Vector3d(o)
-    p = Rhino.Geometry.Vector3d(p)
 
     changeBasisXform = Rhino.Geometry.Transform.ChangeBasis(u, v, w, i, j, k)
 
@@ -26,8 +22,8 @@ def createTransformMatrix(from_frame, to_frame):
 
     return xForm2
 
-def getBasisOnMesh(mesh_frame, mesh):
-    faceIdx, edgeIdx, tVertIdx = mesh_frame
+def getBasisOnMesh(mesh_location, mesh):
+    faceIdx, edgeIdx, tVertIdx = mesh_location
     faceTopoVerts = convertArray(mesh.Faces.GetTopologicalVertices(faceIdx))
     assert(tVertIdx in faceTopoVerts), "prblm in getBasisOnMesh():tVert not in faceTopoVerts "
     edgeTopoVerts = [mesh.TopologyEdges.GetTopologyVertices(
@@ -53,12 +49,6 @@ def getBasisOnMesh(mesh_frame, mesh):
     """P"""
     origin = mesh.TopologyVertices.Item[tVertIdx]
     return Frame.create_frame(origin,u,w)
-
-
-def getTransform(meshFrame, toBasis, mesh):
-    fromBasis = getBasisOnMesh(meshFrame, mesh)
-    xForm = createTransformMatrix(fromBasis, toBasis)
-    return xForm
 
 def get_net_frame(pointPair):
     pntI, pntJ = pointPair
@@ -126,9 +116,6 @@ class Frame(object):
         assert(self.xVec.Length - 1 < .00000001), "x.Length!~=1"
         assert(self.yVec.Length - 1 < .00000001), "y.Length!~=1"
         assert(self.zVec.Length - 1 < .00000001), "z.Length!~=1"
-
-    def test_self(self):
-        print type(self.origin)
 
 if __name__ == "__main__":
     pass

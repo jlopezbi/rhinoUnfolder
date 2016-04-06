@@ -29,13 +29,15 @@ class Net():
     """
 #myMesh.mesh.Faces.Count
 
-    def __init__(self, myMesh, holeRadius):
+    def __init__(self, myMesh, holeRadius=10):
         self.holeRadius = holeRadius
         self.angleThresh = math.radians(3.3)
         self.myMesh = myMesh
         self.islands = []
-
         #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
+
+    def add_island(self,island):
+        self.islands.append(island)
 
     '''SEGMENTATION, seems like should be a seperate thing!'''
 
@@ -197,7 +199,11 @@ class Island(object):
     def __init__(self):
         self.flatVerts = []
         self.flatEdges = []
-        self.flatFaces = [None]  
+        self.flatFaces = []  
+
+    def addFace(self,flatFace):
+        self.flatFaces.append(flatFace)
+        return len(self.flatFaces) - 1
 
     def addEdge(self, flatEdge):
         self.flatEdges.append(flatEdge)
