@@ -2,6 +2,7 @@ import visualization as vis
 import scriptcontext
 import rhinoscriptsyntax as rs
 import Rhino.Geometry as geom
+reload(vis)
 
 def make_test_mesh():
     vertices = []
@@ -70,7 +71,7 @@ class Mesh(object):
 
     def getTVertsForVert(self,tVert):
         arrTVerts = self.mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
-        listVerts = convertArray(arrTVerts)
+        listVerts = vis.convertArray(arrTVerts)
         if tVert in listVerts:
             listVerts = listVerts.remove(tVert)
         return listVerts
@@ -124,7 +125,7 @@ class Mesh(object):
 
     def getFacesForVert(self,tVert):
         arrfaces = self.mesh.TopologyVertices.ConnectedFaces(tVert)
-        return convertArray(arrfaces)
+        return vis.convertArray(arrfaces)
 
     def getTVertsForEdge(self,edge):
         vertPair = self.mesh.TopologyEdges.GetTopologyVertices(edge)
@@ -254,12 +255,12 @@ class Mesh(object):
         list of 4 values if quad, 3 values if triangle
         '''
         arrTVerts = self.mesh.Faces.GetTopologicalVertices(faceIdx)
-        tVerts = convertArray(arrTVerts)
+        tVerts = vis.convertArray(arrTVerts)
         return uniqueList(tVerts)
 
     def getFaceEdges(self,faceIdx):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
-        return convertArray(arrFaceEdges)
+        return vis.convertArray(arrFaceEdges)
 
 class MeshDisplayer(object):
 
@@ -289,7 +290,7 @@ class MeshDisplayer(object):
         rs.AddTextDot('I', pntI)
         rs.AddTextDot('J', pntJ)
 
-    def displayFaceIdxs(self):
+    def displayFacesIdx(self):
         for i,face in enumerate(self.meshElementFinder.meshFaces()):
             self.displayFaceIdx(i)
 
@@ -297,20 +298,24 @@ class MeshDisplayer(object):
         centerPnt = self.meshElementFinder.mesh.Faces.GetFaceCenter(face)
         rs.AddTextDot(str(face), centerPnt)
 
-    '''
-    TO WORK ON
     def displayNormals(self):
         normLines = []
-        for i in range(mesh.FaceNormals.Count):
-            pntCenter = mesh.Faces.GetFaceCenter(i)  # Point3d
+        for i in range(self.meshElementFinder.mesh.FaceNormals.Count):
+            pntCenter = self.meshElementFinder.mesh.Faces.GetFaceCenter(i)  # Point3d
             posVecCenter = geom.Vector3d(pntCenter)
-            vecNormal = mesh.FaceNormals.Item[i]  # Vector3f
+            vecNormal = self.meshElementFinder.mesh.FaceNormals.Item[i]  # Vector3f
             vecNormal.Unitize()
-            lineGuid = drawVector(vecNormal, pntCenter, (0, 0, 0, 0))
+            lineGuid = vis.drawVector(vecNormal, pntCenter)
             normLines.append(lineGuid)
-        name = createGroup('Normals', normLines)
-        return name
-    '''
+        #name = createGroup('Normals', normLines)
+        #return name
+
+    def display_edge_direction(self,edgeIdx):
+        line = self.meshElementFinder.get_edge_line(edgeIdx)
+        vis.draw_arrow(line,color=(0,255,0,255))
+
+    def display_all_edges_direction(self):
+        pass
 
     def displayCutEdges(self, color, edgeIdxs):
         drawnEdges = {}

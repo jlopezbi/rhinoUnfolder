@@ -1,5 +1,9 @@
 from rhino_helpers import *
 
+arrowTypes = {'none':Rhino.DocObjects.ObjectDecoration.None,
+              'start':Rhino.DocObjects.ObjectDecoration.StartArrowhead,
+              'end':Rhino.DocObjects.ObjectDecoration.EndArrowhead,
+              'both':Rhino.DocObjects.ObjectDecoration.BothArrowhead}
 
 def displayVector(vector, position, color):
     endPnt = vector
@@ -11,15 +15,7 @@ def setAttrColor(a, r, g, b):
     return attr
 
 def setAttrArrow(attr, strType):
-    if strType == 'StartArrowhead':
-        value = Rhino.DocObjects.ObjectDecoration.StartArrowhead
-    elif strType == 'EndArrowhead':
-        value = Rhino.DocObjects.ObjectDecoration.EndArrowhead
-    elif strType == 'BothArrowhead':
-        value = Rhino.DocObjects.ObjectDecoration.BothArrowhead
-    else:
-        value = 0
-    attr.ObjectDecoration = value
+    attr.ObjectDecoration = arrowTypes[strType]
     return attr
 
 def drawPolyline(polyline, color, arrowType):
@@ -33,14 +29,23 @@ def drawPolyline(polyline, color, arrowType):
 def rhino_line(pntA,pntB):
     return Rhino.Geometry.Line(pntA,pntB)
 
-def drawLine(points, color=(0,0,0,0), arrowType='None' ):
+def show_line(line,color,arrowType='none'):
+    attrCol = setAttrColor(color[0], color[1], color[2], color[3])
+    if arrowType:
+        attrCol = setAttrArrow(attrCol, arrowType)
+    line_guide = scriptcontext.doc.Objects.AddLine(line,attrCol)
+    return line_guide
+
+def draw_arrow(line,color=(0,0,0,0)):
+    show_line(line,color,arrowType='end')
+
+def show_line_from_points(points, color=(0,0,0,0), arrowType='none' ):
     # points must be Point3d
     if len(points) != 0:
         line = Rhino.Geometry.Line(points[0], points[1])
     attrCol = setAttrColor(color[0], color[1], color[2], color[3])
     if arrowType:
         attrCol = setAttrArrow(attrCol, arrowType)
-
     # returns a Guid (globally unique identifier)
     lineGuid = scriptcontext.doc.Objects.AddLine(line, attrCol)
     return lineGuid, line
@@ -56,7 +61,7 @@ def drawVector(vector, position, color=[0,0,0,0]):
     pntStart = Rhino.Geometry.Point3d(position)
     vecEnd = position + vector
     pntEnd = Rhino.Geometry.Point3d(vecEnd)
-    lineGuid = drawLine([pntStart, pntEnd], color, 'EndArrowhead')
+    lineGuid = show_line_from_points([pntStart, pntEnd], color ,'end')
     return lineGuid
 
 
@@ -79,7 +84,7 @@ perforations, tabs, etc"""
 def drawEdgeLine(flatEdge, color):
     p1, p2 = flatEdge.coordinates
     line = Rhino.Geometry.Line(p1, p2)
-    lineGuid = drawLine(line, flatEdge.edgeIdx, color, displayIdx=False)
+    lineGuid = show_line_from_points(line, flatEdge.edgeIdx, color, displayIdx=False)
     return lineGuid
 
 '''
@@ -87,19 +92,19 @@ EDGE_DRAW_FUNCTIONS = {}
 
 def drawFoldEdge(flatEdge):
   green = (0,49,224,61)
-  lineGuid = drawLine(flatEdge.coordinates,green)
+  lineGuid = show_line_from_points(flatEdge.coordinates,green)
   return lineGuid
 EDGE_DRAW_FUNCTIONS['fold'] = drawFoldEdge
 
 def drawCutEdge(flatEdge):
   red = (0,237,43,120)
-  lineGuid = drawLine(flatEdge.coordinates,red)
+  lineGuid = show_line_from_points(flatEdge.coordinates,red)
   return lineGuid
 EDGE_DRAW_FUNCTIONS['cut'] = drawCutEdge
 
 def drawNakedEdge(flatEdge):
   blue = (0,55,156,196)
-  lineGuid = drawLine(flatEdge.coordinates,blue)
+  lineGuid = show_line_from_points(flatEdge.coordinates,blue)
   return lineGuid
 EDGE_DRAW_FUNCTIONS['naked'] = drawNakedEdge
 '''

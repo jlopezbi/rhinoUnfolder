@@ -46,9 +46,13 @@ class FrameOnMeshTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.mesh = mesh.make_test_mesh()
+        cls.meshDisplayer = mesh.MeshDisplayer(cls.mesh)
+        cls.meshDisplayer.displayFacesIdx()
+        cls.meshDisplayer.displayEdgesIdx()
+        cls.meshDisplayer.displayTVertsIdx()
     
     def test_get_frame_on_mesh(self):
-        mesh_location = (0,2)
+        mesh_location = (1,10)
         frame = trans.get_frame_on_mesh(mesh_location,self.mesh)
         frame.show()
 

@@ -29,7 +29,13 @@ class MeshDiplayerTestCase(unittest.TestCase):
         self.meshDisplayer.displayEdgesIdx()
 
     def test_displayFaceIdxs(self):
-        self.meshDisplayer.displayFaceIdxs()
+        self.meshDisplayer.displayFacesIdx()
+
+    def test_displayNormals(self):
+        self.meshDisplayer.displayNormals()
+
+    def test_display_edge_direction(self):
+        self.meshDisplayer.display_edge_direction(0)
 
 if __name__ == "__main__":
     suiteA = unittest.TestLoader().loadTestsFromTestCase(MeshTestCase)
