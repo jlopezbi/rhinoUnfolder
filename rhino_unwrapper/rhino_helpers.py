@@ -8,7 +8,6 @@ import math
 
 '''Rhino_helpers'''
 
-
 def createGroup(groupName, objects):
     name = rs.AddGroup(groupName)
     if not rs.AddObjectsToGroup(objects, groupName):
@@ -16,14 +15,11 @@ def createGroup(groupName, objects):
         return
     return name
 
-
 def convertArray(array):
     pyList = []
     for i in range(array.Length):
         pyList.append(array.GetValue(i))
     return pyList
-
-
 
 def getCenterPointLine(line):
     cenX = (line.FromX + line.ToX) / 2
@@ -31,7 +27,6 @@ def getCenterPointLine(line):
     cenZ = (line.FromZ + line.ToZ) / 2
     point = Rhino.Geometry.Point3d(cenX, cenY, cenZ)
     return point
-
 
 def getOffset(points, testPoint, distance, towards, axis=(0, 0, 1)):
     '''
@@ -59,7 +54,6 @@ def getOffset(points, testPoint, distance, towards, axis=(0, 0, 1)):
     point = offsetPoint + points[0]
     return Rhino.Geometry.Line(point, vec), offsetVec
 
-
 def testPointIsLeftB(pointA, pointB, testPoint):
     '''
     ASSUMES: in XY plane!!!
@@ -72,7 +66,6 @@ def testPointIsLeftB(pointA, pointB, testPoint):
     cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine, vecTest)
     z = cross.Z  # (pos and neg)
     return z > 0
-
 
 def getOrientedVector(mesh, edgeIdx, tVert, isEnd):
     '''
@@ -92,12 +85,10 @@ def getOrientedVector(mesh, edgeIdx, tVert, isEnd):
     vec = Rhino.Geometry.Vector3d(vecPnt)
     return vec
 
-
 def getVectorForPoints(pntA, pntB):
     vecA = Rhino.Geometry.Vector3d(pntA)  # From
     vecB = Rhino.Geometry.Vector3d(pntB)  # To
     return Rhino.Geometry.Vector3d.Subtract(vecB, vecA)
-
 
 def getMidPoint(curve_id):
     '''get the midpoint of a curve
@@ -112,7 +103,6 @@ def getMidPoint(curve_id):
 
     return point
 
-
 def getMedian(edgeLens):
     eLensSorted = sorted(edgeLens)
     nEdges = len(edgeLens)
@@ -125,14 +115,11 @@ def getMedian(edgeLens):
     else:
         return edgeLens[int(nEdges / 2)]
 
-
 def approxEqual(A, B, tolerance=10**-4):
     return math.fabs(A - B) < tolerance
 
-
 def getFlatList(collection):
     return [element for subCollection in collection for element in subCollection]
-
 
 def uniqueList(seq, idfun=None):
     # order preserving

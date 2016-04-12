@@ -1,26 +1,26 @@
 from rhino_helpers import *
+import Rhino.Geometry as geom
 import visualization 
 import math
 
 reload(visualization)
 
-
 def createTransformMatrix(from_frame, to_frame):
     p, u, v, w = from_frame.get_tuple()
     o, i, j, k = to_frame.get_tuple()
 
-    changeBasisXform = Rhino.Geometry.Transform.ChangeBasis(u, v, w, i, j, k)
+    changeBasisXform = geom.Transform.ChangeBasis(u, v, w, i, j, k)
 
-    transFormToOrigin = Rhino.Geometry.Transform.Translation(-p)
-    rotatXform = Rhino.Geometry.Transform.Rotation(u, v, w, i, j, k)
-    transFormToPnt = Rhino.Geometry.Transform.Translation(o)
-    xForm1 = Rhino.Geometry.Transform.Multiply(rotatXform, transFormToOrigin)
-    xForm2 = Rhino.Geometry.Transform.Multiply(transFormToPnt, xForm1)
+    transFormToOrigin = geom.Transform.Translation(-p)
+    rotatXform = geom.Transform.Rotation(u, v, w, i, j, k)
+    transFormToPnt = geom.Transform.Translation(o)
+    xForm1 = geom.Transform.Multiply(rotatXform, transFormToOrigin)
+    xForm2 = geom.Transform.Multiply(transFormToPnt, xForm1)
 
-    transXform = Rhino.Geometry.Transform.Translation(o - p)
-    fullXform = Rhino.Geometry.Transform.Multiply(rotatXform, transXform)
+    transXform = geom.Transform.Translation(o - p)
+    fullXform = geom.Transform.Multiply(rotatXform, transXform)
 
-    return xForm2
+    return xForm2   
 
 def get_frame_on_mesh(mesh_location, myMesh):
     faceIdx, edgeIdx = mesh_location
@@ -44,21 +44,21 @@ def get_frame_on_mesh(mesh_location, myMesh):
 #    p1 = myMesh.mesh.TopologyVertices.Item[tVertIdx]
 #    p2 = myMesh.mesh.TopologyVertices.Item[getOther(tVertIdx, edgeTopoVerts)]
 #    pU = p2 - p1
-#    u = Rhino.Geometry.Vector3d(pU)
+#    u = geom.Vector3d(pU)
 """
-    u = myMesh.getEdgeVector(edgeIdx)
+    x = myMesh.get_edge_vec_oriented(edgeIdx,faceIdx)
     
     """W"""
-    w = Rhino.Geometry.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
+    w = geom.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
     """P"""
-    pntI,pntJ = myMesh.getPointsForEdge(edgeIdx)
-    origin_vec = Rhino.Geometry.Vector3d(pntI)
-    return Frame.create_frame(origin_vec,u,w)
+    pntI,pntJ = myMesh.get_oriented_points_for_edge(edgeIdx,faceIdx)
+    origin_vec = geom.Point3d(pntI)
+    return Frame.create_frame_from_normal_and_x(origin_vec,x,w)
 
 def get_net_frame(pointPair):
     pntI, pntJ = pointPair
     o = pntI
-    x = Rhino.Geometry.Vector3d(pntJ - pntI)
+    x = geom.Vector3d(pntJ - pntI)
     z = rs.WorldXYPlane()[3]
     return Frame.create_frame(o,x,z)
 
@@ -72,20 +72,14 @@ def make_origin_frame():
     """
     return Frame(plane[0],plane[1],plane[2],plane[3])
 
-
-#Frame = collections.namedtuple('Frame',['origin','xVec','yVec','zVec'])
-
 class Frame(object):
 
     """
     An orthonormal bases: each vector is of unit length
     and all three vectors are orthogonal to one-another
     """
-    def __init__(self,origin,xVec,yVec,zVec):
-        self.origin = origin
-        self.xVec = xVec #Vector3d
-        self.yVec = yVec
-        self.zVec = zVec
+    def __init__(self,plane):
+        self.plane = plane #RhinoGeom Plane
         self.precision = .0000001
         self._unitize()
         self._check_unitized()
@@ -94,43 +88,57 @@ class Frame(object):
         self.y_color = {'green':(0,32,250,32)}
         self.z_color = {'blue':(0,32,32,250)}
 
-    def get_tuple(self):
-        return (self.origin, self.xVec, self.yVec, self.zVec)
+    @classmethod
+    def create_frame_from_vectors(cls,origin,x,y):
+        plane = cls.instantiate_plane(origin,x,y)
+        return cls(plane)
 
     @classmethod
-    def create_frame(cls,origin,x,z):
-        y = Rhino.Geometry.Vector3d.CrossProduct(z, x)
-        return cls(origin,x,y,z)
+    def create_frame_from_normal_and_x(cls,origin,x,z):
+        y = geom.Vector3d.CrossProduct(z,x)
+        return cls(cls.instantiate_plane(origin,x,y))
+
+    @classmethod
+    def create_frame_from_tuples(cls,origin,x,y):
+        origin = geom.Point3d(origin[0],origin[1],origin[2])
+        x = geom.Vector3d(x[0],x[1],x[2])
+        y = geom.Vector3d(y[0],y[1],y[2])
+        plane = cls.instantiate_plane(origin,x,y)
+        return cls(plane)
+
+    @staticmethod
+    def instantiate_plane(origin,x,y):
+        assert x.IsPerpendicularTo(y), "vec {} is not perpendicular to {}".format(x,y)
+        return geom.Plane(origin,x,y)
 
     def show(self):
-        visualization.drawVector(self.xVec,self.origin,self.x_color['red'])
-        visualization.drawVector(self.yVec,self.origin,self.y_color['green'])
-        visualization.drawVector(self.zVec,self.origin,self.z_color['blue'])
+        visualization.drawVector(self.plane.XAxis,self.plane.Origin,self.x_color['red'])
+        visualization.drawVector(self.plane.YAxis,self.plane.Origin,self.y_color['green'])
+        visualization.drawVector(self.plane.ZAxis,self.plane.Origin,self.z_color['blue'])
 
-    def make_frame(self,origin,x,z):
-        y = Rhino.Geometry.Vector3d.CrossProduct(z, x)
-        return Frame(origin,x,y,z)
+    def is_equal(self,test_frame):
+        return self.plane.Equals(test_frame.plane)
 
     def _check_vector3d(self):
         pass
 
     def _unitize(self):
-        self.xVec.Unitize()
-        self.yVec.Unitize()
-        self.zVec.Unitize()
+        self.plane.XAxis.Unitize()
+        self.plane.YAxis.Unitize()
+        self.plane.ZAxis.Unitize()
 
     def _check_orthogonal(self):
-        xy = Rhino.Geometry.Vector3d.Multiply(self.xVec,self.yVec)
+        xy = geom.Vector3d.Multiply(self.plane.XAxis,self.plane.YAxis)
         assert(math.fabs(xy)< self.precision)
-        yz = Rhino.Geometry.Vector3d.Multiply(self.yVec,self.xVec)
+        yz = geom.Vector3d.Multiply(self.plane.YAxis,self.plane.ZAxis)
         assert(math.fabs(yz)< self.precision)
-        zx = Rhino.Geometry.Vector3d.Multiply(self.zVec,self.xVec)
+        zx = geom.Vector3d.Multiply(self.plane.ZAxis,self.plane.XAxis)
         assert(math.fabs(zx)< self.precision)
 
     def _check_unitized(self):
-        assert(self.xVec.Length - 1 < .00000001), "x.Length!~=1"
-        assert(self.yVec.Length - 1 < .00000001), "y.Length!~=1"
-        assert(self.zVec.Length - 1 < .00000001), "z.Length!~=1"
+        assert(self.plane.XAxis.Length - 1 < .00000001), "x.Length!~=1"
+        assert(self.plane.YAxis.Length - 1 < .00000001), "y.Length!~=1"
+        assert(self.plane.ZAxis.Length - 1 < .00000001), "z.Length!~=1"
 
 if __name__ == "__main__":
     make_origin_frame()

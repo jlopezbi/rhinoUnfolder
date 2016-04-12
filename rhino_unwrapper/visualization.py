@@ -5,9 +5,6 @@ arrowTypes = {'none':Rhino.DocObjects.ObjectDecoration.None,
               'end':Rhino.DocObjects.ObjectDecoration.EndArrowhead,
               'both':Rhino.DocObjects.ObjectDecoration.BothArrowhead}
 
-def displayVector(vector, position, color):
-    endPnt = vector
-
 def setAttrColor(a, r, g, b):
     attr = Rhino.DocObjects.ObjectAttributes()
     attr.ObjectColor = System.Drawing.Color.FromArgb(a, r, g, b)
@@ -17,14 +14,17 @@ def setAttrColor(a, r, g, b):
 def setAttrArrow(attr, strType):
     attr.ObjectDecoration = arrowTypes[strType]
     return attr
+    
+def rhino_polyline(points):
+    return Rhino.Geometry.PolylineCurve(points)
 
-def drawPolyline(polyline, color, arrowType):
+def drawPolyline(point_list, color=(0,0,0,0), arrowType='none'):
     attr = setAttrColor(color[0], color[1], color[2], color[3])
     if arrowType:
         attr = setAttrArrow(attr, arrowType)
 
-    poly_id = scriptcontext.doc.Objects.AddPolyline(polyline, attr)
-    return poly_id, polyline
+    poly_id = scriptcontext.doc.Objects.AddPolyline(point_list, attr)
+    return poly_id 
 
 def rhino_line(pntA,pntB):
     return Rhino.Geometry.Line(pntA,pntB)
@@ -49,7 +49,6 @@ def show_line_from_points(points, color=(0,0,0,0), arrowType='none' ):
     # returns a Guid (globally unique identifier)
     lineGuid = scriptcontext.doc.Objects.AddLine(line, attrCol)
     return lineGuid, line
-
 
 def translateLine(self, xForm):
     if self.line is not None:

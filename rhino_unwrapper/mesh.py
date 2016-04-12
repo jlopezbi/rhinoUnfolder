@@ -1,4 +1,5 @@
 import visualization as vis
+import rhino_helpers as helpers
 import scriptcontext
 import rhinoscriptsyntax as rs
 import Rhino.Geometry as geom
@@ -69,6 +70,25 @@ class Mesh(object):
         assert(newFaceIdx != faceIdx), "getOtherFaceIdx(): newFaceIdx == faceIdx!"
         return newFaceIdx
 
+    def get_set_of_edges(self):
+        count = self.mesh.TopologyEdges.Count
+        return set(range(count))
+
+    def get_set_of_face_idxs(self):
+        count = self.mesh.Faces.Count
+        return set(range(count))
+
+    def get_mesh_faces(self):
+        """
+        returns list of MeshFace instances that make up mesh
+        """
+        return (self.mesh.Faces.GetFace(i) for i in xrange(self.mesh.Faces.Count))
+
+    def meshTVerts(self):
+        return xrange(self.mesh.TopologyVertices.Count)
+
+    ### QUIRED OBJECT IS VERTEX
+
     def getTVertsForVert(self,tVert):
         arrTVerts = self.mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
         listVerts = vis.convertArray(arrTVerts)
@@ -111,62 +131,16 @@ class Mesh(object):
                     return edge
         return      
 
-    def getEdgeAngle(self,edge):
-        '''
-        get dihedral angle of a given edge in the mesh
-        '''
-        faceIdxs = self.getFacesForEdge(edge)
-        if (len(faceIdxs)==2):
-            faceNormA = self.mesh.FaceNormals.Item[faceIdxs[0]]
-            faceNormB = self.mesh.FaceNormals.Item[faceIdxs[1]]
-            return geom.Vector3d.VectorAngle(faceNormA,faceNormB)
-        else:
-            pass
-
     def getFacesForVert(self,tVert):
         arrfaces = self.mesh.TopologyVertices.ConnectedFaces(tVert)
         return vis.convertArray(arrfaces)
-
-    def getTVertsForEdge(self,edge):
-        vertPair = self.mesh.TopologyEdges.GetTopologyVertices(edge)
-        return [vertPair.I, vertPair.J]
-
-    def get_set_of_edges(self):
-        count = self.mesh.TopologyEdges.Count
-        return set(range(count))
-
-    def meshFaces(self):
-        return (self.mesh.Faces.GetFace(i) for i in xrange(self.mesh.Faces.Count))
     
-    def meshTVerts(self):
-        return xrange(self.mesh.TopologyVertices.Count)
-
-    def getFacesForEdge(self,edgeIndex):
-        '''
-        returns an array of indices of the faces connected to a given edge
-        if the array has only one face this indicates it is a naked edge
-        '''
-        arrConnFaces = self.mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
-
-        faceIdxs = []
-        faceIdxs.append(arrConnFaces.GetValue(0))
-        if arrConnFaces.Length == 2:
-            faceIdxs.append(arrConnFaces.GetValue(1))
-
-        return faceIdxs
-
-    def getChain(self,edge, angleTolerance):
-        '''
-        gets chains extending from both ends of a given edge,
-        using angleTolerance as stopping criterion
-        '''
-        chain = []
+    def getOtherTVert(self,edge, tVert):
         tVerts = self.getTVertsForEdge(edge)
-        for tVert in tVerts:
-            subChain = self.getTangentEdge(edge, tVert, angleTolerance, [])
-            chain.extend(subChain)
-        chain.append(edge)
-        return chain
+        tVerts.remove(tVert)
+        return tVerts[0]
+
+    ### Main OBJECT IS EDGE
 
     def getTangentEdge(self,edge, tVert, angleTolerance, chain):
         '''
@@ -192,10 +166,48 @@ class Mesh(object):
             nextTVert = self.getOtherTVert(self.mesh, newEdge, tVert)
             return self.getTangentEdge(newEdge, nextTVert, angleTolerance, chain)
 
-    def getOtherTVert(self,edge, tVert):
+    def getChain(self,edge, angleTolerance):
+        '''
+        gets chains extending from both ends of a given edge,
+        using angleTolerance as stopping criterion
+        '''
+        chain = []
         tVerts = self.getTVertsForEdge(edge)
-        tVerts.remove(tVert)
-        return tVerts[0]
+        for tVert in tVerts:
+            subChain = self.getTangentEdge(edge, tVert, angleTolerance, [])
+            chain.extend(subChain)
+        chain.append(edge)
+        return chain
+
+    def getFacesForEdge(self,edgeIndex):
+        '''
+        returns an array of indices of the faces connected to a given edge
+        if the array has only one face this indicates it is a naked edge
+        '''
+        arrConnFaces = self.mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
+
+        faceIdxs = []
+        faceIdxs.append(arrConnFaces.GetValue(0))
+        if arrConnFaces.Length == 2:
+            faceIdxs.append(arrConnFaces.GetValue(1))
+
+        return faceIdxs
+
+    def getTVertsForEdge(self,edge):
+        vertPair = self.mesh.TopologyEdges.GetTopologyVertices(edge)
+        return [vertPair.I, vertPair.J]
+
+    def getEdgeAngle(self,edge):
+        '''
+        get dihedral angle of a given edge in the mesh
+        '''
+        faceIdxs = self.getFacesForEdge(edge)
+        if (len(faceIdxs)==2):
+            faceNormA = self.mesh.FaceNormals.Item[faceIdxs[0]]
+            faceNormB = self.mesh.FaceNormals.Item[faceIdxs[1]]
+            return geom.Vector3d.VectorAngle(faceNormA,faceNormB)
+        else:
+            pass
 
     def getDistanceToEdge(self,edge, point):
         '''
@@ -210,12 +222,42 @@ class Mesh(object):
         # Vector3d
         vec = edgeLine.Direction
         return vec
+    
+    def get_edge_vec_oriented(self,edgeIdx,faceIdx):
+        tVerts = self.get_oriented_TVerts_for_edge(edgeIdx,faceIdx)
+        pntA,pntB = self._get_points_for_tVerts(tVerts)
+        return helpers.getVectorForPoints(pntA,pntB)
+
+    def get_oriented_points_for_edge(self,edgIdx,faceIdx):
+        tVerts = self.get_oriented_TVerts_for_edge(edgIdx,faceIdx)
+        return self._get_points_for_tVerts(tVerts)
+
+    def _get_points_for_tVerts(self,verts):
+        points = []
+        for vert in verts:
+            points.append(self.mesh.TopologyVertices.Item[vert])
+        return points
 
     def getPointsForEdge(self,edgeIdx):
         tVertI, tVertJ = self.getTVertsForEdge(edgeIdx)
         pntI = self.mesh.TopologyVertices.Item[tVertI]
         pntJ = self.mesh.TopologyVertices.Item[tVertJ]
         return [pntI, pntJ]
+     
+    def get_oriented_TVerts_for_edge(self,edgeIdx,faceIdx):
+        """
+        using the right-hand rule for face normals, each edge has a specific
+        direction, given one of its ajoining faces. Returns the TVerts of that
+        edge in that order.
+        """
+        correct_list = self.getTVertsForFace(faceIdx)
+        edge_IJ = self.getTVertsForEdge(edgeIdx)
+        assert set(edge_IJ).issubset(set(correct_list)), \
+        "edge {} does not belong to face {}".format(edgeIdx,faceIdx)
+        ordered_IJ = sorted(edge_IJ,key=lambda x:correct_list.index(x))
+        if ordered_IJ[0]== correct_list[0] and ordered_IJ[-1] == correct_list[-1]:
+            ordered_IJ.reverse()
+        return ordered_IJ
 
     def get_edge_line(self,edgeIdx):
         return self.mesh.TopologyEdges.EdgeLine(edgeIdx)
@@ -250,17 +292,27 @@ class Mesh(object):
         edgeLens = self.getEdgeLengths(self.mesh)
         return getMedian(edgeLens)
 
+    ### Main OBJECT IS FACE
+
     def getTVertsForFace(self,faceIdx):
         '''
         list of 4 values if quad, 3 values if triangle
         '''
         arrTVerts = self.mesh.Faces.GetTopologicalVertices(faceIdx)
         tVerts = vis.convertArray(arrTVerts)
-        return uniqueList(tVerts)
+        return vis.uniqueList(tVerts)
+    
+    def get_points_for_face(self,faceIdx):
+        tVerts = self.getTVertsForFace(faceIdx)
+        points = []
+        for tVert in tVerts:
+            points.append(geom.Point3d(self.mesh.TopologyVertices.Item[tVert]))
+        return points
 
     def getFaceEdges(self,faceIdx):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
         return vis.convertArray(arrFaceEdges)
+
 
 class MeshDisplayer(object):
 
@@ -291,7 +343,7 @@ class MeshDisplayer(object):
         rs.AddTextDot('J', pntJ)
 
     def displayFacesIdx(self):
-        for i,face in enumerate(self.meshElementFinder.meshFaces()):
+        for i,face in enumerate(self.meshElementFinder.get_set_of_face_idxs()):
             self.displayFaceIdx(i)
 
     def displayFaceIdx(self, face):
@@ -307,15 +359,32 @@ class MeshDisplayer(object):
             vecNormal.Unitize()
             lineGuid = vis.drawVector(vecNormal, pntCenter)
             normLines.append(lineGuid)
-        #name = createGroup('Normals', normLines)
-        #return name
 
+    def display_face_vert_ordering(self,faceIdx):
+        points = self.meshElementFinder.get_points_for_face(faceIdx)
+        points.append(points[0])
+        vis.drawPolyline(points,arrowType='end')
+
+    def display_all_face_vert_ordering(self):
+        faces = self.meshElementFinder.get_set_of_face_idxs()
+        for face in faces:
+            self.display_face_vert_ordering(face)
+
+    def display_edge_direction_IJ(self,edgeIdx):
+        pnts = self.meshElementFinder.getPointsForEdge(edgeIdx)
+        vis.show_line_from_points(pnts,color=(0,0,0,255),arrowType='end')
+
+    def display_all_edges_direction_IJ(self):
+        for i in self.meshElementFinder.get_set_of_edges():
+            self.display_edge_direction_IJ(i)
+        
     def display_edge_direction(self,edgeIdx):
         line = self.meshElementFinder.get_edge_line(edgeIdx)
         vis.draw_arrow(line,color=(0,255,0,255))
 
     def display_all_edges_direction(self):
-        pass
+        for edge in self.meshElementFinder.get_set_of_edges():
+            self.display_edge_direction(edge)
 
     def displayCutEdges(self, color, edgeIdxs):
         drawnEdges = {}
