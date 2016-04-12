@@ -1,5 +1,6 @@
 import unittest
 import Rhino.Geometry as geom
+import rhinoscriptsyntax as rs
 import transformations as trans
 import mesh
 reload(trans)
@@ -68,11 +69,58 @@ class FrameOnMeshTestCase(unittest.TestCase):
         frame.show()
         self.assertTrue(frame.is_equal(correct_frame))
 
+class TransformTestCase(unittest.TestCase):
 
+    '''
+    def test_change_basis_slick(self):
+        #NOTE: This function was me playing around. Use this as reference
+        #for creating a create_transform_matrix function that is more clear
+        origin_frame = trans.Frame(geom.Plane.WorldXY)
+        origin_frame.show()
+        p = geom.Point3d(1,-2,1)
+        u = geom.Vector3d(0,0,1)
+        v = geom.Vector3d(1,0,0)
+        to_frame = trans.Frame.create_frame_from_normal_and_x(p,u,v)
+        to_frame.show()
+        pnt = geom.Point3d(2,-1,1)
+        original_pnt = geom.Point3d(pnt)
+        rs.AddPoint(pnt)
+        xForm1 = geom.Transform.ChangeBasis(origin_frame.plane,to_frame.plane)
+        pnt.Transform(xForm1)
+        rs.AddPoint(pnt)
+        new_frame = trans.Frame.create_frame_from_normal_and_x(
+            geom.Point3d(3,3,0),
+            geom.Vector3d(1,0,0),
+            geom.Vector3d(0,1,0))
+        new_frame.show()
+        xForm2 = geom.Transform.ChangeBasis(new_frame.plane,origin_frame.plane)
+        original_pnt.Transform(xForm2*xForm1)
+        rs.AddPoint(original_pnt)
+    '''
+    
+    def test_get_mapped_point(self):
+        from_frame = trans.Frame.create_frame_from_normal_and_x(
+            origin = geom.Point3d(1,-2,1),
+            normal = geom.Vector3d(0,0,1),
+            x = geom.Vector3d(1,0,0))
+        from_frame.show()
+        to_frame = trans.Frame.create_frame_from_normal_and_x(
+            origin = geom.Point3d(3,3,0),
+            normal = geom.Vector3d(0,0,1),
+            x = geom.Vector3d(-1,0,0))
+        to_frame.show()
+        pnt = geom.Point3d(2,-1,1)
+        correct_point = geom.Point3d(2,2,0)
+        new_point = trans.get_mapped_point(pnt,from_frame,to_frame)
+        self.assertTrue(correct_point.Equals(new_point))
+        rs.AddPoint(pnt)
+        rs.AddPoint(new_point)
+        rs.AddPoint(correct_point)
 
 if __name__ == "__main__":
-    suiteA = unittest.TestLoader().loadTestsFromTestCase(FrameTestCase)
+    suiteA = unittest.TestLoader().loadTestsFromTestCase(FrameTestCase) 
     suiteB = unittest.TestLoader().loadTestsFromTestCase(FrameOnMeshTestCase)
-    big_suite = unittest.TestSuite([suiteA,suiteB])
-    unittest.TextTestRunner(verbosity=2).run(big_suite)
+    suiteC = unittest.TestLoader().loadTestsFromTestCase(TransformTestCase)
+    big_suite = unittest.TestSuite([suiteA,suiteB,suiteC])
+    unittest.TextTestRunner(verbosity=2).run(suiteC)
 

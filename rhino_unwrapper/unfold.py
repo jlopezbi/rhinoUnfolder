@@ -189,6 +189,7 @@ class IslandCreator(object):
         vertI = dataMap.get
 
     def transformPoint(self, mesh, tVert, xForm):
+        #NOTE: mesh.TopologyVertices.Item returns a point3f
         point = Rhino.Geometry.Point3d(mesh.TopologyVertices.Item[tVert])
         point.Transform(xForm)
         point.Z = 0.0  # TODO: find where error comes from!!! (rounding?)

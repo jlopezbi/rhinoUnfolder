@@ -6,10 +6,8 @@ import math
 reload(visualization)
 
 def createTransformMatrix(from_frame, to_frame):
-    p, u, v, w = from_frame.get_tuple()
-    o, i, j, k = to_frame.get_tuple()
 
-    changeBasisXform = geom.Transform.ChangeBasis(u, v, w, i, j, k)
+    changeBasisXform = geom.Transform.ChangeBasis(from_frame.plane,to_frame.plane)
 
     transFormToOrigin = geom.Transform.Translation(-p)
     rotatXform = geom.Transform.Rotation(u, v, w, i, j, k)
@@ -22,15 +20,20 @@ def createTransformMatrix(from_frame, to_frame):
 
     return xForm2   
 
+def get_mapped_point(point,from_frame,to_frame):
+    did_map, mapped_point = from_frame.plane.RemapToPlaneSpace(point)
+    assert did_map, "get_mapped_point failed for point {}".format(point)
+    final_point = to_frame.plane.PointAt(mapped_point.X,mapped_point.Y,mapped_point.Z)
+    return final_point
+
 def get_frame_on_mesh(mesh_location, myMesh):
     faceIdx, edgeIdx = mesh_location
     face_edges = myMesh.getFaceEdges(faceIdx)
     assert(edgeIdx in face_edges), "prblm in get_frame_on_mesh(): edgeIdx not in face_edges"
-    #assert(tVertIdx in faceTopoVerts), "prblm in getBasisOnMesh():tVert not in faceTopoVerts "
     """
+    assert(tVertIdx in faceTopoVerts), "prblm in getBasisOnMesh():tVert not in faceTopoVerts "
     edgeTopoVerts = myMesh.getTVertsForEdge(edgeIdx) 
     assert(tVertIdx in edgeTopoVerts), "prblm in getBasisOnMesh():tVert not part of given edge"
-
     def getOther(tVertIdx, edgeTopoVerts):
         if(edgeTopoVerts[0] == tVertIdx):
             return edgeTopoVerts[1]
@@ -39,7 +42,6 @@ def get_frame_on_mesh(mesh_location, myMesh):
         else:
             print "ERROR: edgeTopoVerts does not contain tVertIdx"
             return None
-
     """U"""
 #    p1 = myMesh.mesh.TopologyVertices.Item[tVertIdx]
 #    p2 = myMesh.mesh.TopologyVertices.Item[getOther(tVertIdx, edgeTopoVerts)]
@@ -47,10 +49,7 @@ def get_frame_on_mesh(mesh_location, myMesh):
 #    u = geom.Vector3d(pU)
 """
     x = myMesh.get_edge_vec_oriented(edgeIdx,faceIdx)
-    
-    """W"""
     w = geom.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
-    """P"""
     pntI,pntJ = myMesh.get_oriented_points_for_edge(edgeIdx,faceIdx)
     origin_vec = geom.Point3d(pntI)
     return Frame.create_frame_from_normal_and_x(origin_vec,x,w)
@@ -94,8 +93,12 @@ class Frame(object):
         return cls(plane)
 
     @classmethod
-    def create_frame_from_normal_and_x(cls,origin,x,z):
-        y = geom.Vector3d.CrossProduct(z,x)
+    def create_frame_from_normal_and_x(cls,origin,normal,x):
+        '''
+        origin = Rhino.Geometry.Point3d
+        x,normal = Rhino.Geometry.Vector3d
+        '''
+        y = geom.Vector3d.CrossProduct(normal,x)
         return cls(cls.instantiate_plane(origin,x,y))
 
     @classmethod
