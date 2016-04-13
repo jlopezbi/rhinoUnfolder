@@ -1,6 +1,7 @@
 from FlatGeom import FlatVert, FlatFace
 import transformations as tf
-import FlatEdge as fe
+import flatEdge as fe
+import flatGeom
 import Net as nt
 import traversal as tr
 import Map
@@ -69,27 +70,31 @@ class IslandCreator(object):
         self.island = nt.Island()
         self.dataMap = dataMap
         self.myMesh = myMesh
+        self.mesh_loc
+        self.to_frame
 
     def make_island(self,foldList,mesh_frame,toBasis):
         self.foldList = foldList
         self.layout_face(None,None,mesh_frame,toBasis)
 
-    def layout_face(self, fromFace, hopEdge, meshLoc, toBasis):
+    def layout_face(self, fromFace, hopEdge, meshLoc, to_frame):
         ''' Recursive Function to traverse through faces, hopping along fold edges
             input:
-                depth = recursion level
                 meshLoc = (faceIdx,edgeIdx,tVertIdx) information required to make basis
                 self.myMesh = a wrapper for RhinoCommon mesh, to unfold
-                toBasis = basis in flat world
+                to_frame = frame in flat world
             out/in:
                 flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
         '''
         from_frame = tf.get_frame_on_mesh(meshLoc,self.myMesh)
-        xForm = tf.createTransformMatrix(from_frame, toBasis)
-        netVerts, mapping = self.assignFlatVerts(self.myMesh, self.dataMap, hopEdge,
-                                                 meshLoc.face, xForm) 
+        """FLAT VERTS"""
+        netVerts, mapping = self.assignFlatVerts( hopEdge,
+                                                 meshLoc.face,
+                                                 from_frame,to_frame) 
+        """FLAT FACES"""
         self.island.flatFaces[meshLoc.face] = FlatFace(netVerts, fromFace)
 
+        """FLAT EDGES"""
         faceEdges = self.myMesh.getFaceEdges(meshLoc.face)
         for edge in faceEdges:
             meshI, meshJ = self.myMesh.getTVertsForEdge(edge)
@@ -137,43 +142,40 @@ class IslandCreator(object):
                     sibFlatEdge = self.island.flatEdges[otherEdge]
                     self.island.flatEdges[otherEdge] = fe.change_to_cut_edge(sibFlatEdge,netEdge)
 
-    def assignFlatVerts(self, mesh, dataMap,  hopEdge, face, xForm):
+    def assignFlatVerts(self, hopEdge, face, from_frame, to_frame):
         '''
         add valid flatVerts to flatVerts list and also return
         a list of netVerts
         '''
 
-        faceTVerts = mesh.getTVertsForFace(face)
+        face_verts = self.myMesh.getTVertsForFace(face)
         netVerts = []
         hopMeshVerts = []
         mapping = {}
 
         if hopEdge is not None:
-            netI, netJ = [hopEdge.vertAidx, hopEdge.vertAidx]
+            netI, netJ = [hopEdge.vertAidx, hopEdge.vertBidx]
             hopMeshVerts = [
                 self.island.flatVerts[netI].tVertIdx,
                 self.island.flatVerts[netJ].tVertIdx]
             mapping[hopMeshVerts[0]] = netI
             mapping[hopMeshVerts[1]] = netJ
 
-        seen = []
-        for tVert in faceTVerts:
-            if tVert not in seen:  # avoid duplicates (triangle faces)
-                seen.append(tVert)
-                if tVert not in hopMeshVerts:
-                    point = self.transformPoint(mesh.mesh, tVert, xForm)
-                    flatVert = FlatVert(tVert, point)
-                    netVert = self.island.addVert(flatVert)
-                    dataMap.meshVerts[tVert].append(netVert)
-                    netVerts.append(netVert)
-                    mapping[tVert] = netVert
-                else:
-                    # this section is important for preserving order
-                    if tVert == self.island.flatVerts[netI].tVertIdx:
-                        netVerts.append(netI)
-                    elif tVert == self.island.flatVerts[netJ].tVertIdx:
-                        netVerts.append(netJ)
-                    pass
+        for vert in face_verts:
+            if vert not in hopMeshVerts:
+                point = self.myMesh.get_point_for_tVert(vert)
+                mapped_point = trans.get_mapped_point(point,from_frame,to_frame) 
+                flatVert = flatGeom.FlatVert(vert, mapped_point)
+                newVertIdx = self.island.addVert(flatVert)
+                self.dataMap.meshVerts[point].append(newVertIdx)
+                netVerts.append(flatVert)
+                mapping[vert] = flatVert
+            else:
+                # this section is important for preserving order
+                if vert == self.island.flatVerts[netI].tVertIdx:
+                    netVerts.append(netI)
+                elif point == self.island.flatVerts[netJ].tVertIdx:
+                    netVerts.append(netJ)
         return netVerts, mapping
 
     def getNewBasisInfo(self, oldBasisInfo, testEdgeIdx, myMesh):

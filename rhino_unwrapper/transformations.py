@@ -5,21 +5,6 @@ import math
 
 reload(visualization)
 
-def createTransformMatrix(from_frame, to_frame):
-
-    changeBasisXform = geom.Transform.ChangeBasis(from_frame.plane,to_frame.plane)
-
-    transFormToOrigin = geom.Transform.Translation(-p)
-    rotatXform = geom.Transform.Rotation(u, v, w, i, j, k)
-    transFormToPnt = geom.Transform.Translation(o)
-    xForm1 = geom.Transform.Multiply(rotatXform, transFormToOrigin)
-    xForm2 = geom.Transform.Multiply(transFormToPnt, xForm1)
-
-    transXform = geom.Transform.Translation(o - p)
-    fullXform = geom.Transform.Multiply(rotatXform, transXform)
-
-    return xForm2   
-
 def get_mapped_point(point,from_frame,to_frame):
     did_map, mapped_point = from_frame.plane.RemapToPlaneSpace(point)
     assert did_map, "get_mapped_point failed for point {}".format(point)

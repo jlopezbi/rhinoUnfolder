@@ -89,6 +89,12 @@ class Mesh(object):
 
     ### QUIRED OBJECT IS VERTEX
 
+    def get_point_for_tVert(self,tVert):
+        '''
+        Note: convertes Point3f to Point3d!
+        '''
+        return geom.Point3d(self.mesh.TopologyVertices.Item[tVert])
+
     def getTVertsForVert(self,tVert):
         arrTVerts = self.mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
         listVerts = vis.convertArray(arrTVerts)
@@ -303,6 +309,9 @@ class Mesh(object):
         return vis.uniqueList(tVerts)
     
     def get_points_for_face(self,faceIdx):
+        '''
+        Note: converts TopologyVertices as Point3f to Point3d
+        '''
         tVerts = self.getTVertsForFace(faceIdx)
         points = []
         for tVert in tVerts:
