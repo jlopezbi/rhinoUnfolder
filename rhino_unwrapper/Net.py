@@ -1,7 +1,7 @@
 import segmentation as sg
 from rhino_helpers import createGroup 
-from FlatGeom import FlatVert
-import FlatEdge as fe
+from flatGeom import FlatVert
+import flatEdge as fe
 import Rhino
 import rhinoscriptsyntax as rs
 import math
@@ -212,6 +212,10 @@ class Island(object):
     def addVert(self, flatVert):
         self.flatVerts.append(flatVert)
         return len(self.flatVerts) - 1
+
+    def draw_verts(self):
+        for vert in self.flatVerts:
+            vert.display()
 
     def draw_edges(self):
         for netEdge in self.flatEdges:

@@ -60,7 +60,7 @@ class FrameOnMeshTestCase(unittest.TestCase):
         cls.meshDisplayer.displayTVertsIdx()
     
     def test_get_frame_on_mesh(self):
-        mesh_location = (4,3)
+        mesh_location = (4,3,2)
         o = geom.Point3d(0,10,0)
         x = geom.Vector3d(0,-1,0)
         y = geom.Vector3d(1,0,0)
@@ -122,5 +122,5 @@ if __name__ == "__main__":
     suiteB = unittest.TestLoader().loadTestsFromTestCase(FrameOnMeshTestCase)
     suiteC = unittest.TestLoader().loadTestsFromTestCase(TransformTestCase)
     big_suite = unittest.TestSuite([suiteA,suiteB,suiteC])
-    unittest.TextTestRunner(verbosity=2).run(suiteC)
+    unittest.TextTestRunner(verbosity=2).run(suiteB)
 

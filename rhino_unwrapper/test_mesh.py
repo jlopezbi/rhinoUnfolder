@@ -2,6 +2,13 @@ import unittest
 import mesh
 reload(mesh)
 
+class MakeMeshTestCase(unittest.TestCase):
+    def test_make_test_mesh(self):
+        mesh.make_test_mesh()
+
+    def test_make_upright_mesh(self):
+        mesh.make_upright_mesh()
+
 class MeshTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -65,5 +72,6 @@ class MeshDiplayerTestCase(unittest.TestCase):
 if __name__ == "__main__":
     suiteA = unittest.TestLoader().loadTestsFromTestCase(MeshTestCase)
     suiteB = unittest.TestLoader().loadTestsFromTestCase(MeshDiplayerTestCase)
-    big_suite = unittest.TestSuite([suiteA,suiteB])
+    suiteC = unittest.TestLoader().loadTestsFromTestCase(MakeMeshTestCase)
+    big_suite = unittest.TestSuite([suiteA,suiteB,suiteC])
     unittest.TextTestRunner(verbosity=2).run(big_suite)

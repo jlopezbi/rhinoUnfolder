@@ -25,9 +25,25 @@ def make_test_mesh():
     faceVertices.append((5,8,4,4))
     faceVertices.append((6,4,7,7))
     faceVertices.append((8,7,4,4))
-    mesh_GUID = rs.AddMesh( vertices, faceVertices )
+    return get_myMesh(vertices,faceVertices)
+
+def make_upright_mesh():
+    verts = []
+    verts.append((0.0,0.0,0.0))
+    verts.append((5.0,0.0,0.0))
+    verts.append((5.0,0.0,5.0))
+    verts.append((0.0,0.0,5.0))
+    face_verts = []
+    face_verts.append((0,1,3,3))
+    face_verts.append((1,2,3,3))
+    return get_myMesh(verts,face_verts)
+
+def get_myMesh(vertices,face_vertices):
+    '''add a mesh to doc and get the Rhino.Geometry.Mesh object''' 
+    mesh_GUID = rs.AddMesh( vertices, face_vertices )
     obj = scriptcontext.doc.Objects.Find(mesh_GUID)
     return Mesh(obj.Geometry)
+
 
 class Mesh(object):
     """
@@ -395,6 +411,11 @@ class MeshDisplayer(object):
         for edge in self.meshElementFinder.get_set_of_edges():
             self.display_edge_direction(edge)
 
+    def display_all_elements(self):
+        self.displayFacesIdx()
+        self.displayEdgesIdx()
+        self.displayTVertsIdx()
+
     def displayCutEdges(self, color, edgeIdxs):
         drawnEdges = {}
         if edgeIdxs:
@@ -405,6 +426,4 @@ class MeshDisplayer(object):
 
 if __name__ == "__main__":
     pass
-
-
 

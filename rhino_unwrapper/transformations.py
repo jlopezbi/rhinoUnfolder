@@ -1,4 +1,5 @@
 from rhino_helpers import *
+import rhino_helpers as helper
 import Rhino.Geometry as geom
 import visualization 
 import math
@@ -11,40 +12,48 @@ def get_mapped_point(point,from_frame,to_frame):
     final_point = to_frame.plane.PointAt(mapped_point.X,mapped_point.Y,mapped_point.Z)
     return final_point
 
-def get_frame_on_mesh(mesh_location, myMesh):
+def get_frame_on_mesh(mesh_location,myMesh):
+    faceIdx,edgeIdx,vertIdx = mesh_location
+    face_edges = myMesh.getFaceEdges(faceIdx)
+    assert (edgeIdx in face_edges), "edge {} not in face {}".format(edgeIdx,faceIdx)
+    faceTopoVerts = myMesh.getTVertsForFace(faceIdx)
+    assert(vertIdx in faceTopoVerts), "prblm in getBasisOnMesh():tVert not in faceTopoVerts "
+    edgeTVerts = myMesh.getTVertsForEdge(edgeIdx) 
+    assert(vertIdx in edgeTVerts), "prblm in getBasisOnMesh():tVert not part of given edge"
+    def getOther(vertIdx, edgeTVerts):
+        if(edgeTVerts[0] == vertIdx):
+            return edgeTVerts[1]
+        elif(edgeTVerts[1] == vertIdx):
+            return edgeTVerts[0]
+        else:
+            print "ERROR: edgeTVerts does not contain vertIdx"
+            return None
+    pntA = myMesh.get_point_for_tVert(vertIdx)
+    pntB = myMesh.get_point_for_tVert(getOther(vertIdx, edgeTVerts))
+    x = helper.getVectorForPoints(pntA,pntB)
+    normal = geom.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
+    return Frame.create_frame_from_normal_and_x(pntA,normal,x)
+
+def get_frame_on_oriented_mesh(mesh_location, myMesh):
+    '''
+    Assumes that the vertices for the face are ordered according to the right
+    hand rule, relative to the face-normal
+    '''
     faceIdx, edgeIdx = mesh_location
     face_edges = myMesh.getFaceEdges(faceIdx)
     assert(edgeIdx in face_edges), "prblm in get_frame_on_mesh(): edgeIdx not in face_edges"
-    """
-    assert(tVertIdx in faceTopoVerts), "prblm in getBasisOnMesh():tVert not in faceTopoVerts "
-    edgeTopoVerts = myMesh.getTVertsForEdge(edgeIdx) 
-    assert(tVertIdx in edgeTopoVerts), "prblm in getBasisOnMesh():tVert not part of given edge"
-    def getOther(tVertIdx, edgeTopoVerts):
-        if(edgeTopoVerts[0] == tVertIdx):
-            return edgeTopoVerts[1]
-        elif(edgeTopoVerts[1] == tVertIdx):
-            return edgeTopoVerts[0]
-        else:
-            print "ERROR: edgeTopoVerts does not contain tVertIdx"
-            return None
-    """U"""
-#    p1 = myMesh.mesh.TopologyVertices.Item[tVertIdx]
-#    p2 = myMesh.mesh.TopologyVertices.Item[getOther(tVertIdx, edgeTopoVerts)]
-#    pU = p2 - p1
-#    u = geom.Vector3d(pU)
-"""
     x = myMesh.get_edge_vec_oriented(edgeIdx,faceIdx)
     w = geom.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
     pntI,pntJ = myMesh.get_oriented_points_for_edge(edgeIdx,faceIdx)
-    origin_vec = geom.Point3d(pntI)
-    return Frame.create_frame_from_normal_and_x(origin_vec,x,w)
+    origin = geom.Point3d(pntI)
+    return Frame.create_frame_from_normal_and_x(origin,x,w)
 
-def get_net_frame(pointPair):
+def get_xy_net_frame(pointPair):
     pntI, pntJ = pointPair
     o = pntI
     x = geom.Vector3d(pntJ - pntI)
-    z = rs.WorldXYPlane()[3]
-    return Frame.create_frame(o,x,z)
+    z = geom.Vector3d(0,0,1)
+    return Frame.create_frame_from_vectors(o,x,z)
 
 def make_origin_frame():
     plane = rs.WorldXYPlane()
@@ -54,7 +63,7 @@ def make_origin_frame():
     print "third element of worldXYplane is {}".format(type(plane[2]))
     print "fourth element of worldXYplane is {}".format(type(plane[3]))
     """
-    return Frame(plane[0],plane[1],plane[2],plane[3])
+    return Frame(plane)
 
 class Frame(object):
 

@@ -1,5 +1,4 @@
-from FlatGeom import FlatVert, FlatFace
-import transformations as tf
+import transformations as trans
 import flatEdge as fe
 import flatGeom
 import Net as nt
@@ -13,6 +12,7 @@ import rhinoscriptsyntax as rs
 import Rhino
 import collections,inspect
 
+reload(flatGeom)
 reload(tf)
 reload(fe)
 reload(nt)
@@ -63,15 +63,15 @@ MeshLoc = collections.namedtuple('MeshLoc',['face','edge','tVert'])
 #Island = collections.nametuple('Island',['flatVerts','flatEdges','flatFaces'])
 
 class IslandCreator(object):
-    """
-    traverses a mesh to create an island
-    """
-    def __init__(self,dataMap=None,myMesh=None):
+    """ traverses a mesh to create an island """
+
+    def __init__(self,dataMap=None,myMesh=None,meshLoc=None,to_frame=None):
         self.island = nt.Island()
         self.dataMap = dataMap
         self.myMesh = myMesh
-        self.mesh_loc
-        self.to_frame
+        self.mesh_loc = meshLoc
+        self.to_frame = to_frame
+        self.visualize_mode = True
 
     def make_island(self,foldList,mesh_frame,toBasis):
         self.foldList = foldList
@@ -86,9 +86,8 @@ class IslandCreator(object):
             out/in:
                 flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
         '''
-        from_frame = tf.get_frame_on_mesh(meshLoc,self.myMesh)
         """FLAT VERTS"""
-        netVerts, mapping = self.assignFlatVerts( hopEdge,
+        netVerts = self.assignFlatVerts( hopEdge,
                                                  meshLoc.face,
                                                  from_frame,to_frame) 
         """FLAT FACES"""
@@ -142,22 +141,39 @@ class IslandCreator(object):
                     sibFlatEdge = self.island.flatEdges[otherEdge]
                     self.island.flatEdges[otherEdge] = fe.change_to_cut_edge(sibFlatEdge,netEdge)
 
+    def assign_flat_verts(self,meshLoc,to_frame,start=False):
+        from_frame = tf.get_frame_on_mesh(meshLoc,self.myMesh)
+        if self.visualize_mode:
+            from_frame.show()
+        faceIdx = meshLoc.face
+        edgeIdx = meshLoc.edge
+        edgeTVerts = set(self.myMesh.getTVertsForEdge(edgeIdx))
+        verts_to_assign = set(self.myMesh.getTVertsForFace(faceIdx))
+        if not start:
+            verts_to_assign = verts_to_assign.difference(edgeTVerts)
+        for vert in verts_to_assign:
+            point = self.myMesh.get_point_for_tVert(vert)
+            mapped_point = trans.get_mapped_point(point,from_frame,to_frame)
+            flat_vert = flatGeom.FlatVert(vert,mapped_point)
+            new_island_vert = self.island.addVert(flat_vert)
+            self.dataMap.add_child_to_vert(vert,new_island_vert)
+
     def assignFlatVerts(self, hopEdge, face, from_frame, to_frame):
         '''
         add valid flatVerts to flatVerts list and also return
-        a list of netVerts
+        a list of netVertassignFlatVerts
         '''
 
         face_verts = self.myMesh.getTVertsForFace(face)
         netVerts = []
         hopMeshVerts = []
-        mapping = {}
 
         if hopEdge is not None:
             netI, netJ = [hopEdge.vertAidx, hopEdge.vertBidx]
             hopMeshVerts = [
                 self.island.flatVerts[netI].tVertIdx,
                 self.island.flatVerts[netJ].tVertIdx]
+            self.dataMap.add_child_to_vert(hopMeshVerts[0],netI)
             mapping[hopMeshVerts[0]] = netI
             mapping[hopMeshVerts[1]] = netJ
 

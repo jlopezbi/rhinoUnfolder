@@ -1,4 +1,5 @@
 from visualization import *
+import rhinoscriptsyntax as rs
 import math
 
 
@@ -12,6 +13,9 @@ class FlatVert():
 
         self.edgeIdx = None
         self.geom = []
+
+    def display(self):
+        rs.AddPoint(self.point)
 
     def hasSamePoint(self, point):
         return approxEqual(self.point.X, point.X) and approxEqual(

@@ -24,6 +24,9 @@ class Map(object):
     def updateVertMap(self, tVert, netVert):
         self.meshVerts[tVert].append(netVert)
 
+    def add_child_to_vert(self,tVert,childVert):
+        self.meshVerts[tVert].append(childVert)
+
     def getSiblingNetEdge(self, edge, netEdge):
         '''for a cut edge get the sibling edge'''
         edges = self.meshEdges[edge]
