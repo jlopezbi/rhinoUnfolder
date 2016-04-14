@@ -1,6 +1,7 @@
 from visualization import * 
 import math 
 
+
 def change_to_cut_edge(flatEdge,otherEdgeIdx):
     newEdge = CutEdge(meshEdgeIdx = flatEdge.meshEdgeIdx,
                       vertAidx = flatEdge.vertAidx,
