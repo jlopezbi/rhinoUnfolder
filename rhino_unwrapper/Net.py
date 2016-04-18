@@ -1,11 +1,14 @@
 import segmentation as sg
 from rhino_helpers import createGroup 
 from flatGeom import FlatVert
+import flatGeom
 import flatEdge as fe
 import Rhino
+import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 import math
 
+reload(flatGeom)
 reload(sg)
 reload(fe)
 
@@ -201,15 +204,26 @@ class Island(object):
         self.flatEdges = []
         self.flatFaces = []  
 
-    def addFace(self,flatFace):
+    def add_face(self,flatFace):
         self.flatFaces.append(flatFace)
         return len(self.flatFaces) - 1
+    
+    def add_face_from_verts(self,*args):
+        '''any number of ordered vertex indices '''
+        flatFace = flatGeom.FlatFace(args)
+        return self.add_face(flatFace)
 
-    def addEdge(self, flatEdge):
+    def add_edge(self, flatEdge):
         self.flatEdges.append(flatEdge)
         return len(self.flatEdges) - 1
 
-    def addVert(self, flatVert):
+    def add_edge_from_verts(self,vertA,vertB):
+        return self.add_edge(fe.FlatEdge(vertAidx=vertA,vertBidx=vertB))
+
+    def add_vert_from_points(self,x,y,z):
+        return self.add_vert(flatGeom.FlatVert.from_coordinates(x,y,z))
+
+    def add_vert(self, flatVert):
         self.flatVerts.append(flatVert)
         return len(self.flatVerts) - 1
 
@@ -221,7 +235,7 @@ class Island(object):
         for netEdge in self.flatEdges:
             netEdge.show_line(self.flatVerts)
 
-    def drawFaces(self, netGroupName):
+    def draw_faces(self, netGroupName=''):
         collection = []
         for face in self.flatFaces:
             collection.append(face.draw(self.flatVerts))

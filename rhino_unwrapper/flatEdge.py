@@ -11,12 +11,16 @@ def change_to_cut_edge(flatEdge,otherEdgeIdx):
                       sibling = otherEdgeIdx)
     return newEdge
 
+edge_colors = {'blue': (0,0,0,255),
+               'red':(0,255,0,0),
+               'green':(0,0,255,0)}
+
 class FlatEdge(object):
     def __init__(self,**kwargs):
-        self.meshEdgeIdx = kwargs['meshEdgeIdx']
         self.vertAidx = kwargs['vertAidx']
         self.vertBidx = kwargs['vertBidx']
-        self.fromFace = kwargs['fromFace']
+        self.meshEdgeIdx = kwargs.get('meshEdgeIdx',None)
+        self.fromFace = kwargs.get('fromFace',None)
         self.toFace = kwargs.get('toFace',None)
         self.color = kwargs.get('color',(0,0,0,0))
         self.line = None
@@ -34,7 +38,7 @@ class FlatEdge(object):
         points = self.getCoordinates(flatVerts)
         if self.line_id is not None:
             scriptcontext.doc.Objects.Delete(self.line_id, True)
-        line_id, line = drawLine(points, self.color, 'None')
+        line_id, line = show_line_from_points(points, self.color, 'none')
         self.line_id = line_id
         self.line = line
         return line_id
@@ -263,6 +267,8 @@ class FlatEdge(object):
             for element in self.geom:
                 element.Transform(xForm)
 
+#NOTE: this function should be removed! Want to translate the actual structure (i.e. the vertices) not its
+# reprsentation
     def translateEdgeLine(self, xForm):
         if self.line is not None:
             self.line.Transform(xForm)
@@ -292,7 +298,7 @@ class FlatEdge(object):
 class FoldEdge(FlatEdge):
     
     def post_initialize(self,kwargs):
-        pass
+        self.color = edge_colors['green']
     
     def show(self,flatVerts):
         self._show_crease(flatVerts)
@@ -308,6 +314,7 @@ class CutEdge(FlatEdge):
 
     def post_initialize(self,kwargs):
         self.sibling = kwargs['sibling']
+        self.color = edge_colors['red']
 
     def show(self,flatVerts):
         self._show_joinery(flatVerts)
@@ -656,7 +663,7 @@ class CutEdge(FlatEdge):
 class NakedEdge(FlatEdge):
 
     def post_initialize(self,kwargs):
-        pass
+        self.color = edge_colors['blue']
 
 class _FlatEdge():
     """

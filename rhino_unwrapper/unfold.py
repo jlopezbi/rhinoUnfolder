@@ -1,3 +1,4 @@
+#THIS PROJECT STUFF
 import transformations as trans
 import flatEdge as fe
 import flatGeom
@@ -8,12 +9,19 @@ import mesh
 import rhino_inputs as ri
 import weight_functions as wf
 
+#RHINO STUFF
 import rhinoscriptsyntax as rs
 import Rhino
+clr.AddReference("Plankton.dll")
+clr.AddReference("Plankton.gha")
+import Plankton
+import PlanktonGh
+
+#PYTHON STUFF
 import collections,inspect
 
 reload(flatGeom)
-reload(tf)
+reload(trans)
 reload(fe)
 reload(nt)
 reload(tr)
@@ -52,7 +60,7 @@ class UnFolder(object):
     
     def unfold(self):
         init_mesh_frame = self.get_init_mesh_frame(self.myMesh.mesh)
-        to_frame = tf.make_origin_frame() 
+        to_frame = trans.make_origin_frame() 
 
         # currently assumes one island makes up net
         island = self.islandCreator.make_island(self.fold_list,init_mesh_frame,to_frame)
@@ -76,6 +84,29 @@ class IslandCreator(object):
     def make_island(self,foldList,mesh_frame,toBasis):
         self.foldList = foldList
         self.layout_face(None,None,mesh_frame,toBasis)
+
+    def ideal_layout(self):
+        # layout this face (populate island)
+            # Add Vertices
+            # Add Face
+            # Add Edges (implicit in face?)
+        # move to the next face
+        # recurse
+        pass
+    
+    def add_flat_verts_plankton(self,meshLoc,to_frame,start=False):
+        from_frame = trans.get_frame_on_mesh(meshLoc,self.myMesh)
+        if self.visualize_mode:
+            from_frame.show()
+        faceIdx = meshLoc.face
+        edgeIdx = meshLoc.edge
+        edgeTVerts = set(self.myMesh.getTVertsForEdge(edgeIdx))
+        verts_to_assign = set(self.myMesh.getTVertsForFace(faceIdx))
+        if not start:
+            verts_to_assign = verts_to_assign.difference(edgeTVerts)
+        for vert in verts_to_assign:
+            point = self.myMesh.get_point_for_tVert(vert)
+            mapped_point = trans.get_mapped_point(point,from_frame,to_frame)
 
     def layout_face(self, fromFace, hopEdge, meshLoc, to_frame):
         ''' Recursive Function to traverse through faces, hopping along fold edges
@@ -116,7 +147,7 @@ class IslandCreator(object):
 
                     # RECURSE
                     recurse = True
-                    new_net_frame = tf.get_net_frame(edgeCoords)
+                    new_net_frame = trans.get_net_frame(edgeCoords)
                     self.dataMap = self.layout_face( meshLoc.face, flatEdge, new_mesh_frame,new_net_frame)
 
             else:
@@ -142,7 +173,7 @@ class IslandCreator(object):
                     self.island.flatEdges[otherEdge] = fe.change_to_cut_edge(sibFlatEdge,netEdge)
 
     def assign_flat_verts(self,meshLoc,to_frame,start=False):
-        from_frame = tf.get_frame_on_mesh(meshLoc,self.myMesh)
+        from_frame = trans.get_frame_on_mesh(meshLoc,self.myMesh)
         if self.visualize_mode:
             from_frame.show()
         faceIdx = meshLoc.face
@@ -155,8 +186,9 @@ class IslandCreator(object):
             point = self.myMesh.get_point_for_tVert(vert)
             mapped_point = trans.get_mapped_point(point,from_frame,to_frame)
             flat_vert = flatGeom.FlatVert(vert,mapped_point)
-            new_island_vert = self.island.addVert(flat_vert)
+            new_island_vert = self.island.add_vert(flat_vert)
             self.dataMap.add_child_to_vert(vert,new_island_vert)
+
 
     def assignFlatVerts(self, hopEdge, face, from_frame, to_frame):
         '''

@@ -1,6 +1,6 @@
 from rhino_helpers import *
 
-arrowTypes = {'none':Rhino.DocObjects.ObjectDecoration.None,
+rrowTypes = {'none':Rhino.DocObjects.ObjectDecoration.None,
               'start':Rhino.DocObjects.ObjectDecoration.StartArrowhead,
               'end':Rhino.DocObjects.ObjectDecoration.EndArrowhead,
               'both':Rhino.DocObjects.ObjectDecoration.BothArrowhead}

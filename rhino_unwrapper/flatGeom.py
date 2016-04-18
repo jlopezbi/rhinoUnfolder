@@ -1,18 +1,23 @@
 from visualization import *
 import rhinoscriptsyntax as rs
+import Rhino.Geometry as geom
 import math
 
 
 class FlatVert():
 
-    def __init__(self, _tVertIdx, _point):
-        self.tVertIdx = _tVertIdx
-        self.point = _point
-        self.fromFace = None
-        #self.toFace = None
-
+    def __init__(self, point, tVertIdx=None,fromFace=None):
+        self.point = point
+        self.tVertIdx = tVertIdx
+        self.fromFace = fromFace
         self.edgeIdx = None
+        #self.toFace = None
         self.geom = []
+
+    @classmethod
+    def from_coordinates(cls,x,y,z):
+        point = geom.Point3d(x,y,z)
+        return cls(point)
 
     def display(self):
         rs.AddPoint(self.point)
@@ -26,11 +31,10 @@ class FlatVert():
 
 
 class FlatFace():
-    # does not store meshFace because position in list determines this
 
-    def __init__(self, _vertices, _fromFace):
-        self.vertices = _vertices  # a list of netVerts
-        self.fromFace = _fromFace
+    def __init__(self, vertices, fromFace=None):
+        self.vertices = vertices  # a list of netVerts
+        self.fromFace = fromFace
         self.centerPoint = None
 
     def getFlatVerts(self, flatVerts):
@@ -66,8 +70,7 @@ class FlatFace():
     def draw(self, flatVerts):
         polyline = self.getPolyline(flatVerts)
         # remove 'EndArrowhead' to stop displaying orientatio of face
-        poly_id, polyline = drawPolyline(
-            polyline, [0, 0, 0, 0], 'EndArrowhead')
+        poly_id = drawPolyline(polyline, arrowType='end')
         self.poly_id = poly_id
         self.polyline = polyline
 

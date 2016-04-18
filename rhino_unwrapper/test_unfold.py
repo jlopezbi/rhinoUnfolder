@@ -23,7 +23,7 @@ class IslandCreatorTestCase(unittest.TestCase):
         cls.islandCreator = unfold.IslandCreator(cls.dataMap,cls.myMesh,cls.meshLoc,cls.to_frame)
 
     def test_assign_flat_verts(self):
-        self.islandCreator.assign_flat_verts(self.meshLoc,self.to_frame,start=False)
+        self.islandCreator.assign_flat_verts(self.meshLoc,self.to_frame,start=True)
         self.islandCreator.island.draw_verts()
 
 if __name__ == '__main__':
