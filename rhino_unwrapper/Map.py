@@ -1,4 +1,3 @@
-# Map
 
 class Map(object):
     """Map:a class for keeping track of the relation between the net and the mesh. Now that multiple islands form a net, the map needs to saw which island, and then which element index in the island. This sounds like a natural tuple or array with [islandIdx,elementIdx]. A mutable type makes sense since islands can be edited
@@ -6,7 +5,6 @@ class Map(object):
 
 
     def __init__(self, myMesh):
-        #super(Map, self).__init__()
         self.meshVerts = {}
         self.meshEdges = {}
         self.meshFaces = {}
@@ -16,10 +14,10 @@ class Map(object):
             self.meshEdges[j] = []
         for faceIdx in xrange(myMesh.mesh.Faces.Count):
             self.meshFaces[faceIdx] = []
-        # faces do not need to be lists, since each meshFace has one netFace
 
-         # self.netToMesh = {} waittt this data can all be stored in the
-         # elements in net
+    def island_edge_already_added(self,island_edge):
+        #if island_edge  
+        pass
 
     def updateEdgeMap(self, edge, netEdge):
         '''To be called imediately after adding an edge'''

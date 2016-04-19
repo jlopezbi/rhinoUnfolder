@@ -1,16 +1,14 @@
-import segmentation as sg
 from rhino_helpers import createGroup 
-from flatGeom import FlatVert
 import flatGeom
-import flatEdge as fe
+import flatEdge
 import Rhino
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 import math
+from UnionFind import UnionFind
 
 reload(flatGeom)
-reload(sg)
-reload(fe)
+reload(flatEdge)
 
 
 class Net():
@@ -42,17 +40,45 @@ class Net():
     def add_island(self,island):
         self.islands.append(island)
 
+    def get_island_for_line(self,line_guid):
+        # naively would iterate through each island and see if edge is in it.
+        # another approach: see if it is in each island's bounding box (can have errors)
+        # another: check if edge is inside island's perimeter (need to get island's perimeter)
+        #NOTE: starting with naive option
+        for island in self.islands:
+            if line_guid in island.line_edge_map.keys():
+                return island
+
     '''SEGMENTATION, seems like should be a seperate thing!'''
+    #Now when segmentation happens a two new islands should be created
+    #A new challenge is finding the island that owns the line or meshEdge that the user selected!
+    #it seems like union find is not necessary when using island idea! whoa! but keep this code in case wrong
+    def segment_island(self):
+        pass
+
+    def segmentIsland(flatFaces, island):
+        sets = UnionFind(True)
+        if len(island) == 0:
+            island = range(len(flatFaces))
+        for face in island:
+            if face not in sets.leader.keys():
+                sets.makeSet([face])
+            neighbor = flatFaces[face].fromFace
+            if neighbor is not None:
+                if neighbor not in sets.leader.keys():
+                    sets.makeSet([neighbor])
+                sets.union(face, neighbor)
+        return sets.group, sets.leader
 
     def findInitalSegments(self):
-        group, leader = sg.segmentIsland(self.flatFaces, [])
+        group, leader = self.segmentIsland(self.flatFaces, [])
         self.groups = group
         self.leaders = leader
 
     def findSegment(self, flatEdgeCut, face):
         island = self.getGroupForMember(face)
         self.removeFaceConnection(flatEdgeCut)
-        group, leader = sg.segmentIsland(self.flatFaces, island)
+        group, leader = self.segmentIsland(self.flatFaces, island)
         self.updateIslands(group, leader, face)
         return group[leader[face]]
 
@@ -122,8 +148,7 @@ class Net():
         elif netFaceA.fromFace == faceB:
             netFaceA.fromFace = None
 
-    def makeNewEdge(self, dataMap, changedVertPairs, meshEdge, otherEdge,
-    fromFace,toFace):
+    def makeNewEdge(self, dataMap, changedVertPairs, meshEdge, otherEdge, fromFace,toFace):
         newVertI = changedVertPairs[0][0]
         newVertJ = changedVertPairs[1][0]
         newFlatEdge = fe.CutEdge(meshEdgeIdx=meshEdge,
@@ -135,7 +160,7 @@ class Net():
         newFlatEdge.hasTab = True
         newFlatEdge.tabFaceCenter = self.flatFaces[toFace].getCenterPoint(self.flatVerts)
         
-# This is where need to add a tabFaceCenter thing that will find the otherFace
+        # This is where need to add a tabFaceCenter thing that will find the otherFace
         # of the edge and find its center
         # TODO: need to set tab angles or something. NOTE: .fromFace and
         # .toFace of flatEdge referes to a MESH face!!
@@ -194,24 +219,70 @@ class Net():
                     netPair = flatEdge.getNetVerts()
                     if oldVert in netPair and flatEdge.fromFace in segment:
                         #assert(flatEdge.fromFace in segment), "flatEdge not in segment"
-                        flatEdge.reset(oldVert, newVert)
+                        flatEdge.reset(oldVert, newVert) 
 
 
 class Island(object):
 
     def __init__(self):
+        '''
+        stores flatVerts,flatEdges and flatFaces and draws itself
+        '''
         self.flatVerts = []
         self.flatEdges = []
         self.flatFaces = []  
+        self.line_edge_map = {}
 
     def add_face(self,flatFace):
         self.flatFaces.append(flatFace)
         return len(self.flatFaces) - 1
     
-    def add_face_from_verts(self,*args):
+    def add_first_face_from_verts(self,*verts):
         '''any number of ordered vertex indices '''
-        flatFace = flatGeom.FlatFace(args)
+        faceIdx_to_be = len(self.flatFaces)
+        edges = []
+        for i,vert in enumerate(verts):
+            newEdgeIdx = self.add_edge_with_from_face(faceIdx_to_be,i)
+            edges.append(newEdgeIdx)
+        flatFace = flatGeom.FlatFace(verts,edges)
         return self.add_face(flatFace)
+    
+    def add_face_from_edge_and_new_verts(self,edge,new_verts):
+        '''
+        edge = FlatEdge instance
+        verts => tuple or list of verts to make face
+        '''
+        faceIdx_to_be = len(self.flatFaces)
+        # Update edge
+        edge.toFace = faceIdx_to_be
+        prev_face = edge.fromFace
+        edge_verts = edge.get_reversed_verts(self.flatFaces)
+        verts = edge_verts + new_verts
+        edges = []
+        for i,vert in enumerate(verts):
+            next_vert =  (i+1)%len(verts)
+            if set([vert,next_vert]) != set(edge_verts):
+                newEdgeIdx = self.add_edge_with_from_face(faceIdx_to_be,i)
+                edges.append(newEdgeIdx)
+        flatFace = flatGeom.FlatFace(verts,edges)
+        return self.add_face(flatFace)
+
+
+    def add_face_from_edge(self,edge,verts):
+        '''
+        edge = (vertA,vertB)
+        verts => tuple or list of verts to make face
+        '''
+        flatFace = flatGeom.FlatFace(verts)
+        for i,vert in enumerate(verts):
+            next_idx = (i+1)%len(verts)
+            next_vert = verts[next_idx]
+            if set([vert,next_vert]) != set(edge):
+                   self.add_edge_from_verts(vert,next_vert)
+        return self.add_face(flatFace)
+
+    def add_edge_with_from_face(self,face,index):
+        self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
 
     def add_edge(self, flatEdge):
         self.flatEdges.append(flatEdge)
@@ -227,13 +298,21 @@ class Island(object):
         self.flatVerts.append(flatVert)
         return len(self.flatVerts) - 1
 
+        self.flatVerts = []
+
+    def draw_all(self):
+        self.draw_faces()
+        self.draw_edges()
+        self.draw_verts()
+
     def draw_verts(self):
-        for vert in self.flatVerts:
-            vert.display()
+        for i,vert in enumerate(self.flatVerts):
+            vert.display(i)
 
     def draw_edges(self):
-        for netEdge in self.flatEdges:
-            netEdge.show_line(self.flatVerts)
+        for i,netEdge in enumerate(self.flatEdges):
+            line_guid = netEdge.show_edge(self.flatFaces,self.flatVerts,i)
+            self.line_edge_map[line_guid] = netEdge
 
     def draw_faces(self, netGroupName=''):
         collection = []
@@ -241,12 +320,14 @@ class Island(object):
             collection.append(face.draw(self.flatVerts))
         createGroup(netGroupName, collection)
 
-    def getFlatEdgeForLine(self, value):
+    def translate(self,vector):
+        xForm = geom.Transform.Translation(vector)
+        for vert in self.flatVerts:
+            vert.point.Transform(xForm)
+
+    def get_edge_instance(self,line_guid):
         # assert guid?
-        for i, flatEdge in enumerate(self.flatEdges):
-            if flatEdge.line_id == value:
-                return flatEdge, i
-        return
+        return self.line_edge_map[line_guid]
 
     def getFlatEdge(self, netEdge):
         return self.flatEdges[netEdge]

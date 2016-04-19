@@ -26,6 +26,10 @@ class IslandCreatorTestCase(unittest.TestCase):
         self.islandCreator.assign_flat_verts(self.meshLoc,self.to_frame,start=True)
         self.islandCreator.island.draw_verts()
 
+    def test_layout_face(self):
+        self.islandCreator.layout_face(None,None,self.meshLoc,self.to_frame)
+
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(IslandCreatorTestCase)
     unittest.TextTestRunner(verbosity=2).run(suite)

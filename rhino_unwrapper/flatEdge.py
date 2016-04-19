@@ -17,11 +17,10 @@ edge_colors = {'blue': (0,0,0,255),
 
 class FlatEdge(object):
     def __init__(self,**kwargs):
-        self.vertAidx = kwargs['vertAidx']
-        self.vertBidx = kwargs['vertBidx']
-        self.meshEdgeIdx = kwargs.get('meshEdgeIdx',None)
-        self.fromFace = kwargs.get('fromFace',None)
+        self.fromFace = kwargs['fromFace']
+        self.indexInFace = kwargs['indexInFace'] # which edge of the from face
         self.toFace = kwargs.get('toFace',None)
+        self.meshEdgeIdx = kwargs.get('meshEdgeIdx',None)
         self.color = kwargs.get('color',(0,0,0,0))
         self.line = None
         self.line_id = None
@@ -34,11 +33,17 @@ class FlatEdge(object):
     def show(self,flatVerts):
         pass
 
-    def show_line(self,flatVerts):
-        points = self.getCoordinates(flatVerts)
+    def show_edge(self,faces,verts,index):
+        '''for displaying this edge in the island '''
+        center = self.getMidPoint(faces,verts)
+        rs.AddTextDot(str(index),center)
+        return self.show_line(faces,verts)
+
+    def show_line(self,faces,verts):
+        points = self.get_coordinates(faces,verts)
         if self.line_id is not None:
             scriptcontext.doc.Objects.Delete(self.line_id, True)
-        line_id, line = show_line_from_points(points, self.color, 'none')
+        line_id, line = show_line_from_points(points, color=self.color, arrowType='end')
         self.line_id = line_id
         self.line = line
         return line_id
@@ -55,10 +60,6 @@ class FlatEdge(object):
         else:
             assert(False == True), "error, flatEdge does not have oldVert"
 
-    def getCoordinates(self, flatVerts):
-        vertI, vertJ = self.getFlatVerts(flatVerts)
-        return (vertI.point, vertJ.point)
-
     def getFlatVerts(self, flatVerts):
         flatVertI = flatVerts[self.vertAidx]
         flatVertJ = flatVerts[self.vertBidx]
@@ -68,11 +69,26 @@ class FlatEdge(object):
         return flatFaces[self.fromFace]
 
     def getEdgeLine(self, flatVerts):
-        pntI, pntJ = self.getCoordinates(flatVerts)
+        pntI, pntJ = self.get_coordinates(faces,verts)
         return Rhino.Geometry.Line(pntI, pntJ)
+    
+    def get_coordinates(self,faces,verts):
+        ''' faces in island, verts in island '''
+        vertA,vertB = self.get_verts(faces)
+        pointA,pointB = verts[vertA].point, verts[vertB].point
+        return pointA,pointB
 
-    def getNetVerts(self):
-        return (self.vertAidx, self.vertBidx)
+
+    def get_verts(self,flatFaces):
+        face = flatFaces[self.fromFace]
+        verts = face.vertices
+        vertA = verts[self.indexInFace]
+        vertB = verts[(self.indexInFace + 1)%len(verts)]
+        return vertA,vertB
+    
+    def get_reversed_verts(self,flatFaces):
+        vertB,vertA = self.get_verts(flatFaces)
+        return [vertB,vertA]
 
     def getTVerts(self, mesh):
         return getTVertsForEdge(mesh, self.meshEdgeIdx)
@@ -119,7 +135,7 @@ class FlatEdge(object):
                     self.drawTab(flatVerts)
             elif self.type == 'naked':
                 color = (0, 55, 156, 196)  # blue
-            points = self.getCoordinates(flatVerts)
+            points = self.get_coordinates(faces,verts)
             if self.line_id is not None:
                 scriptcontext.doc.Objects.Delete(self.line_id, True)
             # EndArrowhead StartArrowhead
@@ -149,8 +165,8 @@ class FlatEdge(object):
     def getConnectToFace(self, flatFaces, mesh):
         return flatFaces[getOtherFaceIdx(self.meshEdgeIdx, self.fromFace, mesh)]
 
-    def getMidPoint(self, flatVerts):
-        coordinates = self.getCoordinates(flatVerts)
+    def getMidPoint(self, faces,verts):
+        coordinates = self.get_coordinates(faces,verts)
         pntA = coordinates[0]
         pntB = coordinates[1]
         x = (pntA.X + pntB.X) / 2.0
@@ -164,7 +180,7 @@ class FlatEdge(object):
         If colinear return None
         Otherwise return the face that is on the same side as the point
         """
-        pntI,pntJ = self.getCoordinates(flatVerts)
+        pntI,pntJ = self.get_coordinates(faces,verts)
         selfVec = self.getEdgeVec(flatVerts)
         pntVec = Rhino.Geometry.Vector3d(point - pntI)
         faceA = flatFaces[self.fromFace]
@@ -211,7 +227,7 @@ class FlatEdge(object):
         returns False if co-linear. HOwever, if the mesh is triangulated
         and has no zero-area faces this should not occur.
         '''
-        pntA, pntB = self.getCoordinates(flatVerts)
+        pntA, pntB = self.get_coordinates(faces,verts)
         vecLine = getVectorForPoints(pntA, pntB)
         vecTest = getVectorForPoints(pntA, testPoint)  # this may be too skewed
         cross = Rhino.Geometry.Vector3d.CrossProduct(vecLine, vecTest)
@@ -352,7 +368,7 @@ class CutEdge(FlatEdge):
             return self.drawQuadTab(flatVerts)
 
     def drawQuadTab(self, flatVerts):
-        pntA, pntD = self.getCoordinates(flatVerts)
+        pntA, pntD = self.get_coordinates(faces,verts)
         vecA = Rhino.Geometry.Vector3d(pntA)
         vecD = Rhino.Geometry.Vector3d(pntD)
 
@@ -386,11 +402,8 @@ class CutEdge(FlatEdge):
         return polyGuid
 
     def drawTruncatedTab(self, flatVerts):
-        '''
-        draw a truncated tab using the drawing style of triTab, but with an offset-line intersection
-        '''
         tabLen = self.tabWidth
-        I, J = self.getCoordinates(flatVerts)
+        I, J = self.get_coordinates(faces,verts)
         K = self.tabFaceCenter
         if self.tabFaceCenter is None:  # this is ahack: TODO: if a new cut edge is created, give it a tabFaceCenter
             return
@@ -451,7 +464,7 @@ class CutEdge(FlatEdge):
         flatFace = self.getConnectToFace(flatFaces, mesh)
         area = flatFace.getArea(flatVerts)
 
-        pntA, pntC = self.getCoordinates(flatVerts)
+        pntA, pntC = self.get_coordinates(faces,verts)
         pntB = self.tabFaceCenter
 
         points = [pntA, pntB, pntC]
@@ -514,7 +527,7 @@ class CutEdge(FlatEdge):
             print otherFace
 
     def drawFaceHole(self, flatVerts,flatFaces, holeRadius):
-        pntA, pntC = self.getCoordinates(flatVerts)
+        pntA, pntC = self.get_coordinates(faces,verts)
         pntB = flatFaces[self.fromFace].getCenterPoint(flatVerts, True)
         pnts = [pntA, pntB, pntC, pntA]
         polyline = Rhino.Geometry.PolylineCurve(pnts)
@@ -622,7 +635,7 @@ class CutEdge(FlatEdge):
         axis = Rhino.Geometry.Vector3d(0.0, 0.0, 1.0)
         K = self.getFacePoint(flatVerts, flatFaces)  # CenterPoint
         # rs.AddPoint(K)
-        I, J = self.getCoordinates(flatVerts)
+        I, J = self.get_coordinates(faces,verts)
         offsetLineA, vecA = getOffset(
             (I, J), K, connectorDist, True)  # EdgeOffset
         offsetLineB, vecB = getOffset((I, K), J, safetyRadius, True)

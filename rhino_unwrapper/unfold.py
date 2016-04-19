@@ -1,4 +1,4 @@
-#THIS PROJECT STUFF
+#THIS_PROJECT STUFF
 import transformations as trans
 import flatEdge as fe
 import flatGeom
@@ -12,8 +12,9 @@ import weight_functions as wf
 #RHINO STUFF
 import rhinoscriptsyntax as rs
 import Rhino
-clr.AddReference("Plankton.dll")
-clr.AddReference("Plankton.gha")
+#import clr
+#clr.AddReference("Plankton.dll")
+#clr.AddReference("Plankton.gha")
 import Plankton
 import PlanktonGh
 
@@ -94,20 +95,6 @@ class IslandCreator(object):
         # recurse
         pass
     
-    def add_flat_verts_plankton(self,meshLoc,to_frame,start=False):
-        from_frame = trans.get_frame_on_mesh(meshLoc,self.myMesh)
-        if self.visualize_mode:
-            from_frame.show()
-        faceIdx = meshLoc.face
-        edgeIdx = meshLoc.edge
-        edgeTVerts = set(self.myMesh.getTVertsForEdge(edgeIdx))
-        verts_to_assign = set(self.myMesh.getTVertsForFace(faceIdx))
-        if not start:
-            verts_to_assign = verts_to_assign.difference(edgeTVerts)
-        for vert in verts_to_assign:
-            point = self.myMesh.get_point_for_tVert(vert)
-            mapped_point = trans.get_mapped_point(point,from_frame,to_frame)
-
     def layout_face(self, fromFace, hopEdge, meshLoc, to_frame):
         ''' Recursive Function to traverse through faces, hopping along fold edges
             input:
@@ -118,21 +105,16 @@ class IslandCreator(object):
                 flatEdges = list containing flatEdges (a class that stores the edgeIdx,coordinates)
         '''
         """FLAT VERTS"""
-        netVerts = self.assignFlatVerts( hopEdge,
-                                                 meshLoc.face,
-                                                 from_frame,to_frame) 
+        new_island_verts = self.assign_flat_verts(meshLoc,to_frame,fromFace) 
         """FLAT FACES"""
-        self.island.flatFaces[meshLoc.face] = FlatFace(netVerts, fromFace)
+        new_island_face = self.island.add_face(flatGeom.FlatFace(new_island_verts,fromFace))
+        self.dataMap.meshFaces[meshLoc.face] = new_island_face
 
         """FLAT EDGES"""
+        face_edges = self.myMesh.get
         faceEdges = self.myMesh.getFaceEdges(meshLoc.face)
         for edge in faceEdges:
             meshI, meshJ = self.myMesh.getTVertsForEdge(edge)
-            netI = mapping[meshI]
-            netJ = mapping[meshJ]
-            #flatEdge = fe.FlatEdge(meshEdgeIdx=edge, vertAidx=netI,
-                                   #vertBidx=netJ,fromFace=meshLoc[0]) # since faces have direct mapping this fromFace corresponds
-            # to both the netFace and meshFace
 
             if edge in self.foldList:
                 if not self.alreadyBeenPlaced(edge, self.dataMap.meshEdges):
@@ -182,13 +164,15 @@ class IslandCreator(object):
         verts_to_assign = set(self.myMesh.getTVertsForFace(faceIdx))
         if not start:
             verts_to_assign = verts_to_assign.difference(edgeTVerts)
+        new_island_verts = []
         for vert in verts_to_assign:
             point = self.myMesh.get_point_for_tVert(vert)
             mapped_point = trans.get_mapped_point(point,from_frame,to_frame)
-            flat_vert = flatGeom.FlatVert(vert,mapped_point)
+            flat_vert = flatGeom.FlatVert(point=mapped_point,tVertIdx=vert)
             new_island_vert = self.island.add_vert(flat_vert)
+            new_island_verts.append(new_island_vert)
             self.dataMap.add_child_to_vert(vert,new_island_vert)
-
+        return new_island_verts
 
     def assignFlatVerts(self, hopEdge, face, from_frame, to_frame):
         '''

@@ -19,8 +19,10 @@ class FlatVert():
         point = geom.Point3d(x,y,z)
         return cls(point)
 
-    def display(self):
+    def display(self,index=None):
         rs.AddPoint(self.point)
+        if index!=None:
+            rs.AddTextDot(str(index),self.point)
 
     def hasSamePoint(self, point):
         return approxEqual(self.point.X, point.X) and approxEqual(
@@ -32,9 +34,9 @@ class FlatVert():
 
 class FlatFace():
 
-    def __init__(self, vertices, fromFace=None):
+    def __init__(self, vertices,edges):
         self.vertices = vertices  # a list of netVerts
-        self.fromFace = fromFace
+        self.edges = edges #ccw with face normal
         self.centerPoint = None
 
     def getFlatVerts(self, flatVerts):

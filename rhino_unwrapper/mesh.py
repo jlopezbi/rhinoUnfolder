@@ -44,7 +44,6 @@ def get_myMesh(vertices,face_vertices):
     obj = scriptcontext.doc.Objects.Find(mesh_GUID)
     return Mesh(obj.Geometry)
 
-
 class Mesh(object):
     """
     better names?
@@ -337,6 +336,10 @@ class Mesh(object):
     def getFaceEdges(self,faceIdx):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
         return vis.convertArray(arrFaceEdges)
+
+    def get_edges_except(self,faceIdx,edgeIdx):
+        face_edges = self.getFaceEdges(faceIdx)
+        return face_edges.remove(edgeIdx)
 
 
 class MeshDisplayer(object):
