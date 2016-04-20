@@ -125,12 +125,16 @@ class Mesh(object):
         edges = []
         for neighVert in neighVerts:
 
-            edge = self.getEdgeForTVertPair(tVert, neighVert, facesVert)
+            edge = self.get_edge_for_vert_pair(tVert, neighVert)
             if edge:
                 edges.append(edge)
         return edges
 
+    def get_edge_for_vert_pair(self,vertA,vertB):
+        return self.mesh.GetEdgeIndex(vertA,vertB)
+
     def getEdgeForTVertPair(self,tVertA, tVertB, facesVertA=None):
+        ''' Depricated, use get_edge_for_vert_pair() '''
         if facesVertA is None:
             facesVertA = self.getFacesForVert(tVertA)
         facesVertB = set(self.getFacesForVert(tVertB))

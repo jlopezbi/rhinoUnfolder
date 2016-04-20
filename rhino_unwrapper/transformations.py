@@ -34,20 +34,6 @@ def get_frame_on_mesh(mesh_location,myMesh):
     normal = geom.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
     return Frame.create_frame_from_normal_and_x(pntA,normal,x)
 
-def get_frame_on_oriented_mesh(mesh_location, myMesh):
-    '''
-    Assumes that the vertices for the face are ordered according to the right
-    hand rule, relative to the face-normal
-    '''
-    faceIdx, edgeIdx = mesh_location
-    face_edges = myMesh.getFaceEdges(faceIdx)
-    assert(edgeIdx in face_edges), "prblm in get_frame_on_mesh(): edgeIdx not in face_edges"
-    x = myMesh.get_edge_vec_oriented(edgeIdx,faceIdx)
-    w = geom.Vector3d(myMesh.mesh.FaceNormals.Item[faceIdx])
-    pntI,pntJ = myMesh.get_oriented_points_for_edge(edgeIdx,faceIdx)
-    origin = geom.Point3d(pntI)
-    return Frame.create_frame_from_normal_and_x(origin,x,w)
-
 def get_xy_net_frame(pointPair):
     pntI, pntJ = pointPair
     o = pntI

@@ -13,6 +13,7 @@ class FlatVert():
         self.edgeIdx = None
         #self.toFace = None
         self.geom = []
+        self.color = {'magenta':(255,0,255)}
 
     @classmethod
     def from_coordinates(cls,x,y,z):
@@ -22,7 +23,8 @@ class FlatVert():
     def display(self,index=None):
         rs.AddPoint(self.point)
         if index!=None:
-            rs.AddTextDot(str(index),self.point)
+            dot_guid = rs.AddTextDot(str(index),self.point)
+            rs.ObjectColor(dot_guid,self.color['magenta'])
 
     def hasSamePoint(self, point):
         return approxEqual(self.point.X, point.X) and approxEqual(
@@ -39,6 +41,10 @@ class FlatFace():
         self.edges = edges #ccw with face normal
         self.centerPoint = None
 
+    def get_normal(self,verts=None):
+        ''' For now returns unit z vector '''
+        return geom.Vector3d(0.0,0.0,1.0)
+    
     def getFlatVerts(self, flatVerts):
         collection = []
         for vert in self.vertices:

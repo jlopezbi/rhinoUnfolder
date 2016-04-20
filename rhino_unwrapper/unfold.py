@@ -69,35 +69,93 @@ class UnFolder(object):
 
 
 MeshLoc = collections.namedtuple('MeshLoc',['face','edge','tVert'])
-#Island = collections.nametuple('Island',['flatVerts','flatEdges','flatFaces'])
+IslandLoc = collections.namedtuple('Island',['edge','vert'])
 
 class IslandCreator(object):
     """ traverses a mesh to create an island """
 
-    def __init__(self,dataMap=None,myMesh=None,meshLoc=None,to_frame=None):
-        self.island = nt.Island()
+    def __init__(self,dataMap=None,myMesh=None,mesh_loc=None,start_frame=None,island_index=None):
         self.dataMap = dataMap
         self.myMesh = myMesh
-        self.mesh_loc = meshLoc
-        self.to_frame = to_frame
+        self.mesh_loc = mesh_loc
+        self.island_loc = None
+        self.island_index = island_index #index of island in net
+
+        self.island = nt.Island()
+        if start_frame==None:
+            start_frame = trans.make_origin_frame()
+        self.to_frame = start_frame
+        self.update_from_frame()
         self.visualize_mode = True
+        if self.visualize_mode:
+            self.to_frame.show()
+            self.from_frame.show()
+
 
     def make_island(self,foldList,mesh_frame,toBasis):
         self.foldList = foldList
         self.layout_face(None,None,mesh_frame,toBasis)
 
-    def ideal_layout(self):
-        # layout this face (populate island)
-            # Add Vertices
-            # Add Face
-            # Add Edges (implicit in face?)
-        # move to the next face
-        # recurse
+    def new_layout(self,meshLoc,islandLoc):
+        self.add_facet_to_island_and_update_map(meshLoc,islandLoc) #does the map get updated in here. yes
+        edges = self.myMesh.getFaceEdges(meshLoc.face)
+        for edge in faceEdges:
+            if self.is_fold(edge):
+                self.modify_edge_type('fold',edge) #edge can now have meshEdgeIdx
+                # RECURSE
+                new_island_loc = self.get_new_island_loc(islandLoc,edge)
+                new_mesh_loc = self.get_new_mesh_loc(meshLoc,edge)
+                new_layout(new_mesh_loc,new_island_loc)
+            if self.is_cut(edge):
+                self.island.modify_edge_type('cut') #sibling edge found using map
+            if self.is_naked(edge):
+                self.island.modify_edge_type('naked')
+
+    def update_from_frame(self):
+        self.from_frame = trans.get_frame_on_mesh(self.mesh_loc,self.myMesh)
+
+    def update_to_frame(self):
+        #self.to_frame = 
         pass
+
+    def add_facet_to_island_and_update_map(self):
+        #WORKING ON THIS!
+        self.update_from_frame()
+        self.update_to_frame()
+        sourceFace,sourceEdge,sourceVert = meshLoc #indices
+        islandEdge,islandVert = islandLoc #indices
+        edgeTVerts = set(self.myMesh.getTVertsForEdge(sourceEdge))
+        all_verts = self.myMesh.getTVertsForFace(sourceFace)
+        verts_to_assign = set(all_verts)
+        if islandLoc != None:
+            verts_to_assign = verts_to_assign.difference(edgeTVerts)
+        island_face_verts = []
+        island_face_edges = []
+        for i,vert in enumerate(all_verts):
+            if vert in verts_to_assign:
+                point = self.myMesh.get_point_for_tVert(vert)
+                mapped_point = trans.get_mapped_point(point,self.from_frame,self.to_frame)
+                new_island_vert = self.island.add_vert_from_point(mapped_point)
+                self.dataMap.add_child_to_vert(vert,new_island_vert)
+            next_vert = all_verts[ (i+1)%len(all_verts) ]
+            island_vert = self.dataMap.get_recent_island_vert(vert)
+            island_next_vert = self.dataMap.get_recent_island_vert(next_vert)
+            island_face_verts.append(island_vert)
+            #TODO: this is absurdely ugly (below line) need to figure out better organization to avoid
+            island_hop_edge_verts = self.island.flatEdges[islandEdge].get_verts(self.island.flatVerts)
+            if set([island_vert,island_next_vert]) != set(island_hop_edge_verts):
+                new_edge_idx = self.island.add_edge_with_from_face(sourceFace,i)
+                island_face_edges.append(new_edge_idx)
+        flatFace = self.island.add_face_verts_edges(island_face_verts,island_edges)
+
+
+
     
     def layout_face(self, fromFace, hopEdge, meshLoc, to_frame):
         ''' Recursive Function to traverse through faces, hopping along fold edges
             input:
+                fromface = 
+                hopEdge = 
                 meshLoc = (faceIdx,edgeIdx,tVertIdx) information required to make basis
                 self.myMesh = a wrapper for RhinoCommon mesh, to unfold
                 to_frame = frame in flat world
@@ -111,7 +169,6 @@ class IslandCreator(object):
         self.dataMap.meshFaces[meshLoc.face] = new_island_face
 
         """FLAT EDGES"""
-        face_edges = self.myMesh.get
         faceEdges = self.myMesh.getFaceEdges(meshLoc.face)
         for edge in faceEdges:
             meshI, meshJ = self.myMesh.getTVertsForEdge(edge)
@@ -168,8 +225,7 @@ class IslandCreator(object):
         for vert in verts_to_assign:
             point = self.myMesh.get_point_for_tVert(vert)
             mapped_point = trans.get_mapped_point(point,from_frame,to_frame)
-            flat_vert = flatGeom.FlatVert(point=mapped_point,tVertIdx=vert)
-            new_island_vert = self.island.add_vert(flat_vert)
+            new_island_vert = self.island.add_vert_from_point(mapped_point)
             new_island_verts.append(new_island_vert)
             self.dataMap.add_child_to_vert(vert,new_island_vert)
         return new_island_verts

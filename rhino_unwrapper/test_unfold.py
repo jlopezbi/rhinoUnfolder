@@ -22,12 +22,17 @@ class IslandCreatorTestCase(unittest.TestCase):
         cls.to_frame.show()
         cls.islandCreator = unfold.IslandCreator(cls.dataMap,cls.myMesh,cls.meshLoc,cls.to_frame)
 
+    def test_add_facet_to_island_and_update_map(self):
+        self.islandCreator.add_facet_to_island_and_update_map()
+    '''
     def test_assign_flat_verts(self):
         self.islandCreator.assign_flat_verts(self.meshLoc,self.to_frame,start=True)
         self.islandCreator.island.draw_verts()
-
+    '''
+    '''
     def test_layout_face(self):
         self.islandCreator.layout_face(None,None,self.meshLoc,self.to_frame)
+    '''
 
 
 if __name__ == '__main__':

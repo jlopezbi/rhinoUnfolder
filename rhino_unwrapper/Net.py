@@ -1,12 +1,14 @@
-from rhino_helpers import createGroup 
+import rhino_helpers 
 import flatGeom
 import flatEdge
 import Rhino
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 import math
+import transformations as trans
 from UnionFind import UnionFind
 
+reload(trans)
 reload(flatGeom)
 reload(flatEdge)
 
@@ -221,21 +223,20 @@ class Net():
                         #assert(flatEdge.fromFace in segment), "flatEdge not in segment"
                         flatEdge.reset(oldVert, newVert) 
 
-
 class Island(object):
 
     def __init__(self):
         '''
         stores flatVerts,flatEdges and flatFaces and draws itself
+        Random thought: each island could have a map 
+        Yooo could have a class for each collection like planton..
         '''
         self.flatVerts = []
         self.flatEdges = []
         self.flatFaces = []  
         self.line_edge_map = {}
 
-    def add_face(self,flatFace):
-        self.flatFaces.append(flatFace)
-        return len(self.flatFaces) - 1
+############ ADDING ELEMENTS
     
     def add_first_face_from_verts(self,*verts):
         '''any number of ordered vertex indices '''
@@ -253,52 +254,45 @@ class Island(object):
         verts => tuple or list of verts to make face
         '''
         faceIdx_to_be = len(self.flatFaces)
-        # Update edge
         edge.toFace = faceIdx_to_be
         prev_face = edge.fromFace
-        edge_verts = edge.get_reversed_verts(self.flatFaces)
+        edge_verts = edge.get_reversed_verts(self)
         verts = edge_verts + new_verts
         edges = []
         for i,vert in enumerate(verts):
-            next_vert =  (i+1)%len(verts)
+            next_vert =  verts[ (i+1)%len(verts) ]
             if set([vert,next_vert]) != set(edge_verts):
                 newEdgeIdx = self.add_edge_with_from_face(faceIdx_to_be,i)
                 edges.append(newEdgeIdx)
         flatFace = flatGeom.FlatFace(verts,edges)
         return self.add_face(flatFace)
 
+    def add_face_verts_edges(self,verts,edges):
+        return self.add_face(flatGeom.FlatFace(verts,edges))
 
-    def add_face_from_edge(self,edge,verts):
-        '''
-        edge = (vertA,vertB)
-        verts => tuple or list of verts to make face
-        '''
-        flatFace = flatGeom.FlatFace(verts)
-        for i,vert in enumerate(verts):
-            next_idx = (i+1)%len(verts)
-            next_vert = verts[next_idx]
-            if set([vert,next_vert]) != set(edge):
-                   self.add_edge_from_verts(vert,next_vert)
-        return self.add_face(flatFace)
+    def add_edge_with_from_face(self,face=None,index=None):
+        return self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
 
-    def add_edge_with_from_face(self,face,index):
-        self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
+
+    def add_face(self,flatFace):
+        self.flatFaces.append(flatFace)
+        return len(self.flatFaces) - 1
 
     def add_edge(self, flatEdge):
         self.flatEdges.append(flatEdge)
         return len(self.flatEdges) - 1
 
-    def add_edge_from_verts(self,vertA,vertB):
-        return self.add_edge(fe.FlatEdge(vertAidx=vertA,vertBidx=vertB))
-
     def add_vert_from_points(self,x,y,z):
         return self.add_vert(flatGeom.FlatVert.from_coordinates(x,y,z))
+
+    def add_vert_from_point(self,point):
+        return self.add_vert(flatGeom.FlatVert(point))
 
     def add_vert(self, flatVert):
         self.flatVerts.append(flatVert)
         return len(self.flatVerts) - 1
 
-        self.flatVerts = []
+############ DRAWING
 
     def draw_all(self):
         self.draw_faces()
@@ -310,15 +304,17 @@ class Island(object):
             vert.display(i)
 
     def draw_edges(self):
-        for i,netEdge in enumerate(self.flatEdges):
-            line_guid = netEdge.show_edge(self.flatFaces,self.flatVerts,i)
-            self.line_edge_map[line_guid] = netEdge
+        for i,edge in enumerate(self.flatEdges):
+            line_guid = edge.show_edge(self,i)
+            self.line_edge_map[line_guid] = edge
 
     def draw_faces(self, netGroupName=''):
         collection = []
         for face in self.flatFaces:
             collection.append(face.draw(self.flatVerts))
         createGroup(netGroupName, collection)
+
+############ OTHER
 
     def translate(self,vector):
         xForm = geom.Transform.Translation(vector)
@@ -329,6 +325,13 @@ class Island(object):
         # assert guid?
         return self.line_edge_map[line_guid]
 
-    def getFlatEdge(self, netEdge):
-        return self.flatEdges[netEdge]
+    def getFlatEdge(self, edge):
+        return self.flatEdges[edge]
 
+    def get_frame(self,face,edge):
+        assert (edge in self.flatFaces[face].edges), "edge {} does not belong to face {}".format(edge,face)
+        flatEdge = self.flatEdges[edge]
+        edgeVec = flatEdge.get_edge_vec(self)
+        pntA,pntB = flatEdge.get_coordinates(self)
+        normal = self.flatFaces[face].get_normal()
+        return trans.Frame.create_frame_from_normal_and_x(pntA,normal,edgeVec)
