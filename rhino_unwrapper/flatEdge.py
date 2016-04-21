@@ -18,7 +18,7 @@ edge_colors = {'blue': (0,0,0,255),
 
 class FlatEdge(object):
     def __init__(self,**kwargs):
-        self.fromFace = kwargs['fromFace']
+        self.fromFace = kwargs['fromFace'] #fromFace is "homeFace"
         self.indexInFace = kwargs['indexInFace'] # which edge of the from face
         self.toFace = kwargs.get('toFace',None)
         self.meshEdgeIdx = kwargs.get('meshEdgeIdx',None)

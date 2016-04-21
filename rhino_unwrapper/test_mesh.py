@@ -27,6 +27,13 @@ class MeshTestCase(unittest.TestCase):
         self.assertEqual(tVerts, [7,4])
         self.assertRaises(AssertionError,self.mesh.get_oriented_TVerts_for_edge,0,76)
 
+    def test_get_edges_and_orientation_for_face(self):
+        edges,orientations = self.mesh.get_edges_and_orientation_for_face(faceIdx=0)
+        correct_edges = [2,1,7]
+        correct_orientation = [0,1,1]
+        self.assertEqual(set(correct_edges),set(edges))
+        self.assertEqual(correct_orientation,orientations)
+    
 class MeshDiplayerTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

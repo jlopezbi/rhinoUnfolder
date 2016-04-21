@@ -16,10 +16,7 @@ def createGroup(groupName, objects):
     return name
 
 def convertArray(array):
-    pyList = []
-    for i in range(array.Length):
-        pyList.append(array.GetValue(i))
-    return pyList
+    return list(arrray)
 
 def getCenterPointLine(line):
     cenX = (line.FromX + line.ToX) / 2

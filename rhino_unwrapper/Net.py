@@ -235,9 +235,78 @@ class Island(object):
         self.flatEdges = []
         self.flatFaces = []  
         self.line_edge_map = {}
+        #self.temp_edges = []
+        #self.temp_verts = []
 
-############ ADDING ELEMENTS
+############ ADDING ELEMENTS    
+    def tack_on_facet(self,edge,points):
+        newFaceIdx = len(self.flatFaces)
+        baseEdge = self.flatEdges[edge]
+        baseEdge.toFace = newFaceIdx
+        edge_verts = baseEdge.get_reversed_verts(self) 
+        faceEdges = [edge]
+        faceVerts = [edge_verts[0],edge_verts[1]]
+        for i,point in enumerate(points):
+            newVert = self.add_vert_from_point(point)
+            newEdge = self.add_edge_with_from_face(newFaceIdx,i+1)
+            faceVerts.append(newVert)
+            faceEdges.append(newEdge)
+        finalEdge = self.add_edge_with_from_face(newFaceIdx,len(points)+1)
+        faceEdges.append(finalEdge)
+        newFaceIdx = self.add_face_verts_edges(faceVerts,faceEdges)
+        faceEdges.pop(0)  #only return new edges
+        return newFaceIdx,faceEdges
+
+################## ADD VERT
+
+    def add_new_points(self,points,edge):
+        old_verts = self.flatEdges[edge].get_verts(self).reverse()
+
+
+    def add_vert_from_points(self,x,y,z):
+        return self.add_vert(flatGeom.FlatVert.from_coordinates(x,y,z))
+
+    def add_vert_from_point(self,point):
+        vertIdx = self.add_vert(flatGeom.FlatVert(point))
+        return vertIdx
+
+    def add_vert(self, flatVert):
+        self.flatVerts.append(flatVert)
+        return len(self.flatVerts) - 1
+
+################## ADD EDGE
+
+    def add_edge_before_face(self,index=None):
+        newFaceIdx = len(self.flatFaces)
+        newEdge = flatEdge.FlatEdge(fromFace=newFaceIdx,indexInFace=index)
+        self.flatFaces.append(newEdge)
+        return len(self.flatEdges) - 1
+
+    def add_edge_with_from_face(self,face=None,index=None):
+        edgeIdx =  self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
+        return edgeIdx
+
+    def add_edge(self, flatEdge):
+        self.flatEdges.append(flatEdge)
+        return len(self.flatEdges) - 1
+
+################## ADD FACE
     
+    def add_face_before(self,vertPair,nEdges):
+        n_new_verts = nEdges-2
+        first_new_vert = len(self.flatVerts)
+        last_new_vert = first_new_vert + n_new_verts
+        verts = vertPair + range(first_new_vert,last_new_vert)
+
+    def add_face_from_recent(self,edge):
+        already_placed_verts = self.flatEdges[edge].get_verts(self).reverse()
+        verts = already_placed_verts + self.temp_verts
+        edges = [edge] + self.temp_edges
+        flatFace = flatGeom.FlatFace(verts,edges)
+        self.temp_verts = []
+        self.temp_edges = []
+        return self.add_face(flatFace)
+
     def add_first_face_from_verts(self,*verts):
         '''any number of ordered vertex indices '''
         faceIdx_to_be = len(self.flatFaces)
@@ -270,27 +339,9 @@ class Island(object):
     def add_face_verts_edges(self,verts,edges):
         return self.add_face(flatGeom.FlatFace(verts,edges))
 
-    def add_edge_with_from_face(self,face=None,index=None):
-        return self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
-
-
     def add_face(self,flatFace):
         self.flatFaces.append(flatFace)
         return len(self.flatFaces) - 1
-
-    def add_edge(self, flatEdge):
-        self.flatEdges.append(flatEdge)
-        return len(self.flatEdges) - 1
-
-    def add_vert_from_points(self,x,y,z):
-        return self.add_vert(flatGeom.FlatVert.from_coordinates(x,y,z))
-
-    def add_vert_from_point(self,point):
-        return self.add_vert(flatGeom.FlatVert(point))
-
-    def add_vert(self, flatVert):
-        self.flatVerts.append(flatVert)
-        return len(self.flatVerts) - 1
 
 ############ DRAWING
 
@@ -328,10 +379,11 @@ class Island(object):
     def getFlatEdge(self, edge):
         return self.flatEdges[edge]
 
-    def get_frame(self,face,edge):
+    def get_frame_reverse_edge(self,face,edge):
         assert (edge in self.flatFaces[face].edges), "edge {} does not belong to face {}".format(edge,face)
         flatEdge = self.flatEdges[edge]
         edgeVec = flatEdge.get_edge_vec(self)
+        edgeVec.Reverse()
         pntA,pntB = flatEdge.get_coordinates(self)
         normal = self.flatFaces[face].get_normal()
-        return trans.Frame.create_frame_from_normal_and_x(pntA,normal,edgeVec)
+        return trans.Frame.create_frame_from_normal_and_x(pntB,normal,edgeVec)

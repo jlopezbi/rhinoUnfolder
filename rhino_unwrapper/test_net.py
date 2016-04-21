@@ -1,8 +1,10 @@
 import unittest
 import Net
+import transformations as trans
 import Rhino.Geometry as geom
 
 reload(Net)
+reload(trans)
 
 class IslandTestCase(unittest.TestCase):
 
@@ -21,7 +23,19 @@ class IslandTestCase(unittest.TestCase):
         face = self.island.add_first_face_from_verts(0,1,3,2)
         #self.island.draw_edges()
 
-    def test_add_face_from_edge_and_new_verts(self):
+    def test_tack_on_facet(self):
+        self.clear_island()
+        self.test_add_first_face_from_verts()
+        Points = []
+        Points.append(geom.Point3d(10.0,0.0,0.0))
+        Points.append(geom.Point3d(10.0,5.0,0.0))
+        face,edges = self.island.tack_on_facet(edge=1,points=Points)
+        self.assertEqual(edges,[4,5,6])
+        self.assertEqual(face,1)
+        self.island.draw_edges()
+        self.island.draw_faces()
+
+    def _test_add_face_from_edge_and_new_verts(self):
         self.clear_island()
         self.test_add_first_face_from_verts()
         new_vert =  self.island.add_vert_from_points(10.0,0.0,0.0)
@@ -44,12 +58,13 @@ class IslandTestCase(unittest.TestCase):
         self.island.translate(vec)
         self.island.draw_edges()
 
-    def test_get_frame(self):
+    def test_get_frame_reverse_edge(self):
         self.clear_island()
         self.test_add_first_face_from_verts()
-        print self.island.flatFaces[0].edges
-        frame = self.island.get_frame(face=0,edge=0)
+        frame = self.island.get_frame_reverse_edge(face=0,edge=1)
         frame.show()
+        correct_frame = trans.Frame.create_frame_from_tuples((5,5,0),(0,-1,0),(1,0,0))
+        self.assertTrue(correct_frame.is_equal(frame))
         
 
 

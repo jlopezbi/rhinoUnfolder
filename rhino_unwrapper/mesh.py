@@ -3,6 +3,8 @@ import rhino_helpers as helpers
 import scriptcontext
 import rhinoscriptsyntax as rs
 import Rhino.Geometry as geom
+import System
+import clr
 reload(vis)
 
 def make_test_mesh():
@@ -63,6 +65,9 @@ class Mesh(object):
     def __init__(self,mesh):
         self.mesh = mesh
         self.mesh.FaceNormals.ComputeFaceNormals()
+
+    def get_():
+        pass
 
     def getOtherFaceIdx(self,edgeIdx, faceIdx):
         connectedFaces = self.getFacesForEdge(edgeIdx)
@@ -318,6 +323,8 @@ class Mesh(object):
         return getMedian(edgeLens)
 
     ### Main OBJECT IS FACE
+    def get_adjacent_faces(self,faceIdx):
+        return list(self.mesh.Faces.AdjacentFaces(faceIdx))
 
     def getTVertsForFace(self,faceIdx):
         '''
@@ -339,12 +346,20 @@ class Mesh(object):
 
     def getFaceEdges(self,faceIdx):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
-        return vis.convertArray(arrFaceEdges)
+        return list(arrFaceEdges)
+
+    def get_edges_and_orientation_for_face(self,faceIdx):
+        orientations = clr.StrongBox[System.Array[bool]]()
+        edges =  self.mesh.TopologyEdges.GetEdgesForFace(faceIdx,orientations)
+        edges = list(edges)
+        orientations = list(orientations.Value)
+        return edges, orientations
+        #print "got edges: {}".format(list(edges))
+        #print "got orientations: {}".format(list(orientations.Value))
 
     def get_edges_except(self,faceIdx,edgeIdx):
         face_edges = self.getFaceEdges(faceIdx)
         return face_edges.remove(edgeIdx)
-
 
 class MeshDisplayer(object):
 
@@ -432,5 +447,8 @@ class MeshDisplayer(object):
         return drawnEdges
 
 if __name__ == "__main__":
-    pass
-
+    mesh = make_test_mesh()
+    displayer = MeshDisplayer(mesh)
+    displayer.display_all_elements()
+    for i in mesh.get_set_of_face_idxs():
+        print "face {} has edges: {}".format(i,mesh.getFaceEdges(i))

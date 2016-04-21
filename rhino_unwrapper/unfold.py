@@ -69,7 +69,49 @@ class UnFolder(object):
 
 
 MeshLoc = collections.namedtuple('MeshLoc',['face','edge','tVert'])
-IslandLoc = collections.namedtuple('Island',['edge','vert'])
+IslandLoc = collections.namedtuple('Island',['face','edge','verts'])
+
+def breadth_first_traverse(myMesh,face):
+    queue = collections.deque([face])
+    visited = [face]
+    while True:
+        try:
+            nextFace = queue.popleft()
+            #nextMeshLoc = queue.popleft()
+            #Add face to Island(face,meshloc,islandloc)
+        except IndexError:
+            break
+        for neighbor in myMesh.get_adjacent_faces(nextFace):
+            if neighbor not in visited:
+                visited.append(neighbor)
+                queue.append(neighbor)
+    return visited
+
+def breadth_first_layout(myMesh,island,startMeshLoc,startIslandLoc):
+    '''
+    CURRENTLY WORKING HERE *******************************************************
+    traverse all faces of mesh breadth first and create an island
+    (does not check if edges are cut or fold, only for testing purposes)
+    '''
+    layoutPair = (startMeshLoc,startIslandLoc)
+    queue = collections.deque([layoutPair])
+    visited = [meshLoc.face]
+    while True:
+        try:
+            meshLoc,islandLoc = queue.popleft()
+            points = self.get_new_points(meshLoc,islandLoc) #NOT IMPLEMENTED
+            islandFace,islandEdges = island.tack_on_facet(islandLoc.edge,points) #IMPLEMENTED
+        except IndexError:
+            break
+        meshEdges,orientations = self.get_edges_to_hop(meshLoc) #NOT IMPLEMENTED
+        for i,meshEdge in enumerate(meshEdges):
+            face = myMesh.getOtherFaceIdx(meshEdge,meshLoc.face)
+            if face not in visited:
+                visited.append(face)
+                newMeshLoc = MeshLoc(face,meshEdge)
+                newIslandLoc = IslandLoc(islandFace,islandEdges[i])
+                queue.append((newMeshLoc,newIslandLoc))
+
 
 class IslandCreator(object):
     """ traverses a mesh to create an island """
@@ -78,7 +120,7 @@ class IslandCreator(object):
         self.dataMap = dataMap
         self.myMesh = myMesh
         self.mesh_loc = mesh_loc
-        self.island_loc = None
+        self.island_loc = IslandLoc(0,0,[0,1])
         self.island_index = island_index #index of island in net
 
         self.island = nt.Island()
@@ -91,10 +133,11 @@ class IslandCreator(object):
             self.to_frame.show()
             self.from_frame.show()
 
-
     def make_island(self,foldList,mesh_frame,toBasis):
         self.foldList = foldList
         self.layout_face(None,None,mesh_frame,toBasis)
+
+
 
     def new_layout(self,meshLoc,islandLoc):
         self.add_facet_to_island_and_update_map(meshLoc,islandLoc) #does the map get updated in here. yes
@@ -115,19 +158,58 @@ class IslandCreator(object):
         self.from_frame = trans.get_frame_on_mesh(self.mesh_loc,self.myMesh)
 
     def update_to_frame(self):
-        #self.to_frame = 
-        pass
+        if self.island_loc != None:
+            face,edge = self.island_loc
+            self.to_frame = self.island.get_frame_reverse_edge(face,edge)
 
-    def add_facet_to_island_and_update_map(self):
-        #WORKING ON THIS!
+    def add_first_edge_to_island(self):
+        ''' first edge and verts added to island so that recursion is easier'''
+        sourceFace,sourceEdge,sourceVert = self.mesh_loc
+        edgePoints = self.myMesh.get_oriented_points_for_edge(sourceEdge,sourceFace)
+        islandVertPair = []
+        for point in edgePoints:
+            mapped_point = trans.get_mapped_point(point,self.from_frame,self.to_frame)
+            islandVertPair.append(self.island.add_vert_from_point(mapped_point))
+        indexInFace = 0 #always will be first edge in face (?)
+        face = 0 #always will be from first face
+        island_edge = self.island.add_edge_with_from_face(0,index=indexInFace) 
+        self.dataMap.add_edge(sourceEdge,self.island_index,island_edge)
+        
+
+# NEW PLAN:
+# iterate edge-wise over edges for meshFace and  use GetEdgesForFace() method
+# that outputs list of booleans for edges that are backwards relative to face
+# then can add only the head vert for each edge
+    
+    def add_facet(self):
         self.update_from_frame()
         self.update_to_frame()
-        sourceFace,sourceEdge,sourceVert = meshLoc #indices
-        islandEdge,islandVert = islandLoc #indices
+        sourceFace,sourceEdge,sourceVert = self.mesh_loc #indices
+        islandFace,islandEdge,islandVertPair = self.island_loc #indices
+        edges,orientations = self.myMesh.get_edges_and_orientation_for_face(sourceFace)
+        for i,edge in enumerate(edges):
+            if self.edge_not_added(edge):
+                vert_list = self.myMesh.getTVertsForEdge(edge)
+                point_list = self.myMesh.getPointsForEdge(edge)
+                if not orientations[i]:
+                    vert_list.reverse()
+                    point_list.reverse()
+                mapped_point = trans.get_mapped_point(point_list[1],self.from_frame,self.to_frame)
+                self.island.add_vert_from_point(mapped_point)
+                self.island.add_edge_before_face(i)
+            else:
+                pass
+
+
+    def add_facet_to_island_and_update_map(self):
+        self.update_from_frame()
+        self.update_to_frame()
+        sourceFace,sourceEdge,sourceVert = self.mesh_loc #indices
+        islandFace,islandEdge,islandEdgeVerts = self.island_loc #indices
         edgeTVerts = set(self.myMesh.getTVertsForEdge(sourceEdge))
         all_verts = self.myMesh.getTVertsForFace(sourceFace)
         verts_to_assign = set(all_verts)
-        if islandLoc != None:
+        if self.island_loc != None:
             verts_to_assign = verts_to_assign.difference(edgeTVerts)
         island_face_verts = []
         island_face_edges = []
@@ -285,8 +367,8 @@ class IslandCreator(object):
         point.Z = 0.0  # TODO: find where error comes from!!! (rounding?)
         return point
 
-    def alreadyBeenPlaced(self, edge, meshEdges):
-        return len(meshEdges[edge]) > 0
+    def edge_not_added(self, edge):
+        return not self.dataMap.meshEdges[edge]
 
 if __name__ == "__main__":
     unfolder = UnFolder()

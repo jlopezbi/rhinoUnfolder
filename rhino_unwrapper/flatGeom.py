@@ -26,9 +26,12 @@ class FlatVert():
             dot_guid = rs.AddTextDot(str(index),self.point)
             rs.ObjectColor(dot_guid,self.color['magenta'])
 
+    def same_coordinates(self,x,y,z):
+        point = geom.Point3d(x,y,z)
+        return self.hasSamePoint(point)
+
     def hasSamePoint(self, point):
-        return approxEqual(self.point.X, point.X) and approxEqual(
-            self.point.Y, point.Y)
+        return self.point.Equals(point)
 
     def translate(self, xForm):
         self.point.Transform(xForm)
@@ -37,8 +40,8 @@ class FlatVert():
 class FlatFace():
 
     def __init__(self, vertices,edges):
-        self.vertices = vertices  # a list of netVerts
-        self.edges = edges #ccw with face normal
+        self.vertices = vertices  #ORDERED a list of netVerts
+        self.edges = edges #ORDERED ccw with face normal
         self.centerPoint = None
 
     def get_normal(self,verts=None):

@@ -26,6 +26,10 @@ class Map(object):
 
     def updateVertMap(self, tVert, netVert):
         self.meshVerts[tVert].append(netVert)
+    
+    def add_edge(self,meshEdge,islandIdx,islandEdge):
+        ''' TBD '''
+        pass
 
     def add_child_to_vert(self,tVert,childVert):
         self.meshVerts[tVert].append(childVert)
