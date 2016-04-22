@@ -2,7 +2,8 @@ import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
-import math
+
+import math,collections
 
 # TODO: look into inline functions
 
@@ -16,7 +17,21 @@ def createGroup(groupName, objects):
     return name
 
 def convertArray(array):
-    return list(arrray)
+    return list(array)
+
+def rotate_and_remove(sequence,index):
+    #TODO: Test function
+    '''
+    returns deque list rotated so starts with element after index
+    Examples:
+    rotate_and_remove[(4,3,1,6],2) => [6,4,3] 
+    rotate_and_remove[(4,3,1,6],1) => [1,6,4] 
+    '''
+    value = sequence[index]
+    sequence = collections.deque(sequence)
+    sequence.rotate(-index)
+    sequence.remove(value)
+    return list(sequence)
 
 def getCenterPointLine(line):
     cenX = (line.FromX + line.ToX) / 2

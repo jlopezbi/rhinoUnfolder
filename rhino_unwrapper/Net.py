@@ -235,8 +235,9 @@ class Island(object):
         self.flatEdges = []
         self.flatFaces = []  
         self.line_edge_map = {}
-        #self.temp_edges = []
-        #self.temp_verts = []
+        self.temp_edges = []
+        self.temp_verts = []
+        self.dummyFace = self.add_face(flatGeom.FlatFace([0,1],[0]))
 
 ############ ADDING ELEMENTS    
     def tack_on_facet(self,edge,points):
@@ -258,10 +259,12 @@ class Island(object):
         return newFaceIdx,faceEdges
 
 ################## ADD VERT
+    def add_vert_point_Breadth(self,point):
+        vertIdx = self.add_vert(flatGeom.FlatVert(point))
+        self.temp_verts.append(vertIdx)
 
     def add_new_points(self,points,edge):
         old_verts = self.flatEdges[edge].get_verts(self).reverse()
-
 
     def add_vert_from_points(self,x,y,z):
         return self.add_vert(flatGeom.FlatVert.from_coordinates(x,y,z))
@@ -276,11 +279,11 @@ class Island(object):
 
 ################## ADD EDGE
 
-    def add_edge_before_face(self,index=None):
+    def add_edge_before_face_Breadth(self,index=None):
         newFaceIdx = len(self.flatFaces)
-        newEdge = flatEdge.FlatEdge(fromFace=newFaceIdx,indexInFace=index)
-        self.flatFaces.append(newEdge)
-        return len(self.flatEdges) - 1
+        newEdge = self.add_edge(flatEdge.FlatEdge(fromFace=newFaceIdx,indexInFace=index))
+        self.temp_edges.append(newEdge)
+        return newEdge
 
     def add_edge_with_from_face(self,face=None,index=None):
         edgeIdx =  self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
@@ -291,7 +294,14 @@ class Island(object):
         return len(self.flatEdges) - 1
 
 ################## ADD FACE
-    
+    def add_face_Breadth(self,baseEdge):
+        baseVerts = self.flatEdges[baseEdge].get_reversed_verts(self)
+        verts = baseVerts + self.temp_verts
+        edges = [baseEdge] + self.temp_edges
+        self.add_face_verts_edges(vert,edges)
+        self.temp_verts = []
+        self.temp_edges = []
+
     def add_face_before(self,vertPair,nEdges):
         n_new_verts = nEdges-2
         first_new_vert = len(self.flatVerts)
@@ -379,7 +389,8 @@ class Island(object):
     def getFlatEdge(self, edge):
         return self.flatEdges[edge]
 
-    def get_frame_reverse_edge(self,face,edge):
+    def get_frame_reverse_edge(self,islandLoc):
+        face,edge = islandLoc
         assert (edge in self.flatFaces[face].edges), "edge {} does not belong to face {}".format(edge,face)
         flatEdge = self.flatEdges[edge]
         edgeVec = flatEdge.get_edge_vec(self)

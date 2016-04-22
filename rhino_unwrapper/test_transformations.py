@@ -15,6 +15,12 @@ class FrameTestCase(unittest.TestCase):
         y = geom.Vector3d(0,3,0)
         cls.frame = trans.Frame.create_frame_from_vectors(o,x,y)
 
+    def test_point3f_input(self):
+        o = geom.Point3f(1,1,0)
+        x =  geom.Vector3d(3,0,0)
+        y = geom.Vector3d(0,3,0)
+        trans.Frame.create_frame_from_vectors(o,x,y)
+
     def test_unitized(self):
         unit =  1.0
         self.assertEqual(self.frame.plane.XAxis.Length,unit)
@@ -122,5 +128,5 @@ if __name__ == "__main__":
     suiteB = unittest.TestLoader().loadTestsFromTestCase(FrameOnMeshTestCase)
     suiteC = unittest.TestLoader().loadTestsFromTestCase(TransformTestCase)
     big_suite = unittest.TestSuite([suiteA,suiteB,suiteC])
-    unittest.TextTestRunner(verbosity=2).run(suiteB)
+    unittest.TextTestRunner(verbosity=2).run(suiteC)
 

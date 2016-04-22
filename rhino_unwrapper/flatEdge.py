@@ -81,6 +81,10 @@ class FlatEdge(object):
         return pointA,pointB
 
     def get_verts(self,island):
+        '''
+        always gets verts in order acording to this edges
+        fromFace
+        '''
         face = island.flatFaces[self.fromFace]
         verts = face.vertices
         vertA = verts[self.indexInFace]

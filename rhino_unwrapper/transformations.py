@@ -12,6 +12,18 @@ def get_mapped_point(point,from_frame,to_frame):
     final_point = to_frame.plane.PointAt(mapped_point.X,mapped_point.Y,mapped_point.Z)
     return final_point
 
+def get_frame_on_mesh_implicit(meshLoc,myMesh):
+    '''
+    an edge and a face (meshLoc) imply a unique frame, since the edge can be oriented according the the face's normal (right hand rule)
+    '''
+    face,edge = meshLoc
+    face_edges = myMesh.getFaceEdges(face)
+    assert (edge in face_edges), "edge {} not in face {}".format(edge,face)
+    basePoint,endPoint = myMesh.get_oriented_points_for_edge(edge,face)
+    normal = myMesh.get_face_normal(face)
+    xVec = helper.getVectorForPoints(basePoint,endPoint)
+    return Frame.create_frame_from_normal_and_x(basePoint,normal,xVec)
+
 def get_frame_on_mesh(mesh_location,myMesh):
     faceIdx,edgeIdx,vertIdx = mesh_location
     face_edges = myMesh.getFaceEdges(faceIdx)

@@ -1,6 +1,7 @@
 import unittest
 import mesh
 reload(mesh)
+import Rhino.Geometry as geom
 
 class MakeMeshTestCase(unittest.TestCase):
     def test_make_test_mesh(self):
@@ -33,6 +34,18 @@ class MeshTestCase(unittest.TestCase):
         correct_orientation = [0,1,1]
         self.assertEqual(set(correct_edges),set(edges))
         self.assertEqual(correct_orientation,orientations)
+
+    def test_get_edges_ccw_besides_base(self):
+        edges = self.mesh.get_edges_ccw_besides_base(baseEdge=4,face=4)
+        correct_list = [(5,False),(3,False)]
+        self.assertEqual(edges,correct_list)
+    
+    def test_get_aligned_points(self):
+        orientedEdge = (0,False)
+        pntA,pntB = self.mesh.get_aligned_points(orientedEdge)
+        self.assertTrue(pntA.Equals(geom.Point3f(0,5,0)))
+        self.assertTrue(pntB.Equals(geom.Point3f(0,0,0)))
+
     
 class MeshDiplayerTestCase(unittest.TestCase):
     @classmethod

@@ -1,12 +1,36 @@
 import unittest
+import Rhino.Geometry as geom
 import transformations as trans
 import unfold
 import mesh
 import Map
+import Net
+reload(Net)
 reload(unfold)
 reload(trans)
 reload(mesh)
 reload(Map)
+
+class IslandMakerTestCase(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.myMesh = mesh.make_upright_mesh()
+        cls.meshDisplayer = mesh.MeshDisplayer(cls.myMesh)
+        cls.meshDisplayer.display_all_elements()
+        cls.island_idx = 0
+        cls.islandMaker = unfold.IslandMaker(None,cls.myMesh,cls.island_idx)
+
+    def test_get_mapped_point(self):
+        #NOTE: working here, currently not working cuz need to bootstrap island..
+        self.islandMaker.island = Net.Island()
+        self.islandMaker.island.add_vert_from_point(geom.Point3d(0.0,0.0,5.0))
+        self.islandMaker.island.add_edge_with_from_face(face=0,index=0)
+        point = self.myMesh.get_point3f_for_tVert(1)
+        meshLoc = unfold.MeshLoc(0,1)
+        islandLoc = unfold.IslandLoc(0,0)
+        self.islandMaker.get_mapped_point(point,meshLoc,islandLoc)
+
 
 class IslandCreatorTestCase(unittest.TestCase):
     """tests for IslandCreator class in unfold.py"""
@@ -59,5 +83,5 @@ class IslandCreatorTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(IslandCreatorTestCase)
+    suite = unittest.TestLoader().loadTestsFromTestCase(IslandMakerTestCase)
     unittest.TextTestRunner(verbosity=2).run(suite)

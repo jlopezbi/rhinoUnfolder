@@ -1,11 +1,13 @@
 import visualization as vis
 import rhino_helpers as helpers
+reload(vis)
+reload(helpers)
+
 import scriptcontext
 import rhinoscriptsyntax as rs
 import Rhino.Geometry as geom
 import System
 import clr
-reload(vis)
 
 def make_test_mesh():
     vertices = []
@@ -115,6 +117,9 @@ class Mesh(object):
         '''
         return geom.Point3d(self.mesh.TopologyVertices.Item[tVert])
 
+    def get_point3f_for_tVert(self,vert):
+        return self.mesh.TopologyVertices.Item[vert]
+
     def getTVertsForVert(self,tVert):
         arrTVerts = self.mesh.TopologyVertices.ConnectedTopologyVertices(tVert)
         listVerts = vis.convertArray(arrTVerts)
@@ -169,6 +174,17 @@ class Mesh(object):
         tVerts = self.getTVertsForEdge(edge)
         tVerts.remove(tVert)
         return tVerts[0]
+
+    ### SPECIAL EDGE
+    def get_aligned_points(self,orientedEdge):
+        '''
+        get points ordered according to orientation 
+        '''
+        edge, aligned_with_face = orientedEdge
+        points = self.getPointsForEdge(edge)
+        if not aligned_with_face:
+            points.reverse()
+        return points
 
     ### Main OBJECT IS EDGE
 
@@ -331,8 +347,8 @@ class Mesh(object):
         list of 4 values if quad, 3 values if triangle
         '''
         arrTVerts = self.mesh.Faces.GetTopologicalVertices(faceIdx)
-        tVerts = vis.convertArray(arrTVerts)
-        return vis.uniqueList(tVerts)
+        tVerts = list(arrTVerts)
+        return helpers.uniqueList(tVerts)
     
     def get_points_for_face(self,faceIdx):
         '''
@@ -348,18 +364,36 @@ class Mesh(object):
         arrFaceEdges = self.mesh.TopologyEdges.GetEdgesForFace(faceIdx)
         return list(arrFaceEdges)
 
+    def get_edges_ccw_besides_base(self,baseEdge=None,face=None):
+        '''
+        get the edges for the face, except the baseEdges, ordered
+        ccw around face, startin with the edge after the baseEdge
+        '''
+        #TODO: do assertion check that baseEdge belongs to the face
+        edges,orientations = self.get_edges_and_orientation_for_face(face)
+        index = edges.index(baseEdge)
+        edges = helpers.rotate_and_remove(edges,index)
+        orientations = helpers.rotate_and_remove(orientations,index)
+        return zip(edges,orientations)
+
     def get_edges_and_orientation_for_face(self,faceIdx):
         orientations = clr.StrongBox[System.Array[bool]]()
         edges =  self.mesh.TopologyEdges.GetEdgesForFace(faceIdx,orientations)
         edges = list(edges)
         orientations = list(orientations.Value)
-        return edges, orientations
-        #print "got edges: {}".format(list(edges))
-        #print "got orientations: {}".format(list(orientations.Value))
+        #edges_with_orientations = zip(edges,orientations)
+        return edges,orientations
 
     def get_edges_except(self,faceIdx,edgeIdx):
         face_edges = self.getFaceEdges(faceIdx)
         return face_edges.remove(edgeIdx)
+
+    def get_face_normal(self,face):
+        '''
+        rhinocommon returns Vector3f, but most other rhioncommon
+        stuff uses vector3d, so returns vector3d
+        '''
+        return geom.Vector3d(self.mesh.FaceNormals.Item[face])
 
 class MeshDisplayer(object):
 
