@@ -137,15 +137,15 @@ class IslandMaker(object):
                     tailPoint,headPoint = self.myMesh.get_aligned_points(orientedEdge) 
                     #NOTE: working here
                     mapped_point = self.get_mapped_point(headPoint,meshLoc,islandLoc) #NOT TESTED
-                    island.add_vert_point_Breadth(mapped_point) #NOT TESTED
-                newEdge = island.add_edge_before_face_Breadth(i+1) #NOT TESTED
+                    island.add_vert_point_Breadth(mapped_point) 
+                newEdge = island.add_edge_before_face_Breadth(i+1)
                 if face not in visited:
                     visited.append(face)
                     island.update_edge_to_face(edge=newEdge,toFace=islandFaceToBe+(i+1)) #NOT IMPLEMENTED
                     newMeshLoc = MeshLoc(face,meshEdge)
                     newIslandLoc = IslandLoc(islandFaceToBe,newEdge)
                     queue.append((newMeshLoc,newIslandLoc))
-            island.add_face_Breadth(baseEdge=islandLoc.edge) #NOT TESTED
+            island.add_face_Breadth(baseEdge=islandLoc.edge)
 
     def get_mapped_point(self,point,meshLoc,islandLoc):
         # NOT TESTED

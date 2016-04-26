@@ -237,7 +237,13 @@ class Island(object):
         self.line_edge_map = {}
         self.temp_edges = []
         self.temp_verts = []
+
+    def add_dummy_elements(self): 
+        '''
+        to be used for layout; initializes with edge and face
+        '''
         self.dummyFace = self.add_face(flatGeom.FlatFace([0,1],[0]))
+        self.dummyEdge = self.add_edge_with_from_face(face=0,index=0)
 
 ############ ADDING ELEMENTS    
     def tack_on_facet(self,edge,points):
@@ -295,10 +301,12 @@ class Island(object):
 
 ################## ADD FACE
     def add_face_Breadth(self,baseEdge):
+        assert self.temp_verts, "temp_verts is empty, need to add verts first"
+        assert self.temp_edges, "temp_edges is empty, need to add edges first"
         baseVerts = self.flatEdges[baseEdge].get_reversed_verts(self)
         verts = baseVerts + self.temp_verts
         edges = [baseEdge] + self.temp_edges
-        self.add_face_verts_edges(vert,edges)
+        self.add_face_verts_edges(verts,edges)
         self.temp_verts = []
         self.temp_edges = []
 
