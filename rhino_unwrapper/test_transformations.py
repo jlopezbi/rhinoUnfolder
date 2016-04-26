@@ -56,6 +56,7 @@ class FrameTestCase(unittest.TestCase):
         self.assertTrue(self.frame.is_equal(test_frame))
 
 class FrameOnMeshTestCase(unittest.TestCase):
+    ''' DEPRICATED'''
 
     @classmethod
     def setUpClass(cls):
@@ -127,6 +128,6 @@ if __name__ == "__main__":
     suiteA = unittest.TestLoader().loadTestsFromTestCase(FrameTestCase) 
     suiteB = unittest.TestLoader().loadTestsFromTestCase(FrameOnMeshTestCase)
     suiteC = unittest.TestLoader().loadTestsFromTestCase(TransformTestCase)
-    big_suite = unittest.TestSuite([suiteA,suiteB,suiteC])
-    unittest.TextTestRunner(verbosity=2).run(suiteC)
+    big_suite = unittest.TestSuite([suiteA,suiteC])
+    unittest.TextTestRunner(verbosity=2).run(big_suite)
 

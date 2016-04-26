@@ -1,5 +1,6 @@
 import unittest
 import mesh
+import transformations as trans
 reload(mesh)
 import Rhino.Geometry as geom
 
@@ -14,6 +15,15 @@ class MeshTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.mesh = mesh.make_test_mesh()
+
+    def test_get_frame_oriented_with_face_normals(self):
+        newFrame = self.mesh.get_frame_oriented_with_face_normal(edge=0,face=2)
+        o = (0,5,0)
+        x = (0,-1,0)
+        y = (1,0,0)
+        correct_frame = trans.Frame.create_frame_from_tuples(o,x,y)
+        newFrame.show()
+        self.assertTrue(newFrame.is_equal(correct_frame))
 
     def test_get_set_of_edges(self):
         self.assertEqual(self.mesh.get_set_of_edges(),set(range(16)))
@@ -46,7 +56,6 @@ class MeshTestCase(unittest.TestCase):
         self.assertTrue(pntA.Equals(geom.Point3f(0,5,0)))
         self.assertTrue(pntB.Equals(geom.Point3f(0,0,0)))
 
-    
 class MeshDiplayerTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

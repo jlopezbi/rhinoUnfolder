@@ -136,7 +136,7 @@ class IslandMaker(object):
                 if orientedEdge != orientedEdges[-1]: # the last edge's head has already been layed out
                     tailPoint,headPoint = self.myMesh.get_aligned_points(orientedEdge) 
                     #NOTE: working here
-                    mapped_point = self.get_mapped_point(headPoint,meshLoc,islandLoc) #NOT IMPLEMENTED
+                    mapped_point = self.get_mapped_point(headPoint,meshLoc,islandLoc) #NOT TESTED
                     island.add_vert_point_Breadth(mapped_point) #NOT TESTED
                 newEdge = island.add_edge_before_face_Breadth(i+1) #NOT TESTED
                 if face not in visited:
@@ -148,18 +148,17 @@ class IslandMaker(object):
             island.add_face_Breadth(baseEdge=islandLoc.edge) #NOT TESTED
 
     def get_mapped_point(self,point,meshLoc,islandLoc):
-        from_frame = trans.get_frame_on_mesh_implicit(meshLoc,self.myMesh)
-        to_frame = self.island.get_frame_reverse_edge(islandLoc)
+        # NOT TESTED
+        from_frame = self.myMesh.get_frame_oriented_with_face_normal(meshLoc.edge,meshLoc.face)
+        to_frame = self.island.get_frame_reverse_edge(islandLoc.edge,islandLoc.face)
         if self.visualize_mode:
             from_frame.show()
             to_frame.show()
-        #getting the frames is an incosistent patter, but whatever, seems ok for now
         return  trans.get_mapped_point(point,from_frame,to_frame)
 
     def get_edges_to_add_CCW(self,meshLoc):
         baseEdge = meshLoc.edge
         face  = meshLoc.face
-
 
 def breadth_first_layout_two_iters(myMesh,island,startMeshLoc,startIslandLoc):
     '''

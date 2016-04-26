@@ -373,7 +373,7 @@ class Island(object):
         collection = []
         for face in self.flatFaces:
             collection.append(face.draw(self.flatVerts))
-        createGroup(netGroupName, collection)
+        #createGroup(netGroupName, collection)
 
 ############ OTHER
 
@@ -389,8 +389,7 @@ class Island(object):
     def getFlatEdge(self, edge):
         return self.flatEdges[edge]
 
-    def get_frame_reverse_edge(self,islandLoc):
-        face,edge = islandLoc
+    def get_frame_reverse_edge(self,edge,face):
         assert (edge in self.flatFaces[face].edges), "edge {} does not belong to face {}".format(edge,face)
         flatEdge = self.flatEdges[edge]
         edgeVec = flatEdge.get_edge_vec(self)

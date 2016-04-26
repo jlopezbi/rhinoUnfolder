@@ -16,24 +16,40 @@ class IslandTestCase(unittest.TestCase):
         self.island = Net.Island()
 
     def test_add_first_face_from_verts(self):
+        self.clear_island()
         self.island.add_vert_from_points(0.0,0.0,0.0) #0
         self.island.add_vert_from_points(5.0,0.0,0.0) #1
         self.island.add_vert_from_points(0.0,5.0,0.0) #2
         self.island.add_vert_from_points(5.0,5.0,0.0) #3
         face = self.island.add_first_face_from_verts(0,1,3,2)
-        #self.island.draw_edges()
-
-    def test_tack_on_facet(self):
-        self.clear_island()
-        self.test_add_first_face_from_verts()
-        Points = []
-        Points.append(geom.Point3d(10.0,0.0,0.0))
-        Points.append(geom.Point3d(10.0,5.0,0.0))
-        face,edges = self.island.tack_on_facet(edge=1,points=Points)
-        self.assertEqual(edges,[4,5,6])
-        self.assertEqual(face,1)
+        self.assertEqual(self.island.flatFaces[0].edges, [0]) #dummy face
+        self.assertEqual(self.island.flatFaces[face].edges,[0,1,2,3])
         self.island.draw_edges()
         self.island.draw_faces()
+        return face
+
+    def test_breadth_construction(self):
+        self.clear_island()
+        pnt0 = geom.Point3d(5,5,0)
+        pnt1 = geom.Point3d(5,10,0)
+        self.island.add_vert_point_Breadth(pnt0)
+        self.island.add_vert_point_Breadth(pnt1)
+        #NOTE: working here, near bottom of rabbit hole, 
+        #top it in unfold.py, breadth_first_layout()
+        self.island.add_edge_before_face_Breadth()
+        self.island.draw_all()
+
+#    def test_tack_on_facet(self):
+#        self.clear_island()
+#        self.test_add_first_face_from_verts()
+#        Points = []
+#        Points.append(geom.Point3d(10.0,0.0,0.0))
+#        Points.append(geom.Point3d(10.0,5.0,0.0))
+#        face,edges = self.island.tack_on_facet(edge=1,points=Points)
+#        self.assertEqual(edges,[4,5,6])
+#        self.assertEqual(face,1)
+#        self.island.draw_edges()
+#        self.island.draw_faces()
 
     def _test_add_face_from_edge_and_new_verts(self):
         self.clear_island()
@@ -60,8 +76,8 @@ class IslandTestCase(unittest.TestCase):
 
     def test_get_frame_reverse_edge(self):
         self.clear_island()
-        self.test_add_first_face_from_verts()
-        frame = self.island.get_frame_reverse_edge(face=0,edge=1)
+        firstFace = self.test_add_first_face_from_verts()
+        frame = self.island.get_frame_reverse_edge(edge=1,face=firstFace)
         frame.show()
         correct_frame = trans.Frame.create_frame_from_tuples((5,5,0),(0,-1,0),(1,0,0))
         self.assertTrue(correct_frame.is_equal(frame))

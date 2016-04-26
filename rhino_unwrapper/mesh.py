@@ -1,5 +1,6 @@
 import visualization as vis
 import rhino_helpers as helpers
+import transformations as trans
 reload(vis)
 reload(helpers)
 
@@ -68,8 +69,17 @@ class Mesh(object):
         self.mesh = mesh
         self.mesh.FaceNormals.ComputeFaceNormals()
 
-    def get_():
-        pass
+    def get_frame_oriented_with_face_normal(self,edge,face):
+        '''
+        an edge and a face (meshLoc) imply a unique frame, 
+        since the edge can be oriented according the the face's normal (right hand rule)
+        '''
+        face_edges = self.getFaceEdges(face)
+        assert (edge in face_edges), "edge {} not in face {}".format(edge,face)
+        basePoint,endPoint = self.get_oriented_points_for_edge(edge,face)
+        normal = self.get_face_normal(face)
+        xVec = helpers.getVectorForPoints(basePoint,endPoint)
+        return trans.Frame.create_frame_from_normal_and_x(basePoint,normal,xVec)
 
     def getOtherFaceIdx(self,edgeIdx, faceIdx):
         connectedFaces = self.getFacesForEdge(edgeIdx)
