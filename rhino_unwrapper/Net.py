@@ -237,6 +237,7 @@ class Island(object):
         self.line_edge_map = {}
         self.temp_edges = []
         self.temp_verts = []
+        self.debug_visualize = False
 
     def add_dummy_elements(self): 
         '''
@@ -244,6 +245,13 @@ class Island(object):
         '''
         self.dummyFace = self.add_face(flatGeom.FlatFace([0,1],[0]))
         self.dummyEdge = self.add_edge_with_from_face(face=0,index=0)
+
+############ QUIERY
+    def get_point_for_vert(self,vert):
+        return self.flatVerts[vert].point
+
+    def next_face_index(self):
+        return len(self.flatFaces)
 
 ############ ADDING ELEMENTS    
     def tack_on_facet(self,edge,points):
@@ -265,7 +273,10 @@ class Island(object):
         return newFaceIdx,faceEdges
 
 ################## ADD VERT
-    def add_vert_point_Breadth(self,point):
+    def layout_add_vert_point(self,point):
+        '''
+        designed for layout: verts get added before face 
+        '''
         vertIdx = self.add_vert(flatGeom.FlatVert(point))
         self.temp_verts.append(vertIdx)
 
@@ -285,7 +296,10 @@ class Island(object):
 
 ################## ADD EDGE
 
-    def add_edge_before_face_Breadth(self,index=None):
+    def layout_add_edge(self,index=None):
+        '''
+        designed for layout: edge gets added before face gets added
+        '''
         newFaceIdx = len(self.flatFaces)
         newEdge = self.add_edge(flatEdge.FlatEdge(fromFace=newFaceIdx,indexInFace=index))
         self.temp_edges.append(newEdge)
@@ -294,7 +308,6 @@ class Island(object):
     def update_edge_to_face(self,edge,toFace):
         edge_obj = self.get_edge_obj(edge)
         edge_obj.toFace = toFace
-
 
     def add_edge_with_from_face(self,face=None,index=None):
         edgeIdx =  self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
@@ -305,16 +318,26 @@ class Island(object):
         return len(self.flatEdges) - 1
 
 ################## ADD FACE
-    def add_face_Breadth(self,baseEdge):
+    def layout_add_face(self,baseEdge):
+        '''
+        designed for layout: verts and edges are added before this function is called.
+        Base edge is an edge index in this island that already exists.
+        '''
         assert self.temp_verts, "temp_verts is empty, need to add verts first"
         assert self.temp_edges, "temp_edges is empty, need to add edges first"
         baseVerts = self.flatEdges[baseEdge].get_reversed_verts(self)
         verts = baseVerts + self.temp_verts
         edges = [baseEdge] + self.temp_edges
-        self.add_face_verts_edges(verts,edges)
+        face = self.add_face_verts_edges(verts,edges)
         self.temp_verts = []
         self.temp_edges = []
-
+        if self.debug_visualize:
+            face_obj = self.flatFaces[face]
+            face_obj.draw(self)
+            face_obj.show_index(face,self)
+            for edge in face_obj.edges:
+                self.flatEdges[edge].show_index(edge,self)
+            
     def add_face_before(self,vertPair,nEdges):
         n_new_verts = nEdges-2
         first_new_vert = len(self.flatVerts)
@@ -379,14 +402,15 @@ class Island(object):
 
     def draw_edges(self):
         for i,edge in enumerate(self.flatEdges):
-            line_guid = edge.show_edge(self,i)
+            line_guid = edge.show(self)
             self.line_edge_map[line_guid] = edge
 
     def draw_faces(self, netGroupName=''):
         collection = []
         for face in self.flatFaces:
-            collection.append(face.draw(self.flatVerts))
+            collection.append(face.draw(self))
         #createGroup(netGroupName, collection)
+
 
 ############ OTHER
 

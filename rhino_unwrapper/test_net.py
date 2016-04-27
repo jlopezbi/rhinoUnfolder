@@ -36,17 +36,17 @@ class IslandTestCase(unittest.TestCase):
         # NOW ADD A NEW FACET
         pnt2 = geom.Point3d(7,6,0)
         pnt3 = geom.Point3d(7,8,0)
-        self.island.add_vert_point_Breadth(pnt2)
-        self.island.add_edge_before_face_Breadth(index=1)
-        self.island.add_vert_point_Breadth(pnt3)
-        self.island.add_edge_before_face_Breadth(index=2)
-        self.island.add_edge_before_face_Breadth(index=3)
-        self.island.add_face_Breadth(baseEdge=0)
+        self.island.layout_add_vert_point(pnt2)
+        self.island.layout_add_edge(index=1)
+        self.island.layout_add_vert_point(pnt3)
+        self.island.layout_add_edge(index=2)
+        self.island.layout_add_edge(index=3)
+        self.island.layout_add_face(baseEdge=0)
         self.island.draw_all()
 
     def test_breadth_construction_catches_error(self):
         self.island.add_dummy_elements()
-        self.assertRaises(AssertionError,self.island.add_face_Breadth,0)
+        self.assertRaises(AssertionError,self.island.layout_add_face,0)
 
     def test_update_edge_to_face(self):
         self.island.add_dummy_elements()

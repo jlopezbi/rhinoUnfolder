@@ -67,12 +67,13 @@ class UnFolder(object):
         island = self.islandCreator.make_island(self.fold_list,init_mesh_frame,to_frame)
         self.net.add_island(island)
 
-#MeshLoc = collections.namedtuple('MeshLoc',['face','edge','tVert'])
-#IslandLoc = collections.namedtuple('Island',['face','edge','verts'])
 MeshLoc = collections.namedtuple('MeshLoc',['face','edge'])
 IslandLoc = collections.namedtuple('IslandLoc',['face','edge']) #note face for island loc is prevFace
 
 def breadth_first_traverse(myMesh,face):
+    '''
+    practice function for traversing mesh breadth-first
+    '''
     queue = collections.deque([face])
     visited = [face]
     while True:
@@ -130,34 +131,35 @@ class IslandMaker(object):
         (does not check if edges are cut or fold) 
         need to figure out how to setup island so ready to do this function...
         '''
+        print "beginning layout....."
         layoutPair = (startMeshLoc,startIslandLoc)
         queue = collections.deque([layoutPair])
         visited = [startMeshLoc.face]
         while True:
             try:
                 meshLoc,islandLoc = queue.popleft()
-                print meshLoc,islandLoc
+                print "At mesh loc: {}, with island loc: {}".format(meshLoc,islandLoc)
             except IndexError:
                 break
             orientedEdges = self.myMesh.get_edges_ccw_besides_base(meshLoc.edge,meshLoc.face) 
             newVerts = []
             newEdges = []
-            islandFaceToBe = islandLoc.face + 1
+            islandFaceToBe = island.next_face_index()
             for i,orientedEdge in enumerate(orientedEdges):
                 edge,alignedWithFace = orientedEdge
                 face = self.myMesh.getOtherFaceIdx(edge,meshLoc.face)
                 if orientedEdge != orientedEdges[-1]: # the last edge's head has already been layed out
                     tailPoint,headPoint = self.myMesh.get_aligned_points(orientedEdge) 
                     mapped_point = self.get_mapped_point(headPoint,meshLoc,islandLoc) 
-                    island.add_vert_point_Breadth(mapped_point) 
-                newEdge = island.add_edge_before_face_Breadth(i+1)
+                    island.layout_add_vert_point(mapped_point) 
+                newEdge = island.layout_add_edge(i+1)
                 if face and face not in visited:
                     visited.append(face)
                     island.update_edge_to_face(edge=newEdge,toFace=islandFaceToBe+(i+1)) 
                     newMeshLoc = MeshLoc(face,edge)
                     newIslandLoc = IslandLoc(islandFaceToBe,newEdge)
                     queue.append((newMeshLoc,newIslandLoc))
-            island.add_face_Breadth(baseEdge=islandLoc.edge)
+            island.layout_add_face(baseEdge=islandLoc.edge)
 
     def get_mapped_point(self,point,meshLoc,islandLoc):
         from_frame = self.myMesh.get_frame_oriented_with_face_normal(meshLoc.edge,meshLoc.face)

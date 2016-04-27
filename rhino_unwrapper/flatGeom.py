@@ -48,59 +48,72 @@ class FlatFace():
         ''' For now returns unit z vector '''
         return geom.Vector3d(0.0,0.0,1.0)
     
-    def getFlatVerts(self, flatVerts):
+    def getFlatVerts(self, island):
         collection = []
         for vert in self.vertices:
-            collection.append(flatVerts[vert])
+            collection.append(island.flatVerts[vert])
         return collection
 
+    def get_points(self,island):
+        points = []
+        for vert in self.vertices:
+            points.append(island.flatVerts[vert].point)
+        return points
+    
     def getFlatVertForTVert(self, tVert, flatVerts):
         assert(tVert in self.vertices.keys())
         return flatVerts[tVert][self.vertices[tVert]]
 
-    def getCenterPoint(self, flatVerts, getNew=False):
+    def getCenterPoint(self, island, getNew=False):
         """
-        assumes face is in XY Plane!
+        NOTE: could probably also get center from polyline
         """
+
         if getNew:
             self.centerPoint = None
         if self.centerPoint is None:
-            flatVerts = self.getFlatVerts(flatVerts)
-            nVerts = len(self.vertices)
             sumX = 0.0
             sumY = 0.0
-            for flatVert in flatVerts:
-                point = flatVert.point
+            sumZ = 0.0
+            for vert in self.vertices:
+                point = island.get_point_for_vert(vert)
                 sumX += point.X
                 sumY += point.Y
+                sumZ += point.Z
+            nVerts = len(self.vertices)
             x = sumX / nVerts
             y = sumY / nVerts
-            self.centerPoint = Rhino.Geometry.Point3d(x, y, 0.0)
+            z = sumZ / nVerts
+            self.centerPoint = geom.Point3d(x,y,z)
         return self.centerPoint
 
-    def draw(self, flatVerts):
-        polyline = self.getPolyline(flatVerts)
+    def draw(self, island):
+        polyline = self.getPolyline(island)
         # remove 'EndArrowhead' to stop displaying orientatio of face
         poly_id = drawPolyline(polyline, arrowType='end')
         self.poly_id = poly_id
         self.polyline = polyline
 
-    def getPolyline(self, flatVerts):
-        points = [flatVerts[i].point for i in self.vertices]
+    def show_index(self,index,island):
+        point = self.getCenterPoint(island)
+        rs.AddTextDot(str(index),point)
+
+    def getPolyline(self, island):
+        points = [island.flatVerts[i].point for i in self.vertices]
         # add first vert to end to make closed
-        points.append(flatVerts[self.vertices[0]].point)
+        points.append(island.flatVerts[self.vertices[0]].point)
         return Rhino.Geometry.Polyline(points)
 
-    def getPolylineCurve(self, flatVerts):
-        polyline = self.getPolyline(flatVerts)
+    def getPolylineCurve(self, island):
+        polyline = self.getPolyline(island)
         return Rhino.Geometry.PolylineCurve(polyline)
 
-    def getProps(self, flatVerts):
-        polylineCurve = self.getPolylineCurve(flatVerts)
+    def getProps(self, island):
+        polylineCurve = self.getPolylineCurve(island)
         return Rhino.Geometry.AreaMassProperties.Compute(polylineCurve)
 
-    def getArea(self, flatVerts):
-        props = self.getProps(flatVerts)
+    def getArea(self, island):
+        props = self.getProps(island)
         return props.Area
 
     def drawInnerface(self, flatVerts, ratio=.33):

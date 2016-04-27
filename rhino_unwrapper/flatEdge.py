@@ -1,4 +1,4 @@
-from visualization import * 
+import visualization as vis
 import rhino_helpers
 import math 
 
@@ -23,6 +23,7 @@ class FlatEdge(object):
         self.toFace = kwargs.get('toFace',None)
         self.meshEdgeIdx = kwargs.get('meshEdgeIdx',None)
         self.color = kwargs.get('color',(0,0,0,0))
+        self.index_color = (0,0,255,0)
         self.line = None
         self.line_id = None
         self.geom = []
@@ -31,14 +32,13 @@ class FlatEdge(object):
     def post_initialize(self,kwargs):
         pass
 
-    def show(self,flatVerts):
-        pass
+    def show(self,island):
+        return self.show_line(island)
 
-    def show_edge(self,island,index):
+    def show_index(self,index,island):
         '''for displaying this edge in the island '''
         center = self.getMidPoint(island)
-        rs.AddTextDot(str(index),center)
-        return self.show_line(island)
+        vis.drawTextDot(center,str(index),self.index_color)
 
     def show_line(self,island):
         points = self.get_coordinates(island)

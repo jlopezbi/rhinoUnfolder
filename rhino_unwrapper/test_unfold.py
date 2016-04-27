@@ -6,6 +6,9 @@ import unfold
 import mesh
 import Map
 import Net
+import meshLoad
+
+reload(meshLoad)
 reload(Net)
 reload(unfold)
 reload(trans)
@@ -77,19 +80,49 @@ class IslandMakerTestCase(unittest.TestCase):
         self.assertTrue(self.islandMaker.island.flatVerts[0].hasSamePoint(pnt0_correct))
         self.assertTrue(self.islandMaker.island.flatVerts[1].hasSamePoint(pnt1_correct))
 
-
     def test_make_island(self):
         meshLoc = unfold.MeshLoc(face=0,edge=1)
-        start_frame = trans.Frame.create_frame_from_tuples((6,0,0),
+        start_frame = trans.Frame.create_frame_from_tuples((10,0,0),
                                                            (1,0,0),
                                                            (0,1,0))
         start_frame.show()
         self.islandMaker.make_island(meshLoc,start_frame)
         self.islandMaker.island.draw_all()
-        #TODO: figure out how to ensure correct output automatically
-        # (may need to do "by hand", or write meshMethod that compares mehses)
+        island = self.islandMaker.island
+        pnt0_correct = geom.Point3d(15,0,0)
+        pnt1_correct = geom.Point3d(10,0,0)
+        pnt2_correct = geom.Point3d(10,5,0)
+        pnt3_correct = geom.Point3d(15,5,0)
+        self.assertTrue(island.flatVerts[0].hasSamePoint(pnt0_correct))
+        self.assertTrue(island.flatVerts[1].hasSamePoint(pnt1_correct))
+        self.assertTrue(island.flatVerts[2].hasSamePoint(pnt2_correct))
+        self.assertTrue(island.flatVerts[3].hasSamePoint(pnt3_correct))
+
+class ComplexIslandMakerTestCase(unittest.TestCase):
+
+    def test_make_island_cone(self):
+        meshFile = "/TestMeshes/cone"
+        myMesh = mesh.Mesh(meshLoad.load_mesh(meshFile))
+        displayer = mesh.MeshDisplayer(myMesh)
+        displayer.display_all_elements()
+        face = 0
+        edge = myMesh.getFaceEdges(face)[0]
+        island_idx = 0
+        self.islandMaker = unfold.IslandMaker(None,myMesh,island_idx)
+
+        meshLoc = unfold.MeshLoc(face,edge)
+        start_frame = trans.Frame.create_frame_from_tuples((20,0,0),
+                                                           (1,0,0),
+                                                           (0,1,0))
+        start_frame.show()
+        island = self.islandMaker.make_island(meshLoc,start_frame)
+        island.draw_all()
+
 
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(IslandMakerTestCase)
+    #suite = unittest.TestLoader().loadTestsFromTestCase(IslandMakerTestCase)
+
+    suite = unittest.TestLoader().loadTestsFromTestCase(ComplexIslandMakerTestCase)
+
     unittest.TextTestRunner(verbosity=2).run(suite)

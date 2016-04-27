@@ -5,6 +5,8 @@ import weight_functions as wf
 import mesh as m
 import unfold 
 
+import os
+
 reload(wf)
 reload(unfold)
 reload(m)
@@ -12,30 +14,42 @@ reload(m)
 def all_weight_functions():
     return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
 
+def load_mesh(meshFilePath=None):
+    '''
+    assumes that the file has only one mesh in it!
+    puts the mesh in the meshFilePath file into the current document
+    returns the rhino mesh and the mesh GUID
+    '''
+    importer = FileImporter()
+    importer.loadFile(meshFilePath)
+    getter = MeshGetter()
+    mesh_guid = getter.getRandMeshGUID()
+    mesh = getter.getGeomFromGUID(mesh_guid)
+    return mesh
 
-
-
-class fileImporter(object):
+class FileImporter(object):
     """
     Loads a saved file
     """
 
     def __init__(self):
-        pass
+        self.directory = os.path.dirname(os.path.abspath(__file__))
+        self.prefix = "-_import " + chr(34)
+        self.suffix = chr(34) + " _Enter"
 
-    def loadFile(self,filePath=None):
-        if filePath==None: 
+    def loadFile(self,relPath=None):
+        if relPath==None: 
             rs.Command("_import ")
             return
-        rs.Command("-_import " + filePath + " _Enter")
+        abs_path = self.directory + relPath
+        command = self.prefix + abs_path + self.suffix
+        rs.Command(command)
 
-    def test(self):
-        self.loadMesh("rhino_unwrapper/testMesh")
-
-class meshGetter(object):
+class MeshGetter(object):
 
     def __init__(self):
         self.MeshID = 32
+
 
     def getRandMeshGUID(self):
         meshes = rs.ObjectsByType(self.MeshID)
@@ -46,13 +60,16 @@ class meshGetter(object):
         if select: rs.SelectObject(meshGuid)
         return self.getGeomFromGUID(meshGuid)
 
+    def get_mesh_from_guid(self,guid):
+        obj = scriptcontext.doc.Objects.Find(guid)
+        return obj.Geometry
+
     def getSelectedMesh(self):
         selected = rs.SelectedObjects()
         for objId in selected:
             if rs.IsMesh(objId):
                 return self.getGeomFromGUID(objId)
         return None
-
 
     def getGeomFromGUID(self,guid):
         obj = scriptcontext.doc.Objects.Find(guid)
@@ -75,14 +92,6 @@ class NetMaker(object):
     
     
 if __name__=="__main__":
-    loader = fileImporter()
-    getter = meshGetter()
-    myMesh = m.Mesh(getter.getSelectedMesh())
-    weightFunc = all_weight_functions()["edgeAngle"]
-    unfolder = unfold.UnFolder()
-    netMaker = NetMaker(myMesh,weightFunc,unfolder,None)
-    net = netMaker.makeNet()
-    print "type of flat edge 0: ",
-    print type(net.flatEdges[4])
-
+    meshFile= "/TestMeshes/blobGuy"
+    print load_mesh(meshFile)
 
