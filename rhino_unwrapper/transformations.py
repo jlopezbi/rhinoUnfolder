@@ -42,6 +42,17 @@ def get_xy_net_frame(pointPair):
     z = geom.Vector3d(0,0,1)
     return Frame.create_frame_from_vectors(o,x,z)
 
+def make_xy_frame(point,xVec):
+    '''
+    returns a frame whose normal is in the unit-Z direction
+    projects point to xy plane.
+    '''
+    #TODO: project xVec to xy plane as well
+    x,y,z = point
+    point = geom.Point3d(x,y,0.0)
+    normal = geom.Vector3d(0.0,0.0,1.0)
+    return Frame.create_frame_from_normal_and_x(point,normal,xVec)
+
 def make_origin_frame():
     plane = rs.WorldXYPlane()
     """

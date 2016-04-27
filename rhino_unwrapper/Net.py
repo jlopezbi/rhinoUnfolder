@@ -291,6 +291,11 @@ class Island(object):
         self.temp_edges.append(newEdge)
         return newEdge
 
+    def update_edge_to_face(self,edge,toFace):
+        edge_obj = self.get_edge_obj(edge)
+        edge_obj.toFace = toFace
+
+
     def add_edge_with_from_face(self,face=None,index=None):
         edgeIdx =  self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
         return edgeIdx
@@ -394,7 +399,10 @@ class Island(object):
         # assert guid?
         return self.line_edge_map[line_guid]
 
-    def getFlatEdge(self, edge):
+    def get_edge_obj(self, edge):
+        '''
+        gets the object instance at the <edge> index
+        '''
         return self.flatEdges[edge]
 
     def get_frame_reverse_edge(self,edge,face):

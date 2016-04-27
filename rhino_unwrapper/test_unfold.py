@@ -1,5 +1,6 @@
 import unittest
 import Rhino.Geometry as geom
+import rhinoscriptsyntax as rs
 import transformations as trans
 import unfold
 import mesh
@@ -11,75 +12,82 @@ reload(trans)
 reload(mesh)
 reload(Map)
 
+class StubbedIsland(object):
+
+    def __init__(self):
+        self.loc = geom.Point3d(-5.0,-5.0,0.0)
+        self.xVec = geom.Vector3d(1.0,0.0,0.0)
+
+    def get_frame_reverse_edge(self,edge,face):
+        '''
+        returns a frame located in the xy plane
+        '''
+        return trans.make_xy_frame(self.loc,self.xVec)
+
+class StubbedMesh(object):
+
+    def __init__(self):
+        self.origin = geom.Point3d(3.0,3.0,3.0)
+        self.normal = geom.Vector3d(0.0,0.0,1.0)
+        self.x = geom.Vector3d(0.0,1.0,0.0)
+        self.frame = trans.Frame.create_frame_from_normal_and_x(self.origin,
+                                                               self.normal,
+                                                               self.x) 
+ 
+    def get_frame_oriented_with_face_normal(self,edge,face):
+        return self.frame
+
+    def get_point(self):
+        u = 1.0
+        v = 1.0
+        return self.frame.plane.PointAt(u,v)
+
 class IslandMakerTestCase(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.myMesh = mesh.make_upright_mesh()
-        cls.meshDisplayer = mesh.MeshDisplayer(cls.myMesh)
-        cls.meshDisplayer.display_all_elements()
-        cls.island_idx = 0
-        cls.islandMaker = unfold.IslandMaker(None,cls.myMesh,cls.island_idx)
+    def setUp(self):
+        self.myMesh = mesh.make_upright_mesh()
+        self.meshDisplayer = mesh.MeshDisplayer(self.myMesh)
+        self.meshDisplayer.display_all_elements()
+        self.island_idx = 0
+        self.islandMaker = unfold.IslandMaker(None,self.myMesh,self.island_idx)
 
     def test_get_mapped_point(self):
-        #NOTE: working here, currently not working cuz need to bootstrap island..
-        self.islandMaker.island = Net.Island()
-        self.islandMaker.island.add_vert_from_point(geom.Point3d(0.0,0.0,5.0))
-        self.islandMaker.island.add_edge_with_from_face(face=0,index=0)
-        point = self.myMesh.get_point3f_for_tVert(1)
+        fakeMesh = StubbedMesh()
+        self.islandMaker.island = StubbedIsland()
+        self.islandMaker.myMesh = fakeMesh
+        point = fakeMesh.get_point() 
+        rs.AddPoint(point)
         meshLoc = unfold.MeshLoc(0,1)
         islandLoc = unfold.IslandLoc(0,0)
-        self.islandMaker.get_mapped_point(point,meshLoc,islandLoc)
+        mapped_point = self.islandMaker.get_mapped_point(point,meshLoc,islandLoc)
+        rs.AddPoint(mapped_point)
+        correct_point = geom.Point3d(-4.0,-4.0,0.0)
+        self.assertTrue(mapped_point.Equals(correct_point))
+
+    def test_layout_first_two_points(self):
+        meshLoc = unfold.MeshLoc(face=0,edge=1)
+        start_frame = trans.Frame.create_frame_from_tuples((0,-10,0),
+                                                           (1,0,0),
+                                                           (0,1,0))
+        start_frame.show()
+        self.islandMaker.layout_first_two_points(meshLoc,start_frame)
+        pnt1_correct = geom.Point3d(0,-10,0)
+        pnt0_correct = geom.Point3d(5,-10,0)
+        self.islandMaker.island.draw_all()
+        self.assertTrue(self.islandMaker.island.flatVerts[0].hasSamePoint(pnt0_correct))
+        self.assertTrue(self.islandMaker.island.flatVerts[1].hasSamePoint(pnt1_correct))
 
 
-class IslandCreatorTestCase(unittest.TestCase):
-    """tests for IslandCreator class in unfold.py"""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.myMesh = mesh.make_upright_mesh()
-        cls.meshDisplayer = mesh.MeshDisplayer(cls.myMesh)
-        cls.meshDisplayer.display_all_elements()
-        cls.dataMap = Map.Map(cls.myMesh)
-        cls.meshLoc = unfold.MeshLoc(face=0,edge=1,tVert=0)
-        cls.to_frame = trans.Frame.create_frame_from_tuples((0,-10,0),(1,0,0),(0,1,0)) 
-        cls.to_frame.show()
-        cls.islandCreator = unfold.IslandCreator(cls.dataMap,cls.myMesh,cls.meshLoc,cls.to_frame)
-
-    def test_breadth_first_traversal(self):
-        myMesh =  mesh.make_test_mesh()
-        displayer = mesh.MeshDisplayer(myMesh)
-        displayer.display_all_elements()
-        path = unfold.breadth_first_traverse(myMesh,face=0)
-        print "path of traverse: {}".format(path)
-
-'''
-    def test_add_first_edge_to_island(self):
-        self.islandCreator.add_first_edge_to_island()
-        #self.islandCreator.island.draw_verts()
-        verts = self.islandCreator.island.flatVerts
-        edges = self.islandCreator.island.flatEdges
-        self.assertTrue(len(edges) == 1)
-        self.assertTrue(len(verts) == 2)
-        vertA = verts[0]
-        vertB = verts[1]
-        self.assertTrue(vertA.same_coordinates(0,-10,0))
-        self.assertTrue(vertB.same_coordinates(5,-10,0))
-        self.assertEqual(edges[0].fromFace, 0)
-        self.assertEqual(edges[0].indexInFace, 0)
-        '''
-
-'''
-    def test_add_facet_to_island_and_update_map(self):
-        self.islandCreator.add_facet_to_island_and_update_map()
-
-    def _test_assign_flat_verts(self):
-        self.islandCreator.assign_flat_verts(self.meshLoc,self.to_frame,start=True)
-        self.islandCreator.island.draw_verts()
-        
-    def _test_layout_face(self):
-        self.islandCreator.layout_face(None,None,self.meshLoc,self.to_frame)
-        '''
+    def test_make_island(self):
+        meshLoc = unfold.MeshLoc(face=0,edge=1)
+        start_frame = trans.Frame.create_frame_from_tuples((6,0,0),
+                                                           (1,0,0),
+                                                           (0,1,0))
+        start_frame.show()
+        self.islandMaker.make_island(meshLoc,start_frame)
+        self.islandMaker.island.draw_all()
+        #TODO: figure out how to ensure correct output automatically
+        # (may need to do "by hand", or write meshMethod that compares mehses)
 
 
 if __name__ == '__main__':

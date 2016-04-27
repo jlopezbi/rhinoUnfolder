@@ -15,8 +15,8 @@ import Rhino
 #import clr
 #clr.AddReference("Plankton.dll")
 #clr.AddReference("Plankton.gha")
-import Plankton
-import PlanktonGh
+#import Plankton
+#import PlanktonGh
 
 #PYTHON STUFF
 import collections,inspect
@@ -98,35 +98,48 @@ class IslandMaker(object):
         self.myMesh = myMesh
         self.island_index = island_index #index of island in net
 
-        self.island = None
+        self.island = nt.Island()
+        self.island.add_dummy_elements()
         self.visualize_mode = True
 
-    def make_island(self,meshLoc=None,toFrame=trans.make_origin_frame()):
+    def make_island(self,meshLoc=None,startFrame=trans.make_origin_frame()):
         if meshLoc==None:
             meshLoc = MeshLoc(0,0)
-        # NOT TESTED
-        island = nt.Island()
         startIslandLoc = IslandLoc(face=0,edge=0)
-        self.breadth_first_layout(island,meshLoc,startIslandLoc)
-        return island
+        self.layout_first_two_points(meshLoc,startFrame)
+        self.breadth_first_layout(self.island,meshLoc,startIslandLoc)
+        return self.island
+
+    def layout_first_two_points(self,meshLoc,start_frame):
+        '''
+        The process must be started with an island that has one edge, its from face, and the two verts
+        for that face and edge. This function adds those verts
+        Note that the verts are added in reverse order; this is consistent with the assumption
+        of breadth_first_layout.
+        '''
+        meshPointA,meshPointB = self.myMesh.get_oriented_points_for_edge(meshLoc.edge,meshLoc.face)
+        from_frame = self.myMesh.get_frame_oriented_with_face_normal(meshLoc.edge,meshLoc.face)
+        pnt0 = trans.get_mapped_point(meshPointA,from_frame,start_frame)
+        pnt1 = trans.get_mapped_point(meshPointB,from_frame,start_frame)
+        self.island.add_vert_from_point(pnt1)
+        self.island.add_vert_from_point(pnt0)
 
     def breadth_first_layout(self,island,startMeshLoc,startIslandLoc):
-        # NOT TESTED
         '''
-        CURRENTLY WORKING HERE *******************************************************
         traverse all faces of mesh breadth first and create an island
         (does not check if edges are cut or fold) 
         need to figure out how to setup island so ready to do this function...
         '''
         layoutPair = (startMeshLoc,startIslandLoc)
         queue = collections.deque([layoutPair])
-        visited = [meshLoc.face]
+        visited = [startMeshLoc.face]
         while True:
             try:
                 meshLoc,islandLoc = queue.popleft()
+                print meshLoc,islandLoc
             except IndexError:
                 break
-            orientedEdges = self.get_edges_to_add_CCW(meshLoc) 
+            orientedEdges = self.myMesh.get_edges_ccw_besides_base(meshLoc.edge,meshLoc.face) 
             newVerts = []
             newEdges = []
             islandFaceToBe = islandLoc.face + 1
@@ -135,20 +148,18 @@ class IslandMaker(object):
                 face = self.myMesh.getOtherFaceIdx(edge,meshLoc.face)
                 if orientedEdge != orientedEdges[-1]: # the last edge's head has already been layed out
                     tailPoint,headPoint = self.myMesh.get_aligned_points(orientedEdge) 
-                    #NOTE: working here
-                    mapped_point = self.get_mapped_point(headPoint,meshLoc,islandLoc) #NOT TESTED
+                    mapped_point = self.get_mapped_point(headPoint,meshLoc,islandLoc) 
                     island.add_vert_point_Breadth(mapped_point) 
                 newEdge = island.add_edge_before_face_Breadth(i+1)
-                if face not in visited:
+                if face and face not in visited:
                     visited.append(face)
-                    island.update_edge_to_face(edge=newEdge,toFace=islandFaceToBe+(i+1)) #NOT IMPLEMENTED
-                    newMeshLoc = MeshLoc(face,meshEdge)
+                    island.update_edge_to_face(edge=newEdge,toFace=islandFaceToBe+(i+1)) 
+                    newMeshLoc = MeshLoc(face,edge)
                     newIslandLoc = IslandLoc(islandFaceToBe,newEdge)
                     queue.append((newMeshLoc,newIslandLoc))
             island.add_face_Breadth(baseEdge=islandLoc.edge)
 
     def get_mapped_point(self,point,meshLoc,islandLoc):
-        # NOT TESTED
         from_frame = self.myMesh.get_frame_oriented_with_face_normal(meshLoc.edge,meshLoc.face)
         to_frame = self.island.get_frame_reverse_edge(islandLoc.edge,islandLoc.face)
         if self.visualize_mode:

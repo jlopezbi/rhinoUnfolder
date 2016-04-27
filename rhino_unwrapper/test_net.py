@@ -48,16 +48,10 @@ class IslandTestCase(unittest.TestCase):
         self.island.add_dummy_elements()
         self.assertRaises(AssertionError,self.island.add_face_Breadth,0)
 
-#    def test_tack_on_facet(self):
-#        self.test_add_first_face_from_verts()
-#        Points = []
-#        Points.append(geom.Point3d(10.0,0.0,0.0))
-#        Points.append(geom.Point3d(10.0,5.0,0.0))
-#        face,edges = self.island.tack_on_facet(edge=1,points=Points)
-#        self.assertEqual(edges,[4,5,6])
-#        self.assertEqual(face,1)
-#        self.island.draw_edges()
-#        self.island.draw_faces()
+    def test_update_edge_to_face(self):
+        self.island.add_dummy_elements()
+        self.island.update_edge_to_face(edge=0,toFace=1)
+        self.assertEqual(self.island.flatEdges[0].toFace,1)
 
     def _test_add_face_from_edge_and_new_verts(self):
         self.test_add_first_face_from_verts()
@@ -93,3 +87,13 @@ if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(IslandTestCase)
     unittest.TextTestRunner(verbosity=2).run(suite)
     
+#    def test_tack_on_facet(self):
+#        self.test_add_first_face_from_verts()
+#        Points = []
+#        Points.append(geom.Point3d(10.0,0.0,0.0))
+#        Points.append(geom.Point3d(10.0,5.0,0.0))
+#        face,edges = self.island.tack_on_facet(edge=1,points=Points)
+#        self.assertEqual(edges,[4,5,6])
+#        self.assertEqual(face,1)
+#        self.island.draw_edges()
+#        self.island.draw_faces()
