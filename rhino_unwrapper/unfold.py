@@ -12,11 +12,6 @@ import weight_functions as wf
 #RHINO STUFF
 import rhinoscriptsyntax as rs
 import Rhino
-#import clr
-#clr.AddReference("Plankton.dll")
-#clr.AddReference("Plankton.gha")
-#import Plankton
-#import PlanktonGh
 
 #PYTHON STUFF
 import collections,inspect
@@ -138,7 +133,6 @@ class IslandMaker(object):
         while True:
             try:
                 meshLoc,islandLoc = queue.popleft()
-                print "At mesh loc: {}, with island loc: {}".format(meshLoc,islandLoc)
             except IndexError:
                 break
             orientedEdges = self.myMesh.get_edges_ccw_besides_base(meshLoc.edge,meshLoc.face) 

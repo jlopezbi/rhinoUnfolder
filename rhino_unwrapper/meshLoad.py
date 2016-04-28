@@ -92,6 +92,6 @@ class NetMaker(object):
     
     
 if __name__=="__main__":
-    meshFile= "/TestMeshes/blobGuy"
+    meshFile= "/TestMeshes/blob"
     print load_mesh(meshFile)
 

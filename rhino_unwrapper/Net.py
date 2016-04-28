@@ -411,7 +411,6 @@ class Island(object):
             collection.append(face.draw(self))
         #createGroup(netGroupName, collection)
 
-
 ############ OTHER
 
     def translate(self,vector):

@@ -15,4 +15,7 @@ pickMeshEdge.py
 hawkinsLayout.py
 tests/
 ExamplesRhinoScripting/
+Experiments/
+mesh_demo.py
+
 
