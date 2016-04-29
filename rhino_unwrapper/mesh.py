@@ -49,6 +49,22 @@ def get_myMesh(vertices,face_vertices):
     obj = scriptcontext.doc.Objects.Find(mesh_GUID)
     return Mesh(obj.Geometry)
 
+#NOTE: what if did something like:
+# Mesh.
+#     .vertexQuiery
+#     .edgeQuiery
+#     .faceQuiery
+#     .special
+
+#or mabe:
+# mesh.Vertices
+# mesh.Edges
+# mesh.Faces
+# mesh.Special
+# ex: mesh.Vertices.get_
+# ex: mesh.Speical.get_frame_asdfsdf()
+
+
 class Mesh(object):
     """
     better names?
@@ -68,6 +84,27 @@ class Mesh(object):
     def __init__(self,mesh):
         self.mesh = mesh
         self.mesh.FaceNormals.ComputeFaceNormals()
+
+    ### GENERAL
+
+    def get_set_of_edges(self):
+        count = self.mesh.TopologyEdges.Count
+        return set(range(count))
+
+    def get_set_of_face_idxs(self):
+        count = self.mesh.Faces.Count
+        return set(range(count))
+
+    def get_mesh_faces(self):
+        """
+        returns list of MeshFace instances that make up mesh
+        """
+        return (self.mesh.Faces.GetFace(i) for i in xrange(self.mesh.Faces.Count))
+
+    def meshTVerts(self):
+        return xrange(self.mesh.TopologyVertices.Count)
+
+    ### SPECIAL, ie requires more than one extra index
 
     def get_frame_oriented_with_face_normal(self,edge,face):
         '''
@@ -101,23 +138,6 @@ class Mesh(object):
 
         assert(newFaceIdx != faceIdx), "getOtherFaceIdx(): newFaceIdx == faceIdx!"
         return newFaceIdx
-
-    def get_set_of_edges(self):
-        count = self.mesh.TopologyEdges.Count
-        return set(range(count))
-
-    def get_set_of_face_idxs(self):
-        count = self.mesh.Faces.Count
-        return set(range(count))
-
-    def get_mesh_faces(self):
-        """
-        returns list of MeshFace instances that make up mesh
-        """
-        return (self.mesh.Faces.GetFace(i) for i in xrange(self.mesh.Faces.Count))
-
-    def meshTVerts(self):
-        return xrange(self.mesh.TopologyVertices.Count)
 
     ### QUIRED OBJECT IS VERTEX
 
@@ -195,6 +215,15 @@ class Mesh(object):
         if not aligned_with_face:
             points.reverse()
         return points
+
+    def is_cut_edge(self,edge):
+        pass
+
+    def is_fold_edge(self,edge):
+        pass
+
+    def is_naked_edge(self,edge):
+        pass
 
     ### Main OBJECT IS EDGE
 

@@ -2,9 +2,14 @@ import unittest
 import Net
 import transformations as trans
 import Rhino.Geometry as geom
+import rhinoscriptsyntax as rs
 
 reload(Net)
 reload(trans)
+
+def tearDownModule():
+    print "MODULE TORN DOWN"
+    rs.DeleteObjects(rs.ObjectsByLayer('Default'))
 
 class IslandTestCase(unittest.TestCase):
 

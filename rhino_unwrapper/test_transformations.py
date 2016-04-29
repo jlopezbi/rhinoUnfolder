@@ -130,4 +130,3 @@ if __name__ == "__main__":
     suiteC = unittest.TestLoader().loadTestsFromTestCase(TransformTestCase)
     big_suite = unittest.TestSuite([suiteA,suiteC])
     unittest.TextTestRunner(verbosity=2).run(big_suite)
-

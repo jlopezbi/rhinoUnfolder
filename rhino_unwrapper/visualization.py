@@ -55,7 +55,6 @@ def translateLine(self, xForm):
         self.line.Transform(xForm)
         scriptcontext.doc.Objects.Replace(self.line_id, self.line)
 
-
 def drawVector(vector, position, color=[0,0,0,0]):
     pntStart = Rhino.Geometry.Point3d(position)
     vecEnd = position + vector

@@ -3,8 +3,17 @@ import mesh
 import transformations as trans
 reload(mesh)
 import Rhino.Geometry as geom
+import rhinoscriptsyntax as rs
+
+def tearDownModule():
+    print "MODULE TORN DOWN"
+    rs.DeleteObjects(rs.ObjectsByLayer('Default'))
+
+def remove_objects():
+    rs.DeleteObjects(rs.ObjectsByLayer('Default'))
 
 class MakeMeshTestCase(unittest.TestCase):
+
     def test_make_test_mesh(self):
         mesh.make_test_mesh()
 
@@ -12,6 +21,7 @@ class MakeMeshTestCase(unittest.TestCase):
         mesh.make_upright_mesh()
 
 class MeshTestCase(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.mesh = mesh.make_test_mesh()
@@ -98,9 +108,5 @@ class MeshDiplayerTestCase(unittest.TestCase):
     def test_display_all_face_vert_ordering(self):
         self.meshDisplayer.display_all_face_vert_ordering()
 
-if __name__ == "__main__":
-    suiteA = unittest.TestLoader().loadTestsFromTestCase(MeshTestCase)
-    suiteB = unittest.TestLoader().loadTestsFromTestCase(MeshDiplayerTestCase)
-    suiteC = unittest.TestLoader().loadTestsFromTestCase(MakeMeshTestCase)
-    big_suite = unittest.TestSuite([suiteA,suiteB,suiteC])
-    unittest.TextTestRunner(verbosity=2).run(big_suite)
+if __name__ == '__main__':
+    unittest.main(verbosity=2,module='test_mesh',exit=False)

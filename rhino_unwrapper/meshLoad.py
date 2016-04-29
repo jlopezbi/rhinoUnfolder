@@ -2,14 +2,10 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import random,inspect
 import weight_functions as wf
-import mesh as m
-import unfold 
 
 import os
 
 reload(wf)
-reload(unfold)
-reload(m)
 
 def all_weight_functions():
     return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
@@ -45,11 +41,11 @@ class FileImporter(object):
         command = self.prefix + abs_path + self.suffix
         rs.Command(command)
 
+
 class MeshGetter(object):
 
     def __init__(self):
         self.MeshID = 32
-
 
     def getRandMeshGUID(self):
         meshes = rs.ObjectsByType(self.MeshID)
@@ -75,22 +71,6 @@ class MeshGetter(object):
         obj = scriptcontext.doc.Objects.Find(guid)
         return obj.Geometry
 
-class NetMaker(object):
-    """
-    creates a net
-    """
-    def __init__(self,myMesh,weightFunc,unfolder,cuts):
-        self.myMesh = myMesh
-        self.weightFunc = weightFunc
-        self.unfolder = unfolder
-        self.cuts = cuts
-
-    def makeNet(self):
-        dataMap,net,foldList = unfolder.unfold(self.myMesh,self.cuts,self.weightFunc)
-        net.draw_edges()
-        return net
-    
-    
 if __name__=="__main__":
     meshFile= "/TestMeshes/blob"
     print load_mesh(meshFile)

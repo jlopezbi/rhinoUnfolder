@@ -1,4 +1,5 @@
 import visualization as vis
+import scriptcontext
 import rhino_helpers
 import math 
 
@@ -44,7 +45,7 @@ class FlatEdge(object):
         points = self.get_coordinates(island)
         if self.line_id is not None:
             scriptcontext.doc.Objects.Delete(self.line_id, True)
-        line_id, line = show_line_from_points(points, color=self.color, arrowType='end')
+        line_id, line = vis.show_line_from_points(points, color=self.color, arrowType='end')
         self.line_id = line_id
         self.line = line
         return line_id
