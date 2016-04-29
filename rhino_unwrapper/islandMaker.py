@@ -61,6 +61,7 @@ class IslandMaker(object):
         self.island.add_vert_from_point(pnt0)
 
     def breadth_first_layout(self,island,startMeshLoc,startIslandLoc):
+        #TODO: implement functions below to get working!
         '''
         traverse all faces of mesh breadth first and create an island
         (does not check if edges are cut or fold) 

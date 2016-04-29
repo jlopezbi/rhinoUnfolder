@@ -2,7 +2,7 @@ import unittest
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 import transformations as trans
-import mesh
+import meshUtils.mesh as mesh
 reload(trans)
 reload(mesh)
 

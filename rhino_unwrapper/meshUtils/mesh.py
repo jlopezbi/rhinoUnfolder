@@ -217,6 +217,7 @@ class Mesh(object):
         return points
 
     def is_cut_edge(self,edge):
+        #TODO: make work
         pass
 
     def is_fold_edge(self,edge):

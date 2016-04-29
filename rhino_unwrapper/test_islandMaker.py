@@ -4,12 +4,12 @@ import rhinoscriptsyntax as rs
 
 import transformations as trans
 import islandMaker as make
-import mesh
+import meshUtils.mesh as mesh
 import Map
 import Net
 import meshLoad
 
-reload(meshLoad)
+reload(mesh)
 reload(Net)
 reload(make)
 reload(trans)
