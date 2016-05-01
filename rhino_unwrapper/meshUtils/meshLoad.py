@@ -1,14 +1,8 @@
 import rhinoscriptsyntax as rs
 import scriptcontext
-import random,inspect
-import weight_functions as wf
+import random,inspect,os
+import Rhino
 
-import os
-
-reload(wf)
-
-def all_weight_functions():
-    return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
 
 def load_mesh(meshFilePath=None):
     '''
@@ -41,6 +35,23 @@ class FileImporter(object):
         command = self.prefix + abs_path + self.suffix
         rs.Command(command)
 
+def user_select_mesh(message="select a mesh"):
+    getter = Rhino.Input.Custom.GetObject()
+    getter.SetCommandPrompt(message)
+    getter.GeometryFilter = Rhino.DocObjects.ObjectType.Mesh
+    getter.SubObjectSelect = True
+    getter.Get()
+    if getter.CommandResult() != Rhino.Commands.Result.Success:
+        return
+
+    objref = getter.Object(0)
+    obj = objref.Object()
+    mesh = objref.Mesh()
+
+    obj.Select(False)
+
+    if obj:
+        return mesh
 
 class MeshGetter(object):
 

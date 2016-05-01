@@ -4,6 +4,9 @@ import scriptcontext
 import System.Drawing
 import math
 
+#def all_weight_functions():
+#    return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
+
 def getUserCuts(myMesh):
     display = True # show selected cut edges
     edges = myMesh.get_set_of_edges()
@@ -49,24 +52,24 @@ def getUserCuts(myMesh):
     return cuts
 
 def getMeshEdge(message, isChain, angle):
-    ge = Rhino.Input.Custom.GetObject()
-    ge.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
-    ge.SetCommandPrompt(message)
-    ge.AcceptNothing(True)
+    getter= Rhino.Input.Custom.GetObject()
+    getter.GeometryFilter = Rhino.DocObjects.ObjectType.MeshEdge
+    getter.SetCommandPrompt(message)
+    getter.AcceptNothing(True)
 
     boolOption = Rhino.Input.Custom.OptionToggle(isChain, "Off", "On")
     dblOption = Rhino.Input.Custom.OptionDouble(math.degrees(angle), 0, 180)
 
-    ge.AddOptionDouble("maxAngle", dblOption)
-    ge.AddOptionToggle("chainSelect", boolOption)
+    getter.AddOptionDouble("maxAngle", dblOption)
+    getter.AddOptionToggle("chainSelect", boolOption)
 
     edgeIdx = None
     mesh = None
     while True:
-        getE = ge.Get()
+        getE =getter.Get()
 
         if getE == Rhino.Input.GetResult.Object:
-            objRef = ge.Object(0)
+            objRef =getter.Object(0)
             edgeIdx = GetEdgeIdx(objRef)
             mesh = objRef.Mesh()
 
@@ -82,7 +85,7 @@ def getMeshEdge(message, isChain, angle):
             break
         break
     scriptcontext.doc.Objects.UnselectAll()
-    ge.Dispose()
+    getter.Dispose()
 
     isChain = boolOption.CurrentValue
     angle = math.radians(dblOption.CurrentValue)

@@ -133,23 +133,6 @@ def get_new_cut(message, net, dataMap):
     return flatEdge, idx, flatEdge.type
 
 # GET MESH
-def getMesh(message=None):
-    getter = Rhino.Input.Custom.GetObject()
-    getter.SetCommandPrompt(message)
-    getter.GeometryFilter = Rhino.DocObjects.ObjectType.Mesh
-    getter.SubObjectSelect = True
-    getter.Get()
-    if getter.CommandResult() != Rhino.Commands.Result.Success:
-        return
-
-    objref = getter.Object(0)
-    obj = objref.Object()
-    mesh = objref.Mesh()
-
-    obj.Select(False)
-
-    if obj:
-        return mesh
 
 def getOptions_dict(options_dict):
     # Eventually would be nice to distiguish between cancel and enter keys
