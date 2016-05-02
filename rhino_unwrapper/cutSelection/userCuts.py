@@ -8,6 +8,7 @@ import math
 #    return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
 
 def getUserCuts(myMesh):
+    #NOTE: thinking about where this function should reside
     display = True # show selected cut edges
     edges = myMesh.get_set_of_edges()
     cuts = set()

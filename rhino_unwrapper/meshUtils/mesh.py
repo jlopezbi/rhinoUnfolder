@@ -49,6 +49,13 @@ def get_myMesh(vertices,face_vertices):
     obj = scriptcontext.doc.Objects.Find(mesh_GUID)
     return Mesh(obj.Geometry)
 
+#NOTE: even more hierarchical:
+# Mesh.
+#     .elements
+#     .display
+#     .select
+#     .unfold <=!?
+
 #NOTE: what if did something like:
 # Mesh.
 #     .vertexQuiery

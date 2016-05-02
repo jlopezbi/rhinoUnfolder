@@ -1,4 +1,4 @@
-import unittest
+import unittest,os
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 
@@ -126,4 +126,6 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
 
 #TODO: consider replicate this nicer solution in all files
 if __name__ == '__main__':
-    unittest.main(verbosity=2,module='test_islandMaker',exit=False)
+    file_name = os.path.basename(__file__).split('.')[0]
+    unittest.main(verbosity=2,module=file_name,exit=False)
+

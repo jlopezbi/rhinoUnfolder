@@ -25,6 +25,8 @@ class GetMeshEdgeTestCase(unittest.TestCase):
     def test_getUserCuts(self):
         print "AFADF"
         mesh = meshLoad.user_select_mesh()
+        #NOTE myMesh not defined yet
+        userCuts.getUserCuts(myMesh)
         print "mesh selected: {}".format(mesh)
 
 if __name__ == "__main__":
