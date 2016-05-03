@@ -6,6 +6,13 @@ import meshUtils.mesh as mesh
 reload(trans)
 reload(mesh)
 
+def setUpModule():
+    print("****Transformations Test Module set-up")
+
+def tearDownModule():
+    print("****MODULE TORN DOWN")
+    rs.DeleteObjects(rs.AllObjects())
+
 class FrameTestCase(unittest.TestCase):
 
     @classmethod

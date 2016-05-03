@@ -40,10 +40,10 @@ def get_user_cuts(myMesh,meshDisplayer):
                 else:
                     cuts.update([edgeIdx])
             else:
-                # if isChain:
-               # cuts.difference_update(getChain(mesh,edgeIdx,angleTolerance))
-                # else:
-                cuts.difference_update([edgeIdx])
+                if isChain:
+                    cuts.difference_update(myMesh.getChain(edgeIdx,angleTolerance))
+                else:
+                    cuts.difference_update([edgeIdx])
 
                 if len(drawnEdges) != 0:
                     scriptcontext.doc.Objects.Delete(drawnEdges[edgeIdx], True)
@@ -56,6 +56,8 @@ def get_user_cuts(myMesh,meshDisplayer):
 
         elif edgeIdx == -1:
             print("enter:")
+            print("set cuts")
+            myMesh.set_cuts(list(cuts))
             break
     return cuts
 

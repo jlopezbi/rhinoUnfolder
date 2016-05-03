@@ -11,7 +11,7 @@ import rhinoscriptsyntax as rs
 
 def tearDownModule():
     print "MODULE TORN DOWN"
-    rs.DeleteObjects(rs.AllObjects())
+    remove_objects()
 
 def remove_objects():
     rs.DeleteObjects(rs.AllObjects())
@@ -23,6 +23,47 @@ class MakeMeshTestCase(unittest.TestCase):
 
     def test_make_upright_mesh(self):
         mesh.make_upright_mesh()
+
+class MeshCutInfoTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.mesh = mesh.make_test_mesh()
+
+    def test_set_cuts(self):
+        cuts = [0,1,2]
+        self.assertTrue(self.mesh.set_cuts(cuts))
+        cuts = [-1]
+        self.assertRaises(AssertionError,self.mesh.set_cuts,cuts)
+        cuts = ['a','b']
+        self.assertRaises(AssertionError,self.mesh.set_cuts,cuts)
+
+    def test_get_cuts(self):
+        self.assertRaises(KeyError,self.mesh.get_cuts)
+        cuts = [0,2]
+        self.mesh.set_cuts(cuts)
+        self.assertEqual(cuts,self.mesh.get_cuts())
+
+    def test_is_cut_edge(self):
+        cuts = [1,2]
+        edge = 1
+        self.mesh.set_cuts(cuts)
+        self.assertTrue(self.mesh.is_cut_edge(edge))
+        self.assertFalse(self.mesh.is_cut_edge(0))
+        self.assertFalse(self.mesh.is_cut_edge(-1))
+
+    def test_is_fold_edge(self):
+        cuts = [1,2]
+        edge = 0
+        self.mesh.set_cuts(cuts)
+        self.assertTrue(self.mesh.is_fold_edge(edge))
+        self.assertFalse(self.mesh.is_fold_edge(1))
+
+    def test_is_naked_edge(self):
+        naked = 0
+        surrounded = 2
+        self.assertTrue(self.mesh.is_naked_edge(naked))
+        self.assertFalse(self.mesh.is_naked_edge(surrounded))
+        self.assertRaises(AssertionError,self.mesh.is_naked_edge,-1)
 
 class MeshTestCase(unittest.TestCase):
 
@@ -69,6 +110,8 @@ class MeshTestCase(unittest.TestCase):
         pntA,pntB = self.mesh.get_aligned_points(orientedEdge)
         self.assertTrue(pntA.Equals(geom.Point3f(0,5,0)))
         self.assertTrue(pntB.Equals(geom.Point3f(0,0,0)))
+
+
 
 class MeshDiplayerTestCase(unittest.TestCase):
     @classmethod
@@ -118,4 +161,6 @@ if __name__ == '__main__':
     suite.addTest(loader.loadTestsFromTestCase(MakeMeshTestCase))
     suite.addTest(loader.loadTestsFromTestCase(MeshTestCase))
     suite.addTest(loader.loadTestsFromTestCase(MeshDiplayerTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(MeshCutInfoTestCase))
     unittest.TextTestRunner(verbosity=2).run(suite)
+    #remove_objects()

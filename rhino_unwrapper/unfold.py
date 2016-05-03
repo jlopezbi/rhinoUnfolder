@@ -5,7 +5,7 @@ import flatGeom
 import Net as nt
 import traversal as tr
 import Map
-import mesh
+import meshUtils.mesh as mesh
 import rhino_inputs as ri
 import weight_functions as wf
 

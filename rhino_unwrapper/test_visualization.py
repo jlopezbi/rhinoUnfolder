@@ -1,8 +1,15 @@
 import unittest
 import visualization as vis
 import Rhino.Geometry as geom
+import rhinoscriptsyntax as rs
 reload(vis)
 
+def setUpModule():
+    print("****Visualization Test Module set-up")
+
+def tearDownModule():
+    print("****MODULE TORN DOWN")
+    rs.DeleteObjects(rs.AllObjects())
 class VisualizationTestCase(unittest.TestCase):
 
     def test_rhino_line(self):

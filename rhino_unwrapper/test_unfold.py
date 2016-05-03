@@ -4,10 +4,10 @@ import rhinoscriptsyntax as rs
 
 import transformations as trans
 import unfold
-import mesh
 import Map
 import Net
-import meshLoad
+import meshUtils.meshLoad as meshLoad
+import meshUtils.mesh as mesh
 
 reload(meshLoad)
 reload(Net)

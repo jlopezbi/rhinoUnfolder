@@ -7,7 +7,7 @@ import islandMaker as make
 import meshUtils.mesh as mesh
 import Map
 import Net
-import meshLoad
+import meshUtils.meshLoad as meshLoad
 
 reload(mesh)
 reload(Net)

@@ -94,6 +94,7 @@ class Mesh(object):
     def __init__(self,mesh):
         self.mesh = mesh
         self.mesh.FaceNormals.ComputeFaceNormals()
+        self.cut_key = 'cuts'
 
     ### GENERAL
 
@@ -226,15 +227,30 @@ class Mesh(object):
             points.reverse()
         return points
 
+    ### STUFF FOR LAYOUT
+
+    def set_cuts(self,cutList):
+        edges = self.get_set_of_edges()
+        assert (edges.issuperset(set(cutList))), "cutList {} was not a subset of mesh edges".format(cutList)
+        did_set = self.mesh.UserDictionary.Set(self.cut_key, System.Array[int](cutList))
+        return did_set
+
+    def get_cuts(self):
+        return list(self.mesh.UserDictionary[self.cut_key])
+
     def is_cut_edge(self,edge):
-        #TODO: make work
-        pass
+        return edge in self.get_cuts()
 
     def is_fold_edge(self,edge):
-        pass
+        return edge not in self.get_cuts()
 
     def is_naked_edge(self,edge):
-        pass
+        faces = self.getFacesForEdge(edge)
+        nFaces = len(faces)
+        assert (nFaces >0), "did not get any faces for edge {}".format(edge)
+        if nFaces== 1:
+            return True
+        return False
 
     ### Main OBJECT IS EDGE
 
@@ -275,19 +291,12 @@ class Mesh(object):
         chain.append(edge)
         return chain
 
-    def getFacesForEdge(self,edgeIndex):
+    def getFacesForEdge(self,edge):
         '''
         returns an array of indices of the faces connected to a given edge
         if the array has only one face this indicates it is a naked edge
         '''
-        arrConnFaces = self.mesh.TopologyEdges.GetConnectedFaces(edgeIndex)
-
-        faceIdxs = []
-        faceIdxs.append(arrConnFaces.GetValue(0))
-        if arrConnFaces.Length == 2:
-            faceIdxs.append(arrConnFaces.GetValue(1))
-
-        return faceIdxs
+        return list(self.mesh.TopologyEdges.GetConnectedFaces(edge))
 
     def getTVertsForEdge(self,edge):
         vertPair = self.mesh.TopologyEdges.GetTopologyVertices(edge)
