@@ -1,6 +1,7 @@
 import unittest,os
 import cutSelection.userCuts as userCuts
 import meshUtils.meshLoad as meshLoad
+import meshUtils.mesh as mesh
 reload(userCuts)
 reload(meshLoad)
 

@@ -2,12 +2,19 @@ import Rhino
 import rhinoscriptsyntax as rs
 import scriptcontext
 import System.Drawing
+import System.Array
 import math
 
 #def all_weight_functions():
 #    return dict([m for m in inspect.getmembers(wf, inspect.isfunction)])
 
-def getUserCuts(myMesh):
+def apply_user_cuts(rMesh,key,cutlist):
+    '''
+    stores cutList in the given rMesh, in a dictionary with key
+    '''
+    rMesh.UserDictionary.Set(key,System.Array[int](cutlist))
+
+def get_user_cuts(myMesh,meshDisplayer):
     #NOTE: thinking about where this function should reside
     display = True # show selected cut edges
     edges = myMesh.get_set_of_edges()
@@ -45,7 +52,7 @@ def getUserCuts(myMesh):
                 for edgeIdx in drawnEdges.keys():
                     scriptcontext.doc.Objects.Delete(drawnEdges[edgeIdx], True)
 
-                drawnEdges.update(myMesh.displayCutEdges(color, cuts, "cuts"))
+                drawnEdges.update(meshDisplayer.display_edges(color, cuts))
 
         elif edgeIdx == -1:
             print("enter:")

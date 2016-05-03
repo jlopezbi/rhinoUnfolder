@@ -79,24 +79,6 @@ def testPointIsLeftB(pointA, pointB, testPoint):
     z = cross.Z  # (pos and neg)
     return z > 0
 
-def getOrientedVector(mesh, edgeIdx, tVert, isEnd):
-    '''
-    tVert is the end point of this vector
-    '''
-    tVerts = getTVertsForEdge(mesh, edgeIdx)
-    assert(tVert in tVerts)
-    tVerts.remove(tVert)
-    otherVert = tVerts[0]
-    if isEnd:
-        pntB = mesh.TopologyVertices.Item[tVert]
-        pntA = mesh.TopologyVertices.Item[otherVert]
-    else:
-        pntA = mesh.TopologyVertices.Item[tVert]
-        pntB = mesh.TopologyVertices.Item[otherVert]
-    vecPnt = pntB - pntA
-    vec = Rhino.Geometry.Vector3d(vecPnt)
-    return vec
-
 def getVectorForPoints(pntA, pntB):
     vecA = Rhino.Geometry.Vector3d(pntA)  # From
     vecB = Rhino.Geometry.Vector3d(pntB)  # To

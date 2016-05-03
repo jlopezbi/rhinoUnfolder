@@ -11,6 +11,9 @@ import System
 import clr
 
 def make_test_mesh():
+    '''
+    returns an instance of myMesh and adds the rhinoMesh to the document
+    '''
     vertices = []
     vertices.append((0.0,0.0,0.0))
     vertices.append((5.0, 0.0, 0.0))
@@ -72,7 +75,7 @@ def get_myMesh(vertices,face_vertices):
 # ex: mesh.Speical.get_frame_asdfsdf()
 
 
-class Mesh(object):
+class Mesh(object): 
     """
     better names?
     MeshQuieryer
@@ -178,7 +181,7 @@ class Mesh(object):
         return edges
 
     def get_edge_for_vert_pair(self,vertA,vertB):
-        return self.mesh.GetEdgeIndex(vertA,vertB)
+        return self.mesh.TopologyEdges.GetEdgeIndex(vertA,vertB)
 
     def getEdgeForTVertPair(self,tVertA, tVertB, facesVertA=None):
         ''' Depricated, use get_edge_for_vert_pair() '''
@@ -240,12 +243,12 @@ class Mesh(object):
         return edge that is closest in angle, or none if none
         of the edges are within angleTolerance
         '''
-        edges = self.getEdgesForVert(self.mesh, tVert)
+        edges = self.getEdgesForVert( tVert)
         if edge in edges:
             edges.remove(edge)
         winEdge = (None, angleTolerance)
         for neighEdge in edges:
-            angle = self.compareEdgeAngle(self.mesh, edge, tVert, neighEdge)
+            angle = self.compareEdgeAngle(edge, tVert, neighEdge)
             if angle < angleTolerance and angle < winEdge[1]:
                 winEdge = (neighEdge, angle)
 
@@ -256,7 +259,7 @@ class Mesh(object):
             return chain
         else:
             chain.append(newEdge)
-            nextTVert = self.getOtherTVert(self.mesh, newEdge, tVert)
+            nextTVert = self.getOtherTVert( newEdge, tVert)
             return self.getTangentEdge(newEdge, nextTVert, angleTolerance, chain)
 
     def getChain(self,edge, angleTolerance):
@@ -368,10 +371,28 @@ class Mesh(object):
         return point
 
     def compareEdgeAngle(self,edge, tVert, neighEdge):
-        vecBase = getOrientedVector(self.mesh, edge, tVert, True)
-        vecCompare = getOrientedVector(self.mesh, neighEdge, tVert, False)
+        vecBase = self._getOrientedVector(edge, tVert, True)
+        vecCompare = self._getOrientedVector(neighEdge, tVert, False)
         angle = geom.Vector3d.VectorAngle(vecBase, vecCompare)
         return angle
+
+    def _getOrientedVector(self,edgeIdx, tVert, isEnd):
+        '''
+        tVert is the end point of this vector
+        '''
+        tVerts = self.getTVertsForEdge(edgeIdx)
+        assert(tVert in tVerts)
+        tVerts.remove(tVert)
+        otherVert = tVerts[0]
+        if isEnd:
+            pntB = self.mesh.TopologyVertices.Item[tVert]
+            pntA = self.mesh.TopologyVertices.Item[otherVert]
+        else:
+            pntA = self.mesh.TopologyVertices.Item[tVert]
+            pntB = self.mesh.TopologyVertices.Item[otherVert]
+        vecPnt = pntB - pntA
+        vec = geom.Vector3d(vecPnt)
+        return vec
 
     def getEdgeLengths(self):
         edgeLens = []
@@ -519,12 +540,13 @@ class MeshDisplayer(object):
         self.displayEdgesIdx()
         self.displayTVertsIdx()
 
-    def displayCutEdges(self, color, edgeIdxs):
+    def display_edges(self, color, edgeIdxs):
         drawnEdges = {}
         if edgeIdxs:
             for edgeIdx in edgeIdxs:
                 points = self.meshElementFinder.getPointsForEdge(edgeIdx)
-                lineGuid, line = vis.drawLine(points, color, 'None')
+                lineGuid, line = vis.show_line_from_points(points, color, 'none')
+                drawnEdges[edgeIdx] = lineGuid
         return drawnEdges
 
 if __name__ == "__main__":

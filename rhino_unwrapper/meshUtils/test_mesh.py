@@ -1,11 +1,9 @@
 import unittest,os,sys
 path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/"
-#sys.path.append(path)
+sys.path.append(path)
 import transformations as trans
 import mesh
-import meshLoad
 reload(mesh)
-reload(meshLoad)
 reload(trans)
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
@@ -13,15 +11,10 @@ import rhinoscriptsyntax as rs
 
 def tearDownModule():
     print "MODULE TORN DOWN"
-    rs.DeleteObjects(rs.ObjectsByLayer('Default'))
+    rs.DeleteObjects(rs.AllObjects())
 
 def remove_objects():
-    rs.DeleteObjects(rs.ObjectsByLayer('Default'))
-
-class SelectMeshTestCase(unittest.TestCase):
-    def test_user_selects_mesh_and_get_mesh_back(self):
-        mesh = meshLoad.user_select_mesh()
-        self.assertIsInstance(mesh,Rhino.Geometry.Mesh)
+    rs.DeleteObjects(rs.AllObjects())
 
 class MakeMeshTestCase(unittest.TestCase):
 
@@ -120,5 +113,9 @@ class MeshDiplayerTestCase(unittest.TestCase):
         self.meshDisplayer.display_all_face_vert_ordering()
 
 if __name__ == '__main__':
-    file_name = os.path.basename(__file__).split('.')[0]
-    unittest.main(verbosity=2,module=file_name,exit=False)
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTest(loader.loadTestsFromTestCase(MakeMeshTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(MeshTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(MeshDiplayerTestCase))
+    unittest.TextTestRunner(verbosity=2).run(suite)

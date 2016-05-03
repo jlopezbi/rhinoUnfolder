@@ -10,11 +10,12 @@ def load_mesh(meshFilePath=None):
     puts the mesh in the meshFilePath file into the current document
     returns the rhino mesh and the mesh GUID
     '''
+    rs.DeleteObjects(rs.AllObjects())
     importer = FileImporter()
-    importer.loadFile(meshFilePath)
+    importer.import_file(meshFilePath)
     getter = MeshGetter()
-    mesh_guid = getter.getRandMeshGUID()
-    mesh = getter.getGeomFromGUID(mesh_guid)
+    mesh_guids = getter.get_all_mesh_guids()
+    mesh = getter.getGeomFromGUID(mesh_guids[0])
     return mesh
 
 class FileImporter(object):
@@ -27,7 +28,7 @@ class FileImporter(object):
         self.prefix = "-_import " + chr(34)
         self.suffix = chr(34) + " _Enter"
 
-    def loadFile(self,relPath=None):
+    def import_file(self,relPath=None):
         if relPath==None: 
             rs.Command("_import ")
             return
@@ -43,13 +44,10 @@ def user_select_mesh(message="select a mesh"):
     getter.Get()
     if getter.CommandResult() != Rhino.Commands.Result.Success:
         return
-
     objref = getter.Object(0)
     obj = objref.Object()
     mesh = objref.Mesh()
-
     obj.Select(False)
-
     if obj:
         return mesh
 
@@ -70,6 +68,9 @@ class MeshGetter(object):
     def get_mesh_from_guid(self,guid):
         obj = scriptcontext.doc.Objects.Find(guid)
         return obj.Geometry
+
+    def get_all_mesh_guids(self):
+        return rs.ObjectsByType(self.MeshID)
 
     def getSelectedMesh(self):
         selected = rs.SelectedObjects()
