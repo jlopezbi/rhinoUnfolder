@@ -46,6 +46,26 @@ def make_upright_mesh():
     face_verts.append((1,2,3,3))
     return get_myMesh(verts,face_verts)
 
+def make_cube_mesh():
+    vertices = []
+    vertices.append((0.0,0.0,0.0)) #0
+    vertices.append((5.0,0.0,0.0)) #1
+    vertices.append((5.0,5.0,0.0)) #2
+    vertices.append((0.0,5.0,0.0)) #3
+    vertices.append((0.0,0.0,5.0)) #4
+    vertices.append((5.0,0.0,5.0)) #5
+    vertices.append((5.0,5.0,5.0)) #6
+    vertices.append((0.0,5.0,5.0)) #7
+    faceVertices = []
+    faceVertices.append((3,2,1,0)) #bottom face
+    faceVertices.append((4,5,6,7)) #top face
+    faceVertices.append((0,1,5,4)) #front face
+    faceVertices.append((4,7,3,0)) #left face
+    faceVertices.append((1,2,6,5)) #right face
+    faceVertices.append((2,3,7,6)) #back face
+    return get_myMesh(vertices,faceVertices)
+
+
 def get_myMesh(vertices,face_vertices):
     '''add a mesh to doc and get the Rhino.Geometry.Mesh object''' 
     mesh_GUID = rs.AddMesh( vertices, face_vertices )

@@ -246,6 +246,19 @@ class Island(object):
         self.dummyFace = self.add_face(flatGeom.FlatFace([0,1],[0]))
         self.dummyEdge = self.add_edge_with_from_face(face=0,index=0)
 
+    #LAYOUT
+    def change_to_fold_edge(self,edge):
+        #TODO: make these do the stuffs
+        pass
+
+    #LAYOUT
+    def change_to_cut_edge(self,edge):
+        pass
+
+    #LAYOUT
+    def change_to_naked_edge(self,edge):
+        pass
+
 ############ QUIERY
     def get_point_for_vert(self,vert):
         return self.flatVerts[vert].point
@@ -253,7 +266,7 @@ class Island(object):
     def next_face_index(self):
         return len(self.flatFaces)
 
-############ ADDING ELEMENTS    
+######### ADDING ELEMENTS    
     def tack_on_facet(self,edge,points):
         newFaceIdx = len(self.flatFaces)
         baseEdge = self.flatEdges[edge]
@@ -273,6 +286,7 @@ class Island(object):
         return newFaceIdx,faceEdges
 
 ################## ADD VERT
+#LAYOUT
     def layout_add_vert_point(self,point):
         '''
         designed for layout: verts get added before face 
@@ -296,6 +310,7 @@ class Island(object):
 
 ################## ADD EDGE
 
+#LAYOUT
     def layout_add_edge(self,index=None):
         '''
         designed for layout: edge gets added before face gets added
@@ -318,6 +333,7 @@ class Island(object):
         return len(self.flatEdges) - 1
 
 ################## ADD FACE
+#LAYOUT
     def layout_add_face(self,baseEdge):
         '''
         designed for layout: verts and edges are added before this function is called.

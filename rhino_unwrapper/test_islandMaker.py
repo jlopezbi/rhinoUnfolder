@@ -59,6 +59,9 @@ class IslandMakerTestCase(unittest.TestCase):
         self.island_idx = 0
         self.islandMaker = make.IslandMaker(None,self.myMesh,self.island_idx)
 
+    def tearDown(self):
+        remove_objects()
+
     def test_get_mapped_point(self):
         fakeMesh = StubbedMesh()
         self.islandMaker.island = StubbedIsland()
@@ -105,6 +108,45 @@ class IslandMakerTestCase(unittest.TestCase):
 
 class ComplexIslandMakerTestCase(unittest.TestCase):
 
+    def tearDown(self):
+        remove_objects()
+
+    def test_make_island_from_a_cube_with_cuts(self):
+        jMesh = mesh.make_cube_mesh()
+        viewer = mesh.MeshDisplayer(jMesh)
+        viewer.displayEdgesIdx()
+        cuts = [8,0,4,10,3,11,5]
+        jMesh.set_cuts(cuts)
+        viewer.display_edges((0,255,0,255),cuts)
+        viewer.displayFacesIdx()
+        #NOTE: working here currently, try unfoldng using these cuts!
+        self.islandMaker = make.IslandMaker(None,jMesh,0)
+        meshLoc = make.MeshLoc(face=1,edge=4)
+        start_frame = trans.Frame.create_frame_from_tuples((10,0,0),
+                                                           (1,0,0),
+                                                           (0,1,0))
+        start_frame.show()
+        island = self.islandMaker.make_island_cuts(meshLoc,start_frame)
+        island.draw_all()
+        correct_points = [
+            geom.Point3d(15,0,0), #0    
+            geom.Point3d(10,0,0), #1
+            geom.Point3d(15,5,0), #2 
+            geom.Point3d(10,5,0), #3 
+            geom.Point3d(15,10,0), #4
+            geom.Point3d(10,10,0), #5
+            geom.Point3d(15,15,0), #6
+            geom.Point3d(10,15,0), #7
+            geom.Point3d(20,10,0), #8
+            geom.Point3d(20,15,0), #9
+            geom.Point3d(15,20,0), #10
+            geom.Point3d(10,20,0), #11
+            geom.Point3d(5,15,0), #12
+            geom.Point3d(5,10,0) #13 ]
+        ]
+        for i,vert in enumerate(island.flatVerts):
+            self.assertTrue(vert.hasSamePoint(correct_points[i]))
+
     def test_make_island_cone(self):
         meshFile = "/TestMeshes/cone"
         myMesh = mesh.Mesh(meshLoad.load_mesh(meshFile))
@@ -124,8 +166,13 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
         island.draw_all()
         #TODO: use assertions to check if layout actually worked
 
-#TODO: consider replicate this nicer solution in all files
 if __name__ == '__main__':
-    file_name = os.path.basename(__file__).split('.')[0]
-    unittest.main(verbosity=2,module=file_name,exit=False)
+    #file_name = os.path.basename(__file__).split('.')[0]
+    #unittest.main(verbosity=2,module=file_name,exit=False)
+
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTest(loader.loadTestsFromTestCase(IslandMakerTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(ComplexIslandMakerTestCase))
+    unittest.TextTestRunner(verbosity=2).run(suite)
 

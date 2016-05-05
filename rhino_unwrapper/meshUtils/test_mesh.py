@@ -19,10 +19,16 @@ def remove_objects():
 class MakeMeshTestCase(unittest.TestCase):
 
     def test_make_test_mesh(self):
-        mesh.make_test_mesh()
+        tMesh = mesh.make_test_mesh()
+        self.assertIsInstance(tMesh,mesh.Mesh)
 
     def test_make_upright_mesh(self):
-        mesh.make_upright_mesh()
+        uMesh = mesh.make_upright_mesh()
+        self.assertIsInstance(uMesh,mesh.Mesh)
+
+    def test_make_cube_mesh(self):
+        cMesh = mesh.make_cube_mesh()
+        self.assertIsInstance(cMesh,mesh.Mesh)
 
 class MeshCutInfoTestCase(unittest.TestCase):
 
