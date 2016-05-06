@@ -1,14 +1,19 @@
 import unittest,sys
 path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/"
+path_meshUtils = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/meshUtils"
 sys.path.append(path)
+#sys.path.append(path_meshUtils)
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 import meshUtils.mesh as mesh
 import meshUtils.meshLoad as meshLoad
 import userCuts
+import autoCuts
 
 reload(userCuts)
+reload(autoCuts)
 reload(mesh)
+reload(meshLoad)
 
 def setUpModule():
     print("USERCUTS")
@@ -45,15 +50,31 @@ class UserAssginCutsTestCase(unittest.TestCase):
 
     def test_updates_mesh_cut_list(self):
         rMesh = meshLoad.load_mesh("/TestMeshes/blob")
-        #TODO: does this stuff reside in some sort of other object?
-        #like meshSeamer.update_cuts(cuts)?
-        #userCuts.update_cut_list(mesh,key,cuts)
 
-class AutoAssignCutsTestCase(unittest.TestCase):
-    pass
+def weight_function(myMesh,edge):
+    return 1.0
 
+class AutoCutsTestCase(unittest.TestCase):
+    def setUp(self):
+        self.myMesh = mesh.make_test_mesh()
+
+    def test_auto_generates_cuts(self):
+        user_cuts = []
+        cuts = autoCuts.auto_fill_cuts(self.myMesh,user_cuts,weight_function)
+        displayer = mesh.MeshDisplayer(self.myMesh)
+        displayer.display_edges(cuts)
+        #TODO: assertion check
+
+    def test_auto_generates_cuts_on_blob(self):
+        bMesh = mesh.Mesh(meshLoad.load_mesh("/TestMeshes/blob"))
+        cuts = autoCuts.auto_fill_cuts(bMesh,[],weight_function)
+        displayer = mesh.MeshDisplayer(bMesh)
+        displayer.display_edges(cuts)
 
 def check_user_setting_cuts():
+    '''
+    for testing user interaction
+    '''
     delete_all()
     myMesh = mesh.make_test_mesh()
     meshDisplayer = mesh.MeshDisplayer(myMesh)
@@ -63,9 +84,10 @@ def delete_all():
     rs.DeleteObjects(rs.AllObjects())
         
 if __name__ == '__main__':
-    check_user_setting_cuts()
+    #check_user_setting_cuts()
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    suite.addTest(loader.loadTestsFromTestCase(UserAssginCutsTestCase))
+    #suite.addTest(loader.loadTestsFromTestCase(UserAssginCutsTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(AutoCutsTestCase))
     unittest.TextTestRunner(verbosity=2).run(suite)
 

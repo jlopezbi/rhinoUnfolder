@@ -1,5 +1,10 @@
 
 def auto_fill_cuts(myMesh,user_cuts,weight_function):
+    '''
+    fill in user_cut list (or if empty create new one) which
+    prefers edges with larger weight, given by the weight_function
+    NOTE: currently sets naked edges as cuts
+    '''
     weights = get_edge_weights(myMesh,user_cuts,weight_function)
     fold_list = getSpanningKruskal(weights,myMesh.mesh)
     return getCutList(myMesh.mesh,fold_list)
