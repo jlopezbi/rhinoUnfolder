@@ -1,9 +1,8 @@
 import rhinoscriptsyntax as rs
-
-import rhino_helpers
-
+import random as rand
 
 def edgeAngle(myMesh, edgeIndex):
+    #TODO: make myMesh function which findes angel between two faces of a given edge
     faceIdxs = myMesh.getFacesForEdge(edgeIndex)
 
     if (len(faceIdxs) == 2):
@@ -13,12 +12,8 @@ def edgeAngle(myMesh, edgeIndex):
     else:
         return None
 
-
 def uniform(mesh, edgeIndex):
     return 1
-
-import random as rand
-
 
 def random(mesh, edgeIndex):
     return rand.random()
