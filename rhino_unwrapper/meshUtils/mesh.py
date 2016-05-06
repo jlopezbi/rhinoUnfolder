@@ -570,7 +570,7 @@ class MeshDisplayer(object):
         self.displayEdgesIdx()
         self.displayTVertsIdx()
 
-    def display_edges(self, color, edgeIdxs):
+    def display_edges(self, edgeIdxs,color=(0,255,0,255)):
         drawnEdges = {}
         if edgeIdxs:
             for edgeIdx in edgeIdxs:
