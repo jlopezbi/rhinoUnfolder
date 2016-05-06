@@ -87,7 +87,12 @@ class IslandMakerTestCase(unittest.TestCase):
         self.islandMaker.island.draw_all()
         self.assertTrue(self.islandMaker.island.flatVerts[0].hasSamePoint(pnt0_correct))
         self.assertTrue(self.islandMaker.island.flatVerts[1].hasSamePoint(pnt1_correct))
-
+    
+    def test_meshLoc_must_be_on_a_cutEdge(self):
+        meshLoc = make.MeshLoc(face=0,edge=1)
+        cuts = [2]
+        self.myMesh.set_cuts(cuts)
+        self.assertRaises(AssertionError,self.islandMaker.make_island_cuts,meshLoc)
 
     def test_make_island(self):
         meshLoc = make.MeshLoc(face=0,edge=1)
@@ -113,13 +118,34 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
         #remove_objects()
         pass
 
+    def test_unfolds_a_segment_of_cube(self):
+        jMesh = mesh.make_cube_mesh()
+        viewer=mesh.MeshDisplayer(jMesh)
+        viewer.displayEdgesIdx()
+        cuts = [3,4,10,11,6,5]
+        jMesh.set_cuts(cuts)
+        viewer.display_edges(cuts)
+        self.islandMaker = make.IslandMaker(None,jMesh,0)
+        meshLoc = make.MeshLoc(face=1,edge=4)
+        island = self.islandMaker.make_island_cuts(meshLoc)
+        island.draw_all()
+        correct_points = [
+            geom.Point3d(5,0,0),
+            geom.Point3d(0,0,0),
+            geom.Point3d(5,5,0),
+            geom.Point3d(0,5,0),
+            geom.Point3d(5,10,0),
+            geom.Point3d(0,10,0)]
+        self.check_has_same_verts(island,correct_points)
+
+
     def test_make_island_from_a_cube_with_cuts(self):
         jMesh = mesh.make_cube_mesh()
         viewer = mesh.MeshDisplayer(jMesh)
         viewer.displayEdgesIdx()
         cuts = [8,0,4,10,3,11,5]
         jMesh.set_cuts(cuts)
-        viewer.display_edges((0,255,0,255),cuts)
+        viewer.display_edges(cuts)
         viewer.displayFacesIdx()
         self.islandMaker = make.IslandMaker(None,jMesh,0)
         meshLoc = make.MeshLoc(face=1,edge=4)
@@ -145,8 +171,12 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
             geom.Point3d(5,15,0), #12
             geom.Point3d(5,10,0) #13 ]
         ]
+        self.check_has_same_verts(island,correct_points)
+
+    def check_has_same_verts(self,island,correct_points):
         for i,vert in enumerate(island.flatVerts):
             self.assertTrue(vert.hasSamePoint(correct_points[i]))
+
 
     def _test_make_island_cone(self):
         meshFile = "/TestMeshes/cone"
