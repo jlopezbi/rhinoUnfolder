@@ -24,6 +24,10 @@ class FileImporterTestCase(unittest.TestCase):
         importer = meshLoad.FileImporter()
         importer.import_file("/TestMeshes/blob")
 
+    def test_non_existant_file(self):
+        importer = meshLoad.FileImporter()
+        self.assertRaises(AssertionError,importer.import_file,"/asdfasf/asdf")
+
 class SelectMeshTestCase(unittest.TestCase):
     def setUp(self):
         meshLoad.FileImporter().import_file("/TestMeshes/blob")
