@@ -34,7 +34,8 @@ class FileImporter(object):
             return
         abs_path = self.directory + relPath
         command = self.prefix + abs_path + self.suffix
-        rs.Command(command)
+        did_work = rs.Command(command)
+        assert did_work, "unable to import {}!".format(abs_path)
 
 def user_select_mesh(message="select a mesh"):
     getter = Rhino.Input.Custom.GetObject()
