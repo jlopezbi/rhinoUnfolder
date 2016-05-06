@@ -115,6 +115,7 @@ class Mesh(object):
         self.mesh = mesh
         self.mesh.FaceNormals.ComputeFaceNormals()
         self.cut_key = 'cuts'
+        self.set_cuts([])
 
     ### GENERAL
 

@@ -67,6 +67,16 @@ class IslandMaker(object):
         pnt1 = trans.get_mapped_point(meshPointB,from_frame,start_frame)
         self.island.add_vert_from_point(pnt1)
         self.island.add_vert_from_point(pnt0)
+        meshEdge = meshLoc.edge
+        islandEdge = 0
+        #NOTE: only works for myMeshes that have cuts set! consider alternatives to deal with this
+        if self.myMesh.is_fold_edge(meshEdge):
+            self.island.change_to_fold_edge(islandEdge)
+        if self.myMesh.is_cut_edge(meshEdge):
+            self.island.change_to_cut_edge(islandEdge)
+        if self.myMesh.is_naked_edge(meshEdge):
+            self.island.change_to_naked_edge(islandEdge)
+            
 
     def breadth_first_layout(self,island,startMeshLoc,startIslandLoc):
         #TODO: implement functions below to get working!
@@ -75,6 +85,7 @@ class IslandMaker(object):
         (does not check if edges are cut or fold) 
         need to figure out how to setup island so ready to do this function...
         '''
+        assert (startMeshLoc.edge in self.myMesh.get_cuts()), "meshloc is not on a cut edge!"
         layoutPair = (startMeshLoc,startIslandLoc)
         queue = collections.deque([layoutPair])
         visited = [startMeshLoc.face]
@@ -97,16 +108,16 @@ class IslandMaker(object):
                     island.layout_add_vert_point(mapped_point) 
                 newEdge = island.layout_add_edge(i+1)
                 if self.myMesh.is_fold_edge(edge):
-                    island.change_to_fold_edge(edge=newEdge) #NOT IMPLEMENTED
+                    island.change_to_fold_edge(edge=newEdge)
                     visited.append(face)
                     island.update_edge_to_face(edge=newEdge,toFace=islandFaceToBe+(i+1)) 
                     newMeshLoc = MeshLoc(face,edge)
                     newIslandLoc = IslandLoc(islandFaceToBe,newEdge)
                     queue.append((newMeshLoc,newIslandLoc))
                 elif self.myMesh.is_cut_edge(edge): 
-                    island.change_to_cut_edge(edge=newEdge)#NOT IMLEMENTD
+                    island.change_to_cut_edge(edge=newEdge)
                 elif self.myMesh.is_naked_edge(edge): 
-                    island.change_to_naked_edge(edge=newEdge) #NOT IMPLEMENTED
+                    island.change_to_naked_edge(edge=newEdge) 
             island.layout_add_face(baseEdge=islandLoc.edge)
 
     def breadth_first_layout_face_version(self,island,startMeshLoc,startIslandLoc):
@@ -151,15 +162,6 @@ class IslandMaker(object):
             to_frame.show()
         return  trans.get_mapped_point(point,from_frame,to_frame)
     
-    def is_cut_edge(self,edge):
-        pass
-
-    def is_fold_edge(self,edge):
-        pass
-
-    def is_naked_edge(self,edge):
-        pass
-
 def breadth_first_traverse(myMesh,face):
     '''
     practice function for traversing mesh breadth-first

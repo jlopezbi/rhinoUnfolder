@@ -88,6 +88,7 @@ class IslandMakerTestCase(unittest.TestCase):
         self.assertTrue(self.islandMaker.island.flatVerts[0].hasSamePoint(pnt0_correct))
         self.assertTrue(self.islandMaker.island.flatVerts[1].hasSamePoint(pnt1_correct))
 
+
     def test_make_island(self):
         meshLoc = make.MeshLoc(face=0,edge=1)
         start_frame = trans.Frame.create_frame_from_tuples((10,0,0),
@@ -109,7 +110,8 @@ class IslandMakerTestCase(unittest.TestCase):
 class ComplexIslandMakerTestCase(unittest.TestCase):
 
     def tearDown(self):
-        remove_objects()
+        #remove_objects()
+        pass
 
     def test_make_island_from_a_cube_with_cuts(self):
         jMesh = mesh.make_cube_mesh()
@@ -119,7 +121,6 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
         jMesh.set_cuts(cuts)
         viewer.display_edges((0,255,0,255),cuts)
         viewer.displayFacesIdx()
-        #NOTE: working here currently, try unfoldng using these cuts!
         self.islandMaker = make.IslandMaker(None,jMesh,0)
         meshLoc = make.MeshLoc(face=1,edge=4)
         start_frame = trans.Frame.create_frame_from_tuples((10,0,0),
@@ -147,7 +148,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
         for i,vert in enumerate(island.flatVerts):
             self.assertTrue(vert.hasSamePoint(correct_points[i]))
 
-    def test_make_island_cone(self):
+    def _test_make_island_cone(self):
         meshFile = "/TestMeshes/cone"
         myMesh = mesh.Mesh(meshLoad.load_mesh(meshFile))
         displayer = mesh.MeshDisplayer(myMesh)

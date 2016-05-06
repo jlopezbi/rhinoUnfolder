@@ -4,26 +4,29 @@ import rhino_helpers
 import math 
 
 
-def change_to_cut_edge(flatEdge,otherEdgeIdx):
-    newEdge = CutEdge(meshEdgeIdx = flatEdge.meshEdgeIdx,
-                      vertAidx = flatEdge.vertAidx,
-                      vertBidx = flatEdge.vertBidx,
-                      fromFace = flatEdge.fromFace,
-                      toFace = flatEdge.toFace,
+def create_cut_edge_from_base(flatEdge,otherEdgeIdx=None):
+    newEdge = CutEdge(fromFace = flatEdge.fromFace,
+                      indexInFace = flatEdge.indexInFace,
                       sibling = otherEdgeIdx)
     return newEdge
+
+def create_fold_edge_from_base(flatEdge):
+    return FoldEdge(fromFace = flatEdge.fromFace, indexInFace=flatEdge.indexInFace)
+
+def create_naked_edge_from_base(flatEdge):
+    return NakedEdge(fromFace=flatEdge.fromFace,indexInFace=flatEdge.indexInFace)
 
 edge_colors = {'blue': (0,0,0,255),
                'red':(0,255,0,0),
                'green':(0,0,255,0)}
 
 class FlatEdge(object):
-    def __init__(self,**kwargs):
-        self.fromFace = kwargs['fromFace'] #fromFace is "homeFace"
-        self.indexInFace = kwargs['indexInFace'] # which edge of the from face
-        self.toFace = kwargs.get('toFace',None)
-        self.meshEdgeIdx = kwargs.get('meshEdgeIdx',None)
-        self.color = kwargs.get('color',(0,0,0,0))
+    def __init__(self,fromFace,indexInFace,**kwargs):
+        self.fromFace = fromFace  #fromFace is "homeFace"
+        self.indexInFace = indexInFace # which edge of the from face
+        self.toFace = None
+        self.meshEdgeIdx = None
+        self.color = (0,0,0,0)
         self.index_color = (0,0,255,0)
         self.line = None
         self.line_id = None
@@ -326,10 +329,11 @@ class FoldEdge(FlatEdge):
     def post_initialize(self,kwargs):
         self.color = edge_colors['green']
     
-    def show(self,flatVerts):
-        self._show_crease(flatVerts)
+    def show(self,island):
+        #self._show_crease(island)
+        return self.show_line(island)
 
-    def _show_crease(self,flatVerts):
+    def _show_crease(self,island):
         pass
 
     def type(self):
@@ -342,8 +346,9 @@ class CutEdge(FlatEdge):
         self.sibling = kwargs['sibling']
         self.color = edge_colors['red']
 
-    def show(self,flatVerts):
-        self._show_joinery(flatVerts)
+    def show(self,island):
+        #self._show_joinery(island)
+        self.show_line(island)
     
     def _show_joinery(self,flatVerts):
         pass

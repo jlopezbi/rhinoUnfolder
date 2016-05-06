@@ -248,16 +248,18 @@ class Island(object):
 
     #LAYOUT
     def change_to_fold_edge(self,edge):
-        #TODO: make these do the stuffs
-        pass
+        baseEdge = self.flatEdges[edge]
+        self.flatEdges[edge] = flatEdge.create_fold_edge_from_base(baseEdge)
 
     #LAYOUT
     def change_to_cut_edge(self,edge):
-        pass
+        baseEdge = self.flatEdges[edge]
+        self.flatEdges[edge] = flatEdge.create_cut_edge_from_base(baseEdge)
 
     #LAYOUT
     def change_to_naked_edge(self,edge):
-        pass
+        baseEdge = self.flatEdges[edge]
+        self.flatEdges[edge] = flatEdge.create_naked_edge_from_base(baseEdge)
 
 ############ QUIERY
     def get_point_for_vert(self,vert):
