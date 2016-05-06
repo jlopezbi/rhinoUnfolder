@@ -1,11 +1,10 @@
 
-#DEPRICATED: this functinoality is now in autoCuts.py!
 def auto_fill_cuts(myMesh,user_cuts,weight_function):
-    graph = buildMeshGraph(myMesh,user_cuts,weight_function)
-    fold_list = getSpanningKruskal(graph,myMesh.mesh)
-    filled_cut_list = getCutList(myMesh.mesh,fold_list)
+    weights = get_edge_weights(myMesh,user_cuts,weight_function)
+    fold_list = getSpanningKruskal(weights,myMesh.mesh)
+    return getCutList(myMesh.mesh,fold_list)
 
-def getSpanningKruskal(graph, mesh):
+def getSpanningKruskal(edge_weights, mesh):
     '''
     this section of the code should be updated to use the union-find trick
     input:
@@ -15,7 +14,6 @@ def getSpanningKruskal(graph, mesh):
     output:
       foldList = list of edgeIdx's that are to be folded
     '''
-    faces, edge_weights = graph
     treeSets = []
     foldList = []
     for tupEdge in edge_weights:
@@ -65,11 +63,7 @@ def getCutList(mesh, foldList):
             cutList.append(i)
     return cutList
 
-def meshFaces(mesh):
-    return (mesh.Faces.GetFace(i) for i in xrange(mesh.Faces.Count))
-
-def buildMeshGraph(myMesh, userCuts,weight_function):
-    nodes = myMesh.meshFaces()
+def get_edge_weights(myMesh, userCuts,weight_function):
     edge_weights = []
     for i in xrange(myMesh.mesh.TopologyEdges.Count):
         if userCuts:
@@ -81,4 +75,4 @@ def buildMeshGraph(myMesh, userCuts,weight_function):
             edge_weights.append((i,weight_function(myMesh, i)))
     edge_weights = sorted(edge_weights, key=lambda tup: tup[1], reverse=False)
     # sorted from smallest to greatest
-    return nodes, edge_weights
+    return  edge_weights
