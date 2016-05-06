@@ -44,7 +44,8 @@ class MeshCutInfoTestCase(unittest.TestCase):
         self.assertRaises(AssertionError,self.mesh.set_cuts,cuts)
 
     def test_get_cuts(self):
-        self.assertRaises(KeyError,self.mesh.get_cuts)
+        #default myMesh has no cuts; empty list
+        self.assertEqual([],self.mesh.get_cuts())
         cuts = [0,2]
         self.mesh.set_cuts(cuts)
         self.assertEqual(cuts,self.mesh.get_cuts())
