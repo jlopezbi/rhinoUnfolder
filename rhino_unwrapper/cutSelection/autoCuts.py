@@ -10,28 +10,28 @@ def auto_fill_cuts(myMesh,user_cuts,weight_function):
     return getCutList(myMesh,fold_list)
 
 def get_edge_weights(myMesh, userCuts,weight_function):
-    edge_weights = []
+    edges_with_weights= []
     for i in xrange(myMesh.mesh.TopologyEdges.Count):
         if userCuts:
             if i not in userCuts:
-                edge_weights.append((i,weight_function(myMesh, i)))
+                edges_with_weights.append((i,weight_function(myMesh, i)))
             else:
-                edge_weights.append((i, float('inf')))
+                edges_with_weights.append((i, float('inf')))
         else:
-            edge_weights.append((i,weight_function(myMesh, i)))
-    sorted_edges = sorted(edge_weights, key=lambda tup: tup[1], reverse=False)
-    # sorted from smallest to greatest
-    return  sorted_edges
+            edges_with_weights.append((i,weight_function(myMesh, i)))
+    return  edges_with_weights
 
-def getSpanningKruskal(sorted_edges, mesh):
+def getSpanningKruskal(edges_with_weights, mesh):
     '''
-    this section of the code should be updated to use the union-find trick. The reason this works is that it relies on edge_weights to be sorted!!!
+    this section of the code should be updated to use the union-find trick. 
     input:
-        sorted_edges = list of tuples (edgeIdx,  weight), already sorted by the weight key
+        edges_with_weights = list of tuples (edgeIdx,  weight) 
         mesh = Rhino.Geometry mesh
     output:
       foldList = list of edgeIdx's that are to be folded
     '''
+    # sorted from smallest to greatest; user cuts, which get inf weight, have low likelyhood of becoming fold edges
+    sorted_edges = sorted(edges_with_weights, key=lambda tup: tup[1], reverse=False)
     treeSets = []
     foldList = []
     for tupEdge in sorted_edges:
@@ -55,7 +55,9 @@ def getSpanningKruskal(sorted_edges, mesh):
                     parentSets.append(i)
 
             if isLegal == True:
-                foldList.append(edgeIdx)
+                #do not save edge as a fold if the user set it as a cut
+                if tupEdge[1] != float('inf'):
+                    foldList.append(edgeIdx)
                 if len(parentSets) == 0:
                     treeSets.append(setConnFaces)
                 elif len(parentSets) == 1:

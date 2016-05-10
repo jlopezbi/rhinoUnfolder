@@ -58,11 +58,11 @@ class AutoCutsTestCase(unittest.TestCase):
     def setUp(self):
         self.myMesh = mesh.make_test_mesh()
 
-    def _test_auto_generates_cuts(self):
+    def test_auto_generates_cuts(self):
         user_cuts = []
         cuts = autoCuts.auto_fill_cuts(self.myMesh,user_cuts,weight_function)
         displayer = mesh.MeshDisplayer(self.myMesh)
-        displayer.display_edges(cuts)
+        #displayer.display_edges(cuts)
         self.assertEqual(cuts,[12])
 
     def test_auto_honors_user_cuts(self):
@@ -70,9 +70,17 @@ class AutoCutsTestCase(unittest.TestCase):
         auto_cuts = autoCuts.auto_fill_cuts(self.myMesh,user_cuts,weight_function)
         displayer = mesh.MeshDisplayer(self.myMesh)
         self.assertEqual(auto_cuts,user_cuts)
-        displayer.display_edges(user_cuts,(0,0,255,0))
+
+    def test_auto_honors_loops_of_user_cuts(self):
+        cuts = [4,3,7,10]
+        cube_mesh = mesh.make_cube_mesh()
+        displayer = mesh.MeshDisplayer(cube_mesh)
+        displayer.displayEdgesIdx()
+        auto_cuts = autoCuts.auto_fill_cuts(cube_mesh,cuts,weight_function)
+        #TODO: make so assertion raises more descriptive error
+        self.assertTrue(set(auto_cuts).issuperset(set(cuts)))
         displayer.display_edges(auto_cuts)
-        
+
     def _test_auto_generates_cuts_on_blob(self):
         bMesh = mesh.Mesh(meshLoad.load_mesh("/TestMeshes/blob"))
         cuts = autoCuts.auto_fill_cuts(bMesh,[],weight_function)
