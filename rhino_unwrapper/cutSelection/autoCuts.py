@@ -5,22 +5,36 @@ def auto_fill_cuts(myMesh,user_cuts,weight_function):
     prefers edges with larger weight, given by the weight_function
     NOTE: currently sets naked edges as cuts
     '''
-    weights = get_edge_weights(myMesh,user_cuts,weight_function)
-    fold_list = getSpanningKruskal(weights,myMesh.mesh)
+    sorted_edges = get_edge_weights(myMesh,user_cuts,weight_function)
+    fold_list = getSpanningKruskal(sorted_edges,myMesh.mesh)
     return getCutList(myMesh,fold_list)
 
-def getSpanningKruskal(edge_weights, mesh):
+def get_edge_weights(myMesh, userCuts,weight_function):
+    edge_weights = []
+    for i in xrange(myMesh.mesh.TopologyEdges.Count):
+        if userCuts:
+            if i not in userCuts:
+                edge_weights.append((i,weight_function(myMesh, i)))
+            else:
+                edge_weights.append((i, float('inf')))
+        else:
+            edge_weights.append((i,weight_function(myMesh, i)))
+    sorted_edges = sorted(edge_weights, key=lambda tup: tup[1], reverse=False)
+    # sorted from smallest to greatest
+    return  sorted_edges
+
+def getSpanningKruskal(sorted_edges, mesh):
     '''
-    this section of the code should be updated to use the union-find trick
+    this section of the code should be updated to use the union-find trick. The reason this works is that it relies on edge_weights to be sorted!!!
     input:
-        edge_weights = list of tuples elem0 = edgeIdx, elem1 = weight
+        sorted_edges = list of tuples (edgeIdx,  weight), already sorted by the weight key
         mesh = Rhino.Geometry mesh
     output:
       foldList = list of edgeIdx's that are to be folded
     '''
     treeSets = []
     foldList = []
-    for tupEdge in edge_weights:
+    for tupEdge in sorted_edges:
         edgeIdx = tupEdge[0]
         arrConnFaces = mesh.TopologyEdges.GetConnectedFaces(edgeIdx)
         if(len(arrConnFaces) > 1):  # this avoids problems with naked edges
@@ -69,16 +83,3 @@ def getCutList(myMesh, foldList):
             cut_list.append(edge)
     return cut_list
 
-def get_edge_weights(myMesh, userCuts,weight_function):
-    edge_weights = []
-    for i in xrange(myMesh.mesh.TopologyEdges.Count):
-        if userCuts:
-            if i not in userCuts:
-                edge_weights.append((i,weight_function(myMesh, i)))
-            else:
-                edge_weights.append((i, float('inf')))
-        else:
-            edge_weights.append((i,weight_function(myMesh, i)))
-    edge_weights = sorted(edge_weights, key=lambda tup: tup[1], reverse=False)
-    # sorted from smallest to greatest
-    return  edge_weights
