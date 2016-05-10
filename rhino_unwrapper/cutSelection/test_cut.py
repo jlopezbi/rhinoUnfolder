@@ -63,7 +63,7 @@ class AutoCutsTestCase(unittest.TestCase):
         cuts = autoCuts.auto_fill_cuts(self.myMesh,user_cuts,weight_function)
         displayer = mesh.MeshDisplayer(self.myMesh)
         displayer.display_edges(cuts)
-        #TODO: assertion check
+        self.assertEqual(cuts,[12])
 
     def test_auto_generates_cuts_on_blob(self):
         bMesh = mesh.Mesh(meshLoad.load_mesh("/TestMeshes/blob"))

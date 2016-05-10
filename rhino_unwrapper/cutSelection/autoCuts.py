@@ -7,15 +7,14 @@ def auto_fill_cuts(myMesh,user_cuts,weight_function):
     '''
     weights = get_edge_weights(myMesh,user_cuts,weight_function)
     fold_list = getSpanningKruskal(weights,myMesh.mesh)
-    return getCutList(myMesh.mesh,fold_list)
+    return getCutList(myMesh,fold_list)
 
 def getSpanningKruskal(edge_weights, mesh):
     '''
     this section of the code should be updated to use the union-find trick
     input:
-      graph = contains faces and edge_weights
-        faces = list of faces in mesh. necessary?
         edge_weights = list of tuples elem0 = edgeIdx, elem1 = weight
+        mesh = Rhino.Geometry mesh
     output:
       foldList = list of edgeIdx's that are to be folded
     '''
@@ -61,12 +60,14 @@ def getSpanningKruskal(edge_weights, mesh):
         # also the if staements could be cleaned up probs.
     return foldList
 
-def getCutList(mesh, foldList):
-    cutList = []
-    for i in range(mesh.TopologyEdges.Count):
-        if i not in foldList:
-            cutList.append(i)
-    return cutList
+def getCutList(myMesh, foldList):
+    all_edges = myMesh.get_set_of_edges()
+    cut_set = all_edges.difference(set(foldList))
+    cut_list = []
+    for edge in cut_set:
+        if not myMesh.is_naked_edge(edge):
+            cut_list.append(edge)
+    return cut_list
 
 def get_edge_weights(myMesh, userCuts,weight_function):
     edge_weights = []
