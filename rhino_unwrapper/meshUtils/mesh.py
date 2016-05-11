@@ -263,7 +263,7 @@ class Mesh(object):
         return edge in self.get_cuts()
 
     def is_fold_edge(self,edge):
-        return edge not in self.get_cuts()
+        return edge not in self.get_cuts() and not self.is_naked_edge(edge)
 
     def is_naked_edge(self,edge):
         faces = self.getFacesForEdge(edge)
