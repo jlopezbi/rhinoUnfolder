@@ -113,13 +113,13 @@ class AutoCutsTestCase(unittest.TestCase):
                     self.assertNotIn(newFace,visited_faces,'newFace {} already in {}!'.format(newFace,visited_faces))
                     queue.append(MeshLoc(newFace,next_edge))
 
-
 def check_user_setting_cuts():
     '''
     for testing user interaction
     '''
     delete_all()
-    myMesh = mesh.make_test_mesh()
+    #myMesh = mesh.make_test_mesh()
+    myMesh = mesh.Mesh(meshLoad.load_mesh("/TestMeshes/blob"))
     meshDisplayer = mesh.MeshDisplayer(myMesh)
     userCuts.get_user_cuts(myMesh,meshDisplayer)
 

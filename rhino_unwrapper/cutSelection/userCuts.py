@@ -16,6 +16,7 @@ def apply_user_cuts(rMesh,key,cutlist):
 
 def get_user_cuts(myMesh,meshDisplayer):
     #NOTE: thinking about where this function should reside
+    #TODO: avoid click-throughs.
     display = True # show selected cut edges
     edges = myMesh.get_set_of_edges()
     cuts = set()
@@ -79,6 +80,10 @@ def getMeshEdge(message, isChain, angle):
         getE =getter.Get()
 
         if getE == Rhino.Input.GetResult.Object:
+            #TODO: figure out how to avoid selecting a obscured edge;
+            #maybe use rs.IsVisibleInView(object_id) function;
+            # add test line to doc, check if IsVisibleInView and if not
+            # delete it and continue the loop
             objRef =getter.Object(0)
             edgeIdx = GetEdgeIdx(objRef)
             mesh = objRef.Mesh()
