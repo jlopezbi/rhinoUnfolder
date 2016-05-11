@@ -59,11 +59,12 @@ class MeshCutInfoTestCase(unittest.TestCase):
         self.assertFalse(self.mesh.is_cut_edge(-1))
 
     def test_is_fold_edge(self):
-        cuts = [1,2]
-        edge = 0
+        cuts = [1,4]
+        edge = 7
         self.mesh.set_cuts(cuts)
         self.assertTrue(self.mesh.is_fold_edge(edge))
         self.assertFalse(self.mesh.is_fold_edge(1))
+        self.assertFalse(self.mesh.is_fold_edge(0))
 
     def test_is_naked_edge(self):
         naked = 0

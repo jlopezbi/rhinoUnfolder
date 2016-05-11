@@ -133,6 +133,6 @@ if __name__ == '__main__':
     suite.addTest(loader.loadTestsFromTestCase(UserAssignCutsTestCase))
     suite.addTest(loader.loadTestsFromTestCase(AutoCutsTestCase))
     unittest.TextTestRunner(verbosity=2).run(suite)
-    check_user_setting_cuts()
+    #check_user_setting_cuts()
 
 

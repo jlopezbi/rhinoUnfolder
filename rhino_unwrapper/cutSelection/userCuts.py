@@ -52,7 +52,7 @@ def get_user_cuts(myMesh,meshDisplayer):
                 for edgeIdx in drawnEdges.keys():
                     scriptcontext.doc.Objects.Delete(drawnEdges[edgeIdx], True)
 
-                drawnEdges.update(meshDisplayer.display_edges(color, cuts))
+                drawnEdges.update(meshDisplayer.display_edges(cuts,color))
 
         elif edgeIdx == -1:
             print("enter:")
