@@ -1,4 +1,4 @@
-import unittest,sys
+import unittest,sys,collections
 path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/"
 path_meshUtils = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/meshUtils"
 sys.path.append(path)
@@ -62,9 +62,11 @@ class AutoCutsTestCase(unittest.TestCase):
         user_cuts = []
         cuts = autoCuts.auto_fill_cuts(self.myMesh,user_cuts,weight_function)
         displayer = mesh.MeshDisplayer(self.myMesh)
-        #displayer.display_edges(cuts)
+        displayer.display_edges(cuts)
+        displayer.displayEdgesIdx()
+        displayer.displayFacesIdx()
         self.assertEqual(cuts,[12])
-
+        self.check_spanning_forest(self.myMesh)
     def test_auto_honors_user_cuts(self):
         user_cuts = [4]
         auto_cuts = autoCuts.auto_fill_cuts(self.myMesh,user_cuts,weight_function)
@@ -77,16 +79,40 @@ class AutoCutsTestCase(unittest.TestCase):
         displayer = mesh.MeshDisplayer(cube_mesh)
         displayer.displayEdgesIdx()
         auto_cuts = autoCuts.auto_fill_cuts(cube_mesh,cuts,weight_function)
-        #TODO: make so assertion raises more descriptive error
-        self.assertTrue(set(auto_cuts).issuperset(set(cuts)))
-        displayer.display_edges(auto_cuts)
+        #displayer.display_edges(auto_cuts)
+        if not set(auto_cuts).issuperset(set(cuts)):
+            self.fail("{} is not superset of {}".format(auto_cuts,cuts))
 
-    def _test_auto_generates_cuts_on_blob(self):
+    def test_auto_generates_cuts_on_blob(self):
         bMesh = mesh.Mesh(meshLoad.load_mesh("/TestMeshes/blob"))
         cuts = autoCuts.auto_fill_cuts(bMesh,[],weight_function)
         displayer = mesh.MeshDisplayer(bMesh)
-        displayer.display_edges(cuts)
-        #TODO: assertion > min spann forest or something
+        #displayer.display_edges(cuts)
+        self.check_spanning_forest(bMesh)
+
+    def check_spanning_forest(self,myMesh):
+        #NOTE: this may be better off living in islandMaker
+        '''
+        do a traversal very similar to islandMaker's traversal and check that no face is visited more than once
+        NOTE: will not necessarily traverse all segments on mesh if there is a closed loop of cuts; needs to check if all faces have been touched; if not jump to a new section and do another traversal
+        '''
+        MeshLoc = collections.namedtuple('MeshLoc',['face','edge'])
+        start = MeshLoc(face=0,edge=2)
+        visited_faces = []
+        all_faces = myMesh.get_set_of_face_idxs()
+        queue = collections.deque([start])
+        while True:
+            try:
+                face,edge = queue.popleft()
+                visited_faces.append(face)
+            except IndexError:
+                break
+            for next_edge in myMesh.getFaceEdges(face):
+                if myMesh.is_fold_edge(next_edge) and next_edge != edge:
+                    newFace = myMesh.getOtherFaceIdx(next_edge,face)
+                    self.assertNotIn(newFace,visited_faces,'newFace {} already in {}!'.format(newFace,visited_faces))
+                    queue.append(MeshLoc(newFace,next_edge))
+
 
 def check_user_setting_cuts():
     '''
@@ -104,7 +130,9 @@ if __name__ == '__main__':
     #check_user_setting_cuts()
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    #suite.addTest(loader.loadTestsFromTestCase(UserAssignCutsTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(UserAssignCutsTestCase))
     suite.addTest(loader.loadTestsFromTestCase(AutoCutsTestCase))
     unittest.TextTestRunner(verbosity=2).run(suite)
+    check_user_setting_cuts()
+
 
