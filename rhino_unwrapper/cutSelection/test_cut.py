@@ -16,10 +16,13 @@ reload(mesh)
 reload(meshLoad)
 
 def setUpModule():
-    print("USERCUTS")
+    print("---- cuts ----")
 
 def tearDownModule():
-    print("MODULE TORN DOWN")
+    print("---- module torn down ----")
+    remove_objects()
+
+def remove_objects():
     rs.DeleteObjects(rs.AllObjects())
 
 #NOTE: 
