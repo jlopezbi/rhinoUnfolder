@@ -5,11 +5,12 @@ import rhinoscriptsyntax as rs
 reload(vis)
 
 def setUpModule():
-    print("****Visualization Test Module set-up")
+    print("---- visualization ----")
 
 def tearDownModule():
-    print("****MODULE TORN DOWN")
+    print("---- module torn down ----")
     rs.DeleteObjects(rs.AllObjects())
+
 class VisualizationTestCase(unittest.TestCase):
 
     def test_rhino_line(self):
