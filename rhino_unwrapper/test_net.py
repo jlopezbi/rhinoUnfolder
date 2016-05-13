@@ -7,9 +7,15 @@ import rhinoscriptsyntax as rs
 reload(Net)
 reload(trans)
 
+def setUpModule():
+    print("---- net ----")
+
 def tearDownModule():
-    print "MODULE TORN DOWN"
-    rs.DeleteObjects(rs.ObjectsByLayer('Default'))
+    print("---- module torn down ----")
+    remove_objects()
+
+def remove_objects():
+    rs.DeleteObjects(rs.AllObjects())
 
 class IslandTestCase(unittest.TestCase):
 
