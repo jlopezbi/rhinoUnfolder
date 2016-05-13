@@ -127,7 +127,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
         viewer.display_edges(cuts)
         self.islandMaker = make.IslandMaker(None,jMesh,0)
         meshLoc = make.MeshLoc(face=1,edge=4)
-        island = self.islandMaker.make_island_cuts(meshLoc)
+        island,visited_faces = self.islandMaker.make_island_cuts(meshLoc)
         island.draw_all()
         correct_points = [
             geom.Point3d(5,0,0),
@@ -137,6 +137,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
             geom.Point3d(5,10,0),
             geom.Point3d(0,10,0)]
         self.check_has_same_verts(island,correct_points)
+        self.assertEqual([1,5],visited_faces)
 
 
     def test_make_island_from_a_cube_with_cuts(self):
@@ -153,7 +154,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
                                                            (1,0,0),
                                                            (0,1,0))
         start_frame.show()
-        island = self.islandMaker.make_island_cuts(meshLoc,start_frame)
+        island,visited_faces = self.islandMaker.make_island_cuts(meshLoc,start_frame)
         island.draw_all()
         correct_points = [
             geom.Point3d(15,0,0), #0    
@@ -172,6 +173,8 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
             geom.Point3d(5,10,0) #13 ]
         ]
         self.check_has_same_verts(island,correct_points)
+        self.assertSetEqual(set(visited_faces),set(range(6)))
+
 
     def check_has_same_verts(self,island,correct_points):
         for i,vert in enumerate(island.flatVerts):
@@ -193,7 +196,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
                                                            (1,0,0),
                                                            (0,1,0))
         start_frame.show()
-        island = self.islandMaker.make_island(meshLoc,start_frame)
+        island,visited_faces = self.islandMaker.make_island_cuts(meshLoc,start_frame)
         island.draw_all()
         #TODO: use assertions to check if layout actually worked
 
