@@ -121,8 +121,7 @@ class IslandMakerTestCase(unittest.TestCase):
 class ComplexIslandMakerTestCase(unittest.TestCase):
 
     def tearDown(self):
-        #remove_objects()
-        pass
+        remove_objects()
 
     def test_unfolds_a_segment_of_cube(self):
         jMesh = mesh.make_cube_mesh()
