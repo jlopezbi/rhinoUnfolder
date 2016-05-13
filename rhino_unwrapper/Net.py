@@ -42,6 +42,11 @@ class Net():
     def add_island(self,island):
         self.islands.append(island)
 
+    def display(self):
+        for island in self.islands:
+            island.display()
+
+
     def get_island_for_line(self,line_guid):
         # naively would iterate through each island and see if edge is in it.
         # another approach: see if it is in each island's bounding box (can have errors)
@@ -408,6 +413,9 @@ class Island(object):
         return len(self.flatFaces) - 1
 
 ############ DRAWING
+    def display(self):
+        #Change to show whatever aspect of island you want
+        self.draw_edges()
 
     def draw_all(self):
         self.draw_faces()
