@@ -8,8 +8,14 @@ import meshLoad
 reload(meshLoad)
 
 
+def setUpModule():
+    print("---- meshLoad ----")
+
 def tearDownModule():
-    print "MODULE TORN DOWN"
+    print("---- module torn down ----")
+    remove_objects()
+
+def remove_objects():
     rs.DeleteObjects(rs.AllObjects())
 
 class FileImporterTestCase(unittest.TestCase):
