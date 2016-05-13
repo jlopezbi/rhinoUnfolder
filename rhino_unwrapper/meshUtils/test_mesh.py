@@ -9,8 +9,11 @@ import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 
 
+def setUpModule():
+    print("---- mesh ----")
+
 def tearDownModule():
-    print "MODULE TORN DOWN"
+    print("---- module torn down ----")
     remove_objects()
 
 def remove_objects():
