@@ -119,13 +119,18 @@ class Mesh(object):
 
     ### GENERAL
 
+    def edge_indices(self):
+        pass
+
+    def face_indices(self):
+        return range(self.mesh.Faces.Count)
+
     def get_set_of_edges(self):
         count = self.mesh.TopologyEdges.Count
         return set(range(count))
 
     def get_set_of_face_idxs(self):
-        count = self.mesh.Faces.Count
-        return set(range(count))
+        return set(self.face_indices())
 
     def get_mesh_faces(self):
         """
