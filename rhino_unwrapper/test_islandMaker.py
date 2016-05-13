@@ -15,10 +15,16 @@ reload(make)
 reload(trans)
 reload(mesh)
 reload(Map)
+
+def setUpModule():
+    print("---- islandMaker ----")
+
+def tearDownModule():
+    print("---- module torn down ----")
+    remove_objects()
  
 def remove_objects():
-    objs = rs.ObjectsByLayer('Default')
-    rs.DeleteObjects(objs)
+    rs.DeleteObjects(rs.AllObjects())
 
 class StubbedIsland(object):
 
@@ -92,7 +98,7 @@ class IslandMakerTestCase(unittest.TestCase):
         meshLoc = make.MeshLoc(face=0,edge=1)
         cuts = [2]
         self.myMesh.set_cuts(cuts)
-        self.assertRaises(AssertionError,self.islandMaker.make_island_cuts,meshLoc)
+        self.assertRaises(AssertionError,self.islandMaker.make_island,meshLoc)
 
     def test_make_island(self):
         meshLoc = make.MeshLoc(face=0,edge=1)
@@ -100,7 +106,7 @@ class IslandMakerTestCase(unittest.TestCase):
                                                            (1,0,0),
                                                            (0,1,0))
         start_frame.show()
-        self.islandMaker.make_island(meshLoc,start_frame)
+        self.islandMaker.make_island_no_cuts(meshLoc,start_frame)
         self.islandMaker.island.draw_all()
         island = self.islandMaker.island
         pnt0_correct = geom.Point3d(15,0,0)
@@ -127,7 +133,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
         viewer.display_edges(cuts)
         self.islandMaker = make.IslandMaker(None,jMesh,0)
         meshLoc = make.MeshLoc(face=1,edge=4)
-        island,visited_faces = self.islandMaker.make_island_cuts(meshLoc)
+        island,visited_faces = self.islandMaker.make_island(meshLoc)
         island.draw_all()
         correct_points = [
             geom.Point3d(5,0,0),
@@ -154,7 +160,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
                                                            (1,0,0),
                                                            (0,1,0))
         start_frame.show()
-        island,visited_faces = self.islandMaker.make_island_cuts(meshLoc,start_frame)
+        island,visited_faces = self.islandMaker.make_island(meshLoc,start_frame)
         island.draw_all()
         correct_points = [
             geom.Point3d(15,0,0), #0    
@@ -196,7 +202,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
                                                            (1,0,0),
                                                            (0,1,0))
         start_frame.show()
-        island,visited_faces = self.islandMaker.make_island_cuts(meshLoc,start_frame)
+        island,visited_faces = self.islandMaker.make_island(meshLoc,start_frame)
         island.draw_all()
         #TODO: use assertions to check if layout actually worked
 

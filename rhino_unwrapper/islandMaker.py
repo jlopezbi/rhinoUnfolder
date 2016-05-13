@@ -26,19 +26,30 @@ IslandLoc = collections.namedtuple('IslandLoc',['face','edge']) #note face for i
 
 class IslandMaker(object):
 
-    def __init__(self,dataMap,myMesh,island_index):
+    def __init__(self,dataMap,myMesh,island_index=0):
         '''
         creates and island, which is a special mesh for representing an unfolded section of a mesh
         '''
         self.dataMap = dataMap
         self.myMesh = myMesh
+        #island_index may eventaully be useful for grouping the island for fast island identification
         self.island_index = island_index #index of island in net
 
         self.island = nt.Island()
         self.island.add_dummy_elements()
         self.visualize_mode = True
 
+
     def make_island(self,meshLoc=None,startFrame=trans.make_origin_frame()):
+        assert self.myMesh.get_cuts(), "cuts no set!"
+        if meshLoc==None:
+            meshLoc = MeshLoc(0,0)
+        startIslandLoc = IslandLoc(face=0,edge=0)
+        self.layout_first_two_points(meshLoc,startFrame)
+        visited_faces = self.breadth_first_layout(self.island,meshLoc,startIslandLoc)
+        return self.island,visited_faces
+
+    def make_island_no_cuts(self,meshLoc=None,startFrame=trans.make_origin_frame()):
         '''
         Does not use cut list; unfolds until all faces have been touched
         '''
@@ -48,14 +59,6 @@ class IslandMaker(object):
         self.layout_first_two_points(meshLoc,startFrame)
         self.breadth_first_layout_face_version(self.island,meshLoc,startIslandLoc)
         return self.island
-
-    def make_island_cuts(self,meshLoc=None,startFrame=trans.make_origin_frame()):
-        if meshLoc==None:
-            meshLoc = MeshLoc(0,0)
-        startIslandLoc = IslandLoc(face=0,edge=0)
-        self.layout_first_two_points(meshLoc,startFrame)
-        visited_faces = self.breadth_first_layout(self.island,meshLoc,startIslandLoc)
-        return self.island,visited_faces
 
     def layout_first_two_points(self,meshLoc,start_frame):
         '''
