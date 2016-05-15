@@ -416,6 +416,7 @@ class Island(object):
     def display(self):
         #Change to show whatever aspect of island you want
         self.draw_edges()
+        self.draw_verts()
 
     def draw_all(self):
         self.draw_faces()
@@ -429,7 +430,10 @@ class Island(object):
     def draw_edges(self):
         for i,edge in enumerate(self.flatEdges):
             line_guid = edge.show(self)
+            edge.show_index(i,self)
             self.line_edge_map[line_guid] = edge
+
+
 
     def draw_faces(self, netGroupName=''):
         collection = []
