@@ -58,6 +58,9 @@ class UnFolderTestCase(unittest.TestCase):
         self.myMesh.set_cuts(cuts)
         self.displayer.display_edges(cuts)
         self.unfolder.unfold()
+        #NOTE: working here, figure out why translates appear to operate on both islands!
+        self.unfolder.net.islands[0].translate(geom.Vector3d(10,0,0))
+        self.unfolder.net.islands[1].translate(geom.Vector3d(10,0,0))
         self.unfolder.net.display()
 
 

@@ -46,6 +46,7 @@ class UnFolder(object):
     def get_arbitrary_mesh_loc(self,face_getter=arbitrary_face_getter):
         assert self.myMesh.get_cuts() , "Mesh has no cuts set. Make sure to assign cuts first"
         canditate_faces = self.myMesh.get_set_of_face_idxs().difference(self.processed_faces)
+        print("canditate_faces: {}".format(canditate_faces))
         arbitrary_face = face_getter(canditate_faces)
         face_edges = self.myMesh.getFaceEdges(arbitrary_face)
         for edge in face_edges:
@@ -57,16 +58,17 @@ class UnFolder(object):
         #to_frame = trans.make_origin_frame() 
         all_faces = self.myMesh.get_set_of_face_idxs()
         i = 0
-        #while self.processed_faces != all_faces:
-        #    i +=1
-        #    if i >5:
-        #        printhself.processed_faces
-        #        print all_faces 
-        #        return
-        start_loc = self.get_arbitrary_mesh_loc()
-        island,faces = self.islandMaker.make_island(start_loc)
-        self.processed_faces.union(set(faces))
-        self.net.add_island(island)
+        max_iters = 1000
+        while self.processed_faces != all_faces:
+            start_loc = self.get_arbitrary_mesh_loc()
+            island,faces = self.islandMaker.make_island(start_loc)
+            self.processed_faces.update(faces)
+            self.net.add_island(island)
+            print("processed_faces: {}".format(self.processed_faces))
+            i +=1
+            if i >max_iters: 
+                print("unfold() iterated {} or more times".format(max_iters))
+                return
 
 MeshLoc = collections.namedtuple('MeshLoc',['face','edge'])
 IslandLoc = collections.namedtuple('IslandLoc',['face','edge']) #note face for island loc is prevFace
