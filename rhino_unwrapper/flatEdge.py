@@ -1,7 +1,9 @@
 import visualization as vis
 import scriptcontext
+import Rhino.Geometry as geom
 import rhino_helpers
 import math 
+
 
 
 def create_cut_edge_from_base(flatEdge,otherEdgeIdx=None):
@@ -27,7 +29,7 @@ class FlatEdge(object):
         self.toFace = None
         self.meshEdgeIdx = None
         self.color = (0,0,0,0)
-        self.index_color = (0,0,255,0)
+        self.index_color = (0,103,118,198)
         self.line = None
         self.line_id = None
         self.geom = []
@@ -185,7 +187,7 @@ class FlatEdge(object):
         x = (pntA.X + pntB.X) / 2.0
         y = (pntA.Y + pntB.Y) / 2.0
         z = (pntA.Z + pntB.Z) / 2.0
-        return Rhino.Geometry.Point3f(x, y, z)
+        return geom.Point3f(x, y, z)
 
     def getFaceFromPoint(self,flatFaces,flatVerts,point):
         """
