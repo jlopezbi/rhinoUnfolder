@@ -87,6 +87,7 @@ class IslandMakerTestCase(unittest.TestCase):
                                                            (1,0,0),
                                                            (0,1,0))
         start_frame.show()
+        self.islandMaker.spawn_island()
         self.islandMaker.layout_first_two_points(meshLoc,start_frame)
         pnt1_correct = geom.Point3d(0,-10,0)
         pnt0_correct = geom.Point3d(5,-10,0)
@@ -141,7 +142,7 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
             geom.Point3d(0,5,0),
             geom.Point3d(5,10,0),
             geom.Point3d(0,10,0)]
-        self.check_has_same_verts(island,correct_points)
+        island.has_same_points(correct_points)
         self.assertEqual([1,5],visited_faces)
 
 
@@ -177,14 +178,8 @@ class ComplexIslandMakerTestCase(unittest.TestCase):
             geom.Point3d(5,15,0), #12
             geom.Point3d(5,10,0) #13 ]
         ]
-        self.check_has_same_verts(island,correct_points)
+        island.has_same_points(correct_points)
         self.assertSetEqual(set(visited_faces),set(range(6)))
-
-
-    def check_has_same_verts(self,island,correct_points):
-        for i,vert in enumerate(island.flatVerts):
-            self.assertTrue(vert.hasSamePoint(correct_points[i]))
-
 
     def _test_make_island_cone(self):
         meshFile = "/TestMeshes/cone"
