@@ -34,14 +34,11 @@ class IslandMaker(object):
         self.myMesh = myMesh
         #island_index may eventaully be useful for grouping the island for fast island identification
         self.island_index = island_index #index of island in net
-
-        self.island = nt.Island()
-        self.island.add_dummy_elements()
         self.visualize_mode = True
 
-
     def make_island(self,meshLoc=None,startFrame=trans.make_origin_frame()):
-        assert self.myMesh.get_cuts(), "cuts no set!"
+        self.spawn_island()
+        assert self.myMesh.get_cuts(), "cuts not set!"
         if meshLoc==None:
             meshLoc = MeshLoc(0,0)
         startIslandLoc = IslandLoc(face=0,edge=0)
@@ -53,12 +50,17 @@ class IslandMaker(object):
         '''
         Does not use cut list; unfolds until all faces have been touched
         '''
+        self.spawn_island()
         if meshLoc==None:
             meshLoc = MeshLoc(0,0)
         startIslandLoc = IslandLoc(face=0,edge=0)
         self.layout_first_two_points(meshLoc,startFrame)
         self.breadth_first_layout_face_version(self.island,meshLoc,startIslandLoc)
         return self.island
+
+    def spawn_island(self):
+        self.island = nt.Island()
+        self.island.add_dummy_elements()
 
     def layout_first_two_points(self,meshLoc,start_frame):
         '''
