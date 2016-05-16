@@ -447,7 +447,7 @@ class Island(object):
         Check if the proided list of points matches the list of verts in this island. Assumes points in correct order
         '''
         for i,vert in enumerate(self.flatVerts):
-            assert(vert.hasSamePoint(points[i]))
+            assert(vert.hasSamePoint(points[i])), "For vert index {}, the position is {}, while the supplied point is {}".format(i,vert.point,points[i])
 
     def translate(self,vector):
         xForm = geom.Transform.Translation(vector)
