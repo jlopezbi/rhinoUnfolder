@@ -46,7 +46,6 @@ class UnFolder(object):
     def get_arbitrary_mesh_loc(self,face_getter=arbitrary_face_getter):
         assert self.myMesh.get_cuts() , "Mesh has no cuts set. Make sure to assign cuts first"
         canditate_faces = self.myMesh.get_set_of_face_idxs().difference(self.processed_faces)
-        print("canditate_faces: {}".format(canditate_faces))
         arbitrary_face = face_getter(canditate_faces)
         face_edges = self.myMesh.getFaceEdges(arbitrary_face)
         for edge in face_edges:
@@ -64,7 +63,6 @@ class UnFolder(object):
             island,faces = self.islandMaker.make_island(start_loc)
             self.processed_faces.update(faces)
             self.net.add_island(island)
-            print("processed_faces: {}".format(self.processed_faces))
             i +=1
             if i >max_iters: 
                 print("unfold() iterated {} or more times".format(max_iters))
