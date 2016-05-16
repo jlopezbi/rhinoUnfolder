@@ -442,6 +442,12 @@ class Island(object):
         #createGroup(netGroupName, collection)
 
 ############ OTHER
+    def has_same_points(self,points):
+        '''
+        Check if the proided list of points matches the list of verts in this island. Assumes points in correct order
+        '''
+        for i,vert in enumerate(self.flatVerts):
+            assert(vert.hasSamePoint(points[i]))
 
     def translate(self,vector):
         xForm = geom.Transform.Translation(vector)
