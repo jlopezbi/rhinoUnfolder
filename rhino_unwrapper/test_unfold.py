@@ -32,8 +32,8 @@ class UnFolderTestCase(unittest.TestCase):
         self.myMesh = mesh.make_cube_mesh()
         self.displayer = mesh.MeshDisplayer(self.myMesh)
         self.unfolder = unfold.UnFolder(self.myMesh)
-        self.displayer.displayFacesIdx()
-        self.displayer.displayEdgesIdx()
+        #self.displayer.displayFacesIdx()
+        #self.displayer.displayEdgesIdx()
         
     def test_get_arbitrary_mesh_loc_raises_error(self):
         self.assertRaises(AssertionError,self.unfolder.get_arbitrary_mesh_loc)
@@ -58,11 +58,35 @@ class UnFolderTestCase(unittest.TestCase):
         self.myMesh.set_cuts(cuts)
         self.displayer.display_edges(cuts)
         self.unfolder.unfold()
-        #NOTE: working here, figure out why translates appear to operate on both islands!
-        self.unfolder.net.islands[0].translate(geom.Vector3d(10,0,0))
-        self.unfolder.net.islands[1].translate(geom.Vector3d(10,0,0))
+        island0 = self.unfolder.net.islands[0]
+        island1 = self.unfolder.net.islands[1]
+        #NOTE: points below are dependent on the translate vectors!
+        island0.translate(geom.Vector3d(10,0,0))
+        island1.translate(geom.Vector3d(30,0,0))
         self.unfolder.net.display()
-
+        points = [
+            geom.Point3d(15,0,0), #0
+            geom.Point3d(10,0,0), #1
+            geom.Point3d(15,5,0), #2
+            geom.Point3d(10,5,0), #3
+            geom.Point3d(20,0,0), #4
+            geom.Point3d(20,5,0), #5
+            geom.Point3d(15,10,0), #6
+            geom.Point3d(10,10,0), #7
+            geom.Point3d(5,5,0), #8
+            geom.Point3d(5,0,0) #9
+        ]
+        island0.has_same_points(points)
+        points = [
+            geom.Point3d(35,0,0), #0
+            geom.Point3d(30,0,0), #1
+            geom.Point3d(35,5,0), #2
+            geom.Point3d(30,5,0), #3
+            geom.Point3d(25,5,0), #4
+            geom.Point3d(25,0,0), #5
+        ]
+        island1.has_same_points(points)
+        
 
 if __name__=='__main__':
     loader = unittest.TestLoader()
