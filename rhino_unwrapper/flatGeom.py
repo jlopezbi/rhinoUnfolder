@@ -20,11 +20,15 @@ class FlatVert():
         point = geom.Point3d(x,y,z)
         return cls(point)
 
-    def display(self,index=None):
-        rs.AddPoint(self.point)
-        if index!=None:
-            dot_guid = rs.AddTextDot(str(index),self.point)
-            rs.ObjectColor(dot_guid,self.color['magenta'])
+    def display(self,group_name):
+        point_guid = rs.AddPoint(self.point)
+        rs.AddObjectToGroup(point_guid,group_name)
+
+    def display_index(self,group_name,index):
+        dot_guid = rs.AddTextDot(str(index),self.point)
+        rs.ObjectColor(dot_guid,self.color['magenta'])
+        rs.AddObjectToGroup(dot_guid,group_name)
+
 
     def same_coordinates(self,x,y,z):
         point = geom.Point3d(x,y,z)
@@ -93,10 +97,12 @@ class FlatFace():
         poly_id = drawPolyline(polyline, arrowType='end')
         self.poly_id = poly_id
         self.polyline = polyline
+        rs.AddObjectToGroup(poly_id,island.group_name)
 
     def show_index(self,index,island):
         point = self.getCenterPoint(island)
-        rs.AddTextDot(str(index),point)
+        dot_id = rs.AddTextDot(str(index),point)
+        rs.AddObjectToGroup(dot_id,island.group_name)
 
     def getPolyline(self, island):
         points = [island.flatVerts[i].point for i in self.vertices]
