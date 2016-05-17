@@ -56,7 +56,7 @@ def get_user_cuts(myMesh,meshDisplayer):
                 drawnEdges.update(meshDisplayer.display_edges(cuts,color))
 
         elif edgeIdx == -1:
-            print("enter:")
+            #print("enter:")
             print("set cuts")
             myMesh.set_cuts(list(cuts))
             break
