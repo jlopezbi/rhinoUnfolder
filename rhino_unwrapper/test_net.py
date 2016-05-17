@@ -81,6 +81,7 @@ class IslandTestCase(unittest.TestCase):
     def test_transform(self):
         self.test_add_first_face_from_verts()
         self.island.draw_edges()
+        self.island.clear()
         vec = geom.Vector3d(20.0,0.0,0.0) 
         self.island.translate(vec)
         self.island.draw_edges()
