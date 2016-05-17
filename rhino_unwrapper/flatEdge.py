@@ -1,6 +1,7 @@
 import visualization as vis
 import scriptcontext
 import Rhino.Geometry as geom
+import rhinoscriptsyntax as rs
 import rhino_helpers
 import math 
 
@@ -39,12 +40,17 @@ class FlatEdge(object):
         pass
 
     def show(self,island):
+        '''
+        General Function for edges to show geometry
+        '''
         return self.show_line(island)
 
     def show_index(self,index,island):
         '''for displaying this edge in the island '''
         center = self.getMidPoint(island)
-        vis.drawTextDot(center,str(index),self.index_color)
+        dot_guid = rs.AddTextDot(str(index),center)
+        rs.ObjectColor(dot_guid,self.index_color)
+        rs.AddObjectToGroup(dot_guid,island.group_name)
 
     def show_line(self,island):
         points = self.get_coordinates(island)
@@ -53,6 +59,7 @@ class FlatEdge(object):
         line_id, line = vis.show_line_from_points(points, color=self.color, arrowType='end')
         self.line_id = line_id
         self.line = line
+        rs.AddObjectsToGroup(line_id,island.group_name)
         return line_id
 
     def type(self):
