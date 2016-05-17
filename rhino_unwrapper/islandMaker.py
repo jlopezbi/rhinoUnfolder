@@ -34,7 +34,7 @@ class IslandMaker(object):
         self.myMesh = myMesh
         #island_index may eventaully be useful for grouping the island for fast island identification
         self.island_index = island_index #index of island in net
-        self.visualize_mode = True
+        self.visualize_mode = False
 
     def make_island(self,meshLoc=None,startFrame=trans.make_origin_frame()):
         self.spawn_island()
