@@ -243,6 +243,7 @@ class Island(object):
         self.temp_edges = []
         self.temp_verts = []
         self.debug_visualize = False
+        self.group_name = rs.AddGroup()
 
     def add_dummy_elements(self): 
         '''
@@ -413,6 +414,11 @@ class Island(object):
         return len(self.flatFaces) - 1
 
 ############ DRAWING
+    def clear(self):
+        ''' clears all geometry for island'''
+        objects = rs.ObjectsByGroup(self.group_name)
+        rs.DeleteObjects(objects)
+
     def display(self):
         #Change to show whatever aspect of island you want
         self.draw_edges()
@@ -425,21 +431,17 @@ class Island(object):
 
     def draw_verts(self):
         for i,vert in enumerate(self.flatVerts):
-            vert.display(i)
+            vert.display(self.group_name)
 
     def draw_edges(self):
         for i,edge in enumerate(self.flatEdges):
             line_guid = edge.show(self)
-            edge.show_index(i,self)
+            #edge.show_index(i,self)
             self.line_edge_map[line_guid] = edge
 
-
-
-    def draw_faces(self, netGroupName=''):
-        collection = []
+    def draw_faces(self):
         for face in self.flatFaces:
-            collection.append(face.draw(self))
-        #createGroup(netGroupName, collection)
+            face.draw(self)
 
 ############ OTHER
     def has_same_points(self,points):
