@@ -9,6 +9,7 @@ def auto_fill_cuts(myMesh,user_cuts,weight_function):
     fold_list = getSpanningKruskal(sorted_edges,myMesh.mesh)
     cuts = getCutList(myMesh,fold_list)
     myMesh.set_cuts(cuts)
+
     return cuts
 
 def get_edge_weights(myMesh, userCuts,weight_function):
