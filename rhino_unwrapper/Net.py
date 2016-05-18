@@ -1,4 +1,5 @@
 import rhino_helpers 
+
 import flatGeom
 import flatEdge
 import Rhino
@@ -15,7 +16,6 @@ reload(flatEdge)
 
 class Net():
     """ 
-    What if Net was composed of islands?! each island has verts,edge and faces.
     What does a net do?, slash know about?
         => it stores the mesh that is the net. In fact perhaps should just use rhino's mesh! but lets save that for later
     Right now the net does this:
@@ -32,29 +32,33 @@ class Net():
     """
 #myMesh.mesh.Faces.Count
 
-    def __init__(self, myMesh, holeRadius=10):
+    def __init__(self, myMesh=None, holeRadius=10):
+        #NOTE: I do not see why net needs to hold onto myMesh
         self.holeRadius = holeRadius
         self.angleThresh = math.radians(3.3)
         self.myMesh = myMesh
-        self.islands = []
+        self.islands = {}
         #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
 
     def add_island(self,island):
-        self.islands.append(island)
+        self.islands[island.group_name] = island
+
+    def get_island(self,index):
+        return self.islands.values()[index]
 
     def display(self):
-        for island in self.islands:
+        for island in self.islands.values():
             island.display()
 
-
     def get_island_for_line(self,line_guid):
-        # naively would iterate through each island and see if edge is in it.
-        # another approach: see if it is in each island's bounding box (can have errors)
-        # another: check if edge is inside island's perimeter (need to get island's perimeter)
-        #NOTE: starting with naive option
-        for island in self.islands:
-            if line_guid in island.line_edge_map.keys():
-                return island
+        '''
+        note: currently assumes that there is only one group for the line!
+        '''
+        groups = rs.ObjectGroups(line_guid)
+        assert len(groups)==1, "line {} is in more than one group".format(line_guid)
+        group_name = groups[0]
+        return self.islands[group_name]
+
 
     '''SEGMENTATION, seems like should be a seperate thing!'''
     #Now when segmentation happens a two new islands should be created
