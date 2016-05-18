@@ -58,8 +58,8 @@ class UnFolderTestCase(unittest.TestCase):
         self.myMesh.set_cuts(cuts)
         self.displayer.display_edges(cuts)
         self.unfolder.unfold()
-        island0 = self.unfolder.net.islands[0]
-        island1 = self.unfolder.net.islands[1]
+        island0 = self.unfolder.net.get_island(0)
+        island1 = self.unfolder.net.get_island(1)
         #NOTE: points below are dependent on the translate vectors!
         island0.translate(geom.Vector3d(10,0,0))
         island1.translate(geom.Vector3d(30,0,0))
