@@ -441,7 +441,7 @@ class Island(object):
         for i,edge in enumerate(self.flatEdges):
             line_guid = edge.show(self)
             #edge.show_index(i,self)
-            self.line_edge_map[line_guid] = edge
+            self.line_edge_map[line_guid] = i
 
     def draw_faces(self):
         for face in self.flatFaces:
@@ -460,9 +460,13 @@ class Island(object):
         for vert in self.flatVerts:
             vert.point.Transform(xForm)
 
-    def get_edge_instance(self,line_guid):
-        # assert guid?
+    def get_index_for_guid(self,line_guid):
         return self.line_edge_map[line_guid]
+
+    def get_edgeInstance_for_guid(self,line_guid):
+        # assert guid?
+        index = get_index_for_guid(line_guid)
+        return self.flatEdges[index]
 
     def get_edge_obj(self, edge):
         '''
