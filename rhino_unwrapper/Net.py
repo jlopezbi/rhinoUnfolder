@@ -249,6 +249,7 @@ class Island(object):
         self.debug_visualize = False
         self.group_name = rs.AddGroup()
 
+################## LAYOUT
     def add_dummy_elements(self): 
         '''
         to be used for layout; initializes with edge and face
@@ -256,17 +257,14 @@ class Island(object):
         self.dummyFace = self.add_face(flatGeom.FlatFace([0,1],[0]))
         self.dummyEdge = self.add_edge_with_from_face(face=0,index=0)
 
-    #LAYOUT
     def change_to_fold_edge(self,edge):
         baseEdge = self.flatEdges[edge]
         self.flatEdges[edge] = flatEdge.create_fold_edge_from_base(baseEdge)
 
-    #LAYOUT
     def change_to_cut_edge(self,edge):
         baseEdge = self.flatEdges[edge]
         self.flatEdges[edge] = flatEdge.create_cut_edge_from_base(baseEdge)
 
-    #LAYOUT
     def change_to_naked_edge(self,edge):
         baseEdge = self.flatEdges[edge]
         self.flatEdges[edge] = flatEdge.create_naked_edge_from_base(baseEdge)
