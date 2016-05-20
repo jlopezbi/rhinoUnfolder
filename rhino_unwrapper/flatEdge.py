@@ -357,7 +357,9 @@ class CutEdge(FlatEdge):
 
     def show(self,island):
         #self._show_joinery(island)
-        self.show_line(island)
+        line_guid =  self.show_line(island)
+        island.cut_edge_guids.append(line_guid)
+        return line_guid
     
     def _show_joinery(self,flatVerts):
         pass
