@@ -17,9 +17,13 @@ class Island(object):
         Random thought: each island could have a map 
         Yooo could have a class for each collection like planton..
         '''
+        #TODO: consider clearing out unused functionality
         self.flatVerts = []
         self.flatEdges = []
         self.flatFaces = []  
+        # quick fix for finding only cut edges.
+        # some day find a better way, perhaps have three arrays, or maybe put cut edges first..
+        self.cut_edge_guids = []
         self.line_edge_map = {}
         self.temp_edges = []
         self.temp_verts = []
@@ -257,3 +261,16 @@ class Island(object):
         pntA,pntB = flatEdge.get_coordinates(self)
         normal = self.flatFaces[face].get_normal()
         return trans.Frame.create_frame_from_normal_and_x(pntB,normal,edgeVec)
+    
+    def get_boundary_polyline(self):
+        '''
+        find the polyline composed of all cut edges, which by definition form the 
+        boundary of this island
+        '''
+        assert self.cut_edge_guids, "cut_edge_guids is empty, make sure have drawn island first"
+        new_curves = rs.JoinCurves(self.cut_edge_guids,delete_input=False)
+        assert len(new_curves)==1, "more than one curve created!"
+        return new_curves[0]
+
+
+
