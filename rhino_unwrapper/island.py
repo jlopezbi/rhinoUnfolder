@@ -220,6 +220,7 @@ class Island(object):
         for i,edge in enumerate(self.flatEdges):
             line_guid = edge.show(self)
             #edge.show_index(i,self)
+            #NOTE: when a cutEdge shows, it adds its line_guid to island.cut_edge_guids
             self.line_edge_map[line_guid] = i
 
     def draw_faces(self):
