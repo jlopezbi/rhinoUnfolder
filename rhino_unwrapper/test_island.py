@@ -88,6 +88,16 @@ class IslandTestCase(unittest.TestCase):
         correct_frame = trans.Frame.create_frame_from_tuples((5,5,0),(0,-1,0),(1,0,0))
         self.assertTrue(correct_frame.is_equal(frame))
 
+    def test_get_boundary_polyline(self):
+        self.test_add_first_face_from_verts()
+        for edge in range(len(self.island.flatEdges)): self.island.change_to_cut_edge(edge)
+        self.island.clear()
+        self.island.draw_edges()
+        boundary = self.island.get_boundary_polyline()
+        self.assertTrue(rs.IsPolyCurve(boundary))
+        self.assertTrue(rs.IsCurveClosed(boundary))
+        self.assertTrue(rs.IsCurvePlanar(boundary))
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
