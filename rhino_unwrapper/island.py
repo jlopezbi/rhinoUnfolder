@@ -9,6 +9,9 @@ reload(flatEdge)
 reload(rhino_helpers)
 reload(trans)
 
+
+island_plane = rs.WorldXYPlane()
+
 class Island(object):
 
     def __init__(self):
@@ -201,6 +204,8 @@ class Island(object):
         ''' clears all geometry for island'''
         objects = rs.ObjectsByGroup(self.group_name)
         rs.DeleteObjects(objects)
+        self.line_edge_map = {}
+        self.cut_edge_guids = []
 
     def display(self):
         #Change to show whatever aspect of island you want
@@ -218,9 +223,9 @@ class Island(object):
 
     def draw_edges(self):
         for i,edge in enumerate(self.flatEdges):
+            #NOTE: when a cutEdge shows, it adds its line_guid to island.cut_edge_guids
             line_guid = edge.show(self)
             #edge.show_index(i,self)
-            #NOTE: when a cutEdge shows, it adds its line_guid to island.cut_edge_guids
             self.line_edge_map[line_guid] = i
 
     def draw_faces(self):
@@ -262,16 +267,62 @@ class Island(object):
         pntA,pntB = flatEdge.get_coordinates(self)
         normal = self.flatFaces[face].get_normal()
         return trans.Frame.create_frame_from_normal_and_x(pntB,normal,edgeVec)
+
+############ AVOIDING OTHER ISLANDS
     
     def get_boundary_polyline(self):
         '''
+        NOTE: draw_edges must be called before running this function!
         find the polyline composed of all cut edges, which by definition form the 
         boundary of this island
         '''
         assert self.cut_edge_guids, "cut_edge_guids is empty, make sure have drawn island first"
         new_curves = rs.JoinCurves(self.cut_edge_guids,delete_input=False)
         assert len(new_curves)==1, "more than one curve created!"
-        return new_curves[0]
+        curve = new_curves[0]
+        assert rs.IsCurveClosed(curve), "curve {} is not closed".format(curve)
+        return curve
+
+    def get_bounding_rectangle(self):
+        '''
+        Assuming the island is planar, gets the four points bounding the current representation
+        of the island. BoundingBox returns a list of 8 points. This returns the first four (the
+        base of the box)
+        '''
+        full_box = rs.BoundingBox(self.line_edge_map.keys(),view_or_plane=island_plane)
+        return full_box[0:4]
+    
+    def is_overlapping(self,other_island):
+        this_perimeter = self.get_boundary_polyline()
+        other_perimeter = other_island.get_boundary_polyline()
+        assert rs.IsCurvePlanar(this_perimeter), "curve of this island not planar"
+        assert rs.IsCurvePlanar(other_perimeter), "curve of other island not planar"
+        assert rs.IsCurveInPlane(this_perimeter,island_plane), "this island not in {} plane".format(island_plane)
+        assert rs.IsCurveInPlane(other_perimeter,island_plane), "input island not in {} plane".format(island_plane)
+        relation = rs.PlanarClosedCurveContainment(this_perimeter,other_perimeter)
+        rs.DeleteObjects([this_perimeter,other_perimeter])
+        assert relation!=None, "PlanarClosedCurveContainment failed"
+        if relation!=0:
+            return True
+        else:
+            return False
+
+    def avoid_other(self,other_island,padding=1.0):
+        '''
+        if this island overlaps other_island, translate this island
+        horizontally to the right so that its bounding rectangle clears 
+        that of other_island
+        '''
+        if self.is_overlapping(other_island):
+            this_bouding_rect = self.get_bounding_rectangle()
+            other_boundary_rect = other_island.get_bounding_rectangle()
+            this_x_lower = this_bouding_rect[0].X
+            other_x_upper = other_boundary_rect[1].X
+            horizontal_move_vec = geom.Vector3d(padding+other_x_upper-this_x_lower,0,0)
+            self.clear()
+            self.translate(horizontal_move_vec)
+            self.draw_edges()
+
 
 
 
