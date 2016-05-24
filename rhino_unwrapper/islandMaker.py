@@ -3,6 +3,7 @@ import transformations as trans
 import flatEdge as fe
 import flatGeom
 import Net as nt
+import island
 import traversal as tr
 import Map
 import rhino_inputs as ri
@@ -19,6 +20,7 @@ reload(flatGeom)
 reload(trans)
 reload(fe)
 reload(nt)
+reload(island)
 reload(tr)
 
 MeshLoc = collections.namedtuple('MeshLoc',['face','edge'])
@@ -59,7 +61,7 @@ class IslandMaker(object):
         return self.island
 
     def spawn_island(self):
-        self.island = nt.Island()
+        self.island = island.Island()
         self.island.add_dummy_elements()
 
     def layout_first_two_points(self,meshLoc,start_frame):
