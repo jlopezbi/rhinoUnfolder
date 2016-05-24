@@ -307,6 +307,16 @@ class Island(object):
         else:
             return False
 
+    def move_to_edge(self,other_island,padding=1.0):
+        this_bouding_rect = self.get_bounding_rectangle()
+        other_boundary_rect = other_island.get_bounding_rectangle()
+        this_x_lower = this_bouding_rect[0].X
+        other_x_upper = other_boundary_rect[1].X
+        horizontal_move_vec = geom.Vector3d(padding+other_x_upper-this_x_lower,0,0)
+        self.clear()
+        self.translate(horizontal_move_vec)
+        self.draw_edges()
+        
     def avoid_other(self,other_island,padding=1.0):
         '''
         if this island overlaps other_island, translate this island
@@ -314,14 +324,7 @@ class Island(object):
         that of other_island
         '''
         if self.is_overlapping(other_island):
-            this_bouding_rect = self.get_bounding_rectangle()
-            other_boundary_rect = other_island.get_bounding_rectangle()
-            this_x_lower = this_bouding_rect[0].X
-            other_x_upper = other_boundary_rect[1].X
-            horizontal_move_vec = geom.Vector3d(padding+other_x_upper-this_x_lower,0,0)
-            self.clear()
-            self.translate(horizontal_move_vec)
-            self.draw_edges()
+            self.move_to_edge(other_island,padding)
 
 
 
