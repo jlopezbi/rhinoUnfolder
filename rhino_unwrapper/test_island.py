@@ -2,8 +2,10 @@ import unittest
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 import island
+import distribute
 import transformations as trans
 reload(island)
+reload(distribute)
 reload(trans)
 
 def setUpModule():
@@ -100,7 +102,6 @@ class IslandTestCase(unittest.TestCase):
         correct_frame = trans.Frame.create_frame_from_tuples((5,5,0),(0,-1,0),(1,0,0))
         self.assertTrue(correct_frame.is_equal(frame))
 
-
 class IslandAvoidTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -155,15 +156,45 @@ class IslandAvoidTestCase(unittest.TestCase):
         rect = self.island.get_bounding_rectangle()
         self.island.clear()
 
-    def test_avoid_other_island(self):
+    def test_move_to_edge(self):
+        islandA,islandB = self.make_overlapping_islands()
+        self.assertTrue(islandA.is_overlapping(islandB))
+        islandA.move_to_edge(islandB)
+        self.assertFalse(islandA.is_overlapping(islandB))
+
+    def _test_avoid_other_island(self):
         islandA,islandB = self.make_overlapping_islands()
         self.assertTrue(islandA.is_overlapping(islandB))
         islandA.avoid_other(islandB)
         self.assertFalse(islandA.is_overlapping(islandB))
+
+class StubbedNet(object):
+    def __init__(self,numIslands=5):
+        self.islands = []
+        for i in range(numIslands):
+            new_island = island.Island()
+            make_five_by_five_square_island(new_island)
+            new_island.draw_edges()
+            self.islands.append(new_island)
+
+class DistributeTestCase(unittest.TestCase):
+    '''
+    I put the distribute test case in island since it already has the quite useful 
+    make_five_by_five_square_island function
+    '''
+    def setUp(self):
+        self.net = StubbedNet()
+
+    def test_spread_out_islands_horizontally(self):
+        distribute.spread_out_islands_horizontally(self.net)
+        islands = self.net.islands
+        for i,island in enumerate(islands[:-1]):
+            self.assertFalse(island.is_overlapping(islands[i+1]))
 
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     suite.addTest(loader.loadTestsFromTestCase(IslandTestCase))
     suite.addTest(loader.loadTestsFromTestCase(IslandAvoidTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(DistributeTestCase))
     unittest.TextTestRunner(verbosity=2).run(suite)
