@@ -35,6 +35,9 @@ class Net():
         self.islands = {}
         #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
 
+    def get_island_list(self):
+        return self.islands.values()
+
     def add_island(self,island):
         self.islands[island.group_name] = island
 
