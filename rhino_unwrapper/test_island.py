@@ -177,6 +177,9 @@ class StubbedNet(object):
             new_island.draw_edges()
             self.islands.append(new_island)
 
+    def get_island_list(self):
+        return self.islands
+
 class DistributeTestCase(unittest.TestCase):
     '''
     I put the distribute test case in island since it already has the quite useful 
