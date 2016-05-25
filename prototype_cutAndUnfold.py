@@ -5,6 +5,13 @@ import rhino_unwrapper.cutSelection.autoCuts as autoCuts
 import rhino_unwrapper.weight_functions as weight_functions
 import rhino_unwrapper.unfold as unfold
 import rhino_unwrapper.distribute as distribute
+reload(meshLoad)
+reload(mesh)
+reload(userCuts)
+reload(autoCuts)
+reload(weight_functions)
+reload(unfold)
+reload(distribute)
 
 #def all_weight_functions():
     #return dict([m for m in inspect.getmembers(weight_functions, inspect.isfunction)])
@@ -24,12 +31,12 @@ displayer.display_edges(cuts) #NOTE right now this will duplicate-draw user-cuts
 
 # UNFOLD
 unfolder = unfold.UnFolder(jMesh)
-unfolder.unfold()
-unfolder.net.display()
-net = unfolder.net
+net = unfolder.unfold()
+net.display()
 
 #DISTRIBUTE
 distribute.spread_out_islands_horizontally(net)
+print jMesh.get_cuts()
 
 
 
