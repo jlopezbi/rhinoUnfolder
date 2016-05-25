@@ -3,8 +3,10 @@ path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoU
 sys.path.append(path)
 import transformations as trans
 import mesh
+import meshLoad
 reload(mesh)
 reload(trans)
+reload(meshLoad)
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 
@@ -52,6 +54,19 @@ class MeshCutInfoTestCase(unittest.TestCase):
         cuts = [0,2]
         self.mesh.set_cuts(cuts)
         self.assertEqual(cuts,self.mesh.get_cuts())
+
+    def test_mesh_cuts_sticking_around(self):
+        remove_objects()
+        jMesh = mesh.make_cube_mesh()
+        selection0 = meshLoad.MeshGetter().getRandMesh() #only one mesh to get
+        self.assertTrue(selection0.UserDictionary.ContainsKey(jMesh.cut_key))
+        jMesh = mesh.Mesh(selection0)
+        correct_cuts = [1,2,3]
+        jMesh.set_cuts(correct_cuts)
+        second_mesh = meshLoad.MeshGetter().getRandMesh()
+        item = list(second_mesh.UserDictionary[jMesh.cut_key])
+        self.assertEqual(correct_cuts,item)
+
 
     def test_is_cut_edge(self):
         cuts = [1,2]
