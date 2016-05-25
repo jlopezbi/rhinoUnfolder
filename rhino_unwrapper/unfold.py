@@ -57,7 +57,7 @@ class UnFolder(object):
         #to_frame = trans.make_origin_frame() 
         all_faces = self.myMesh.get_set_of_face_idxs()
         i = 0
-        max_iters = 1000
+        max_iters = len(all_faces)+1
         while self.processed_faces != all_faces:
             start_loc = self.get_arbitrary_mesh_loc()
             island,faces = self.islandMaker.make_island(start_loc)
@@ -67,6 +67,7 @@ class UnFolder(object):
             if i >max_iters: 
                 print("unfold() iterated {} or more times".format(max_iters))
                 return
+        return self.net
 
 MeshLoc = collections.namedtuple('MeshLoc',['face','edge'])
 IslandLoc = collections.namedtuple('IslandLoc',['face','edge']) #note face for island loc is prevFace
