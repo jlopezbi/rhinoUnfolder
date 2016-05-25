@@ -38,6 +38,16 @@ class FileImporter(object):
         assert did_work, "unable to import {}!".format(abs_path)
 
 def user_select_mesh(message="select a mesh"):
+    mesh_guid = rs.GetObject(message,filter=32,preselect=True)
+    return get_geom_from_guid(mesh_guid)
+
+def get_geom_from_guid(guid):
+    obj = scriptcontext.doc.Objects.Find(guid)
+    mesh =  obj.Geometry
+    print mesh
+    return mesh
+
+def user_select_mesh_rhino_common(message="select a mesh"):
     getter = Rhino.Input.Custom.GetObject()
     getter.SetCommandPrompt(message)
     getter.GeometryFilter = Rhino.DocObjects.ObjectType.Mesh
