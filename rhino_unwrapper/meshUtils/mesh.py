@@ -98,7 +98,6 @@ def get_myMesh(vertices,face_vertices):
 # ex: mesh.Vertices.get_
 # ex: mesh.Speical.get_frame_asdfsdf()
 
-
 class Mesh(object): 
     """
     better names?
@@ -117,9 +116,11 @@ class Mesh(object):
 
     def __init__(self,mesh):
         self.mesh = mesh
-        self.mesh.FaceNormals.ComputeFaceNormals()
+        #NOTE: the below line seems to wipe the UserDictionary for later access
+        #self.mesh.FaceNormals.ComputeFaceNormals()
         self.cut_key = 'cuts'
-        self.set_cuts([])
+        if not self.mesh.UserDictionary.ContainsKey(self.cut_key):
+            self.set_cuts([])
 
     ### GENERAL
 
