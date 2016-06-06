@@ -12,6 +12,48 @@ reload(trans)
 
 island_plane = rs.WorldXYPlane()
 
+def make_triangulated_square_island(island=None):
+    '''
+    This function gives a demo of how layout makes an
+    island. This is also usefull for testing stuff on
+    island and its elements
+    '''
+    if not island: island=Island()
+    #First Face
+    pnt0 = geom.Point3d(0.0,0.0,0.0) #0
+    pnt1 = geom.Point3d(5.0,0.0,0.0) #1
+    pnt2 = geom.Point3d(0.0,5.0,0.0)
+    pnt3 = geom.Point3d(5.0,5.0,0.0)
+    island.add_dummy_elements()
+    island.add_vert_from_point(pnt0)
+    island.add_vert_from_point(pnt1)
+    island.change_to_naked_edge(edge=0)
+    island.layout_add_vert_point(pnt2)
+    edge = island.layout_add_edge(index=1)
+    island.change_to_cut_edge(edge)
+    fold_edge = island.layout_add_edge(index=2)
+    island.change_to_fold_edge(fold_edge)
+    island.layout_add_face(baseEdge=0)
+
+    #Second face
+    island.layout_add_vert_point(pnt3)
+    edge = island.layout_add_edge(index=1)
+    island.change_to_cut_edge(edge)
+    edge = island.layout_add_edge(index=2)
+    island.change_to_cut_edge(edge)
+    island.layout_add_face(baseEdge=fold_edge)
+    return island
+
+def make_five_by_five_square_island(island=None):
+    if not island: island=Island()
+    island.add_vert_from_points(0.0,0.0,0.0) #0
+    island.add_vert_from_points(5.0,0.0,0.0) #1
+    island.add_vert_from_points(0.0,5.0,0.0) #2
+    island.add_vert_from_points(5.0,5.0,0.0) #3
+    face = island.add_first_face_from_verts(0,1,3,2)
+    for edge in range(len(island.flatEdges)): island.change_to_cut_edge(edge)
+    return island
+
 class Island(object):
 
     def __init__(self):
@@ -26,8 +68,8 @@ class Island(object):
         self.flatFaces = []  
         # quick fix for finding only cut edges.
         # some day find a better way, perhaps have three arrays, or maybe put cut edges first..
-        self.cut_edge_guids = []
-        self.line_edge_map = {}
+        self.cut_edge_lines= []
+        self.groupToEdge_map= {}
         self.temp_edges = []
         self.temp_verts = []
         self.debug_visualize = False
@@ -204,13 +246,17 @@ class Island(object):
         ''' clears all geometry for island'''
         objects = rs.ObjectsByGroup(self.group_name)
         rs.DeleteObjects(objects)
-        self.line_edge_map = {}
-        self.cut_edge_guids = []
+        self.groupToEdge_map= {}
+        self.cut_edge_lines= []
 
+    #show, display, draw, render, ?
     def display(self):
         #Change to show whatever aspect of island you want
         self.draw_edges()
         self.draw_verts()
+    
+    def get_perimeter_geometry(self):
+        return self.cut_edge_lines
 
     def draw_all(self):
         self.draw_faces()
@@ -220,13 +266,17 @@ class Island(object):
     def draw_verts(self):
         for i,vert in enumerate(self.flatVerts):
             vert.display(self.group_name)
+    
+    def show_vert_indices(self):
+        for i, vert in enumerate(self.flatVerts):
+            vert.display_index(i,self.group_name)
 
     def draw_edges(self):
         for i,edge in enumerate(self.flatEdges):
-            #NOTE: when a cutEdge shows, it adds its line_guid to island.cut_edge_guids
-            line_guid = edge.show(self)
+            #NOTE: when a cutEdge shows, it adds its line_guid to island.cut_edge_lines
+            edge.show(self)
             #edge.show_index(i,self)
-            self.line_edge_map[line_guid] = i
+            self.groupToEdge_map[edge.group_name] = i
 
     def draw_faces(self):
         for face in self.flatFaces:
@@ -238,15 +288,15 @@ class Island(object):
         Check if the proided list of points matches the list of verts in this island. Assumes points in correct order
         '''
         for i,vert in enumerate(self.flatVerts):
-            assert(vert.hasSamePoint(points[i])), "For vert index {}, the position is {}, while the supplied point is {}".format(i,vert.point,points[i])
+            assert(vert.hasSamePoint(points[i])), "For vert index {}, the actual position is {}, while the supplied point is {}".format(i,vert.point,points[i])
 
     def translate(self,vector):
         xForm = geom.Transform.Translation(vector)
         for vert in self.flatVerts:
             vert.point.Transform(xForm)
 
-    def get_index_for_guid(self,line_guid):
-        return self.line_edge_map[line_guid]
+    def get_index_for_group(self,group):
+        return self.groupToEdge_map[group]
 
     def get_edgeInstance_for_guid(self,line_guid):
         # assert guid?
@@ -271,13 +321,16 @@ class Island(object):
 ############ AVOIDING OTHER ISLANDS
     
     def get_boundary_polyline(self):
+        #NOTE: will not work anymore: moving to more general model where
+        #using cut_edge_linesisntead of lines
+
         '''
         NOTE: draw_edges must be called before running this function!
         find the polyline composed of all cut edges, which by definition form the 
         boundary of this island
         '''
-        assert self.cut_edge_guids, "cut_edge_guids is empty, make sure have drawn island first"
-        new_curves = rs.JoinCurves(self.cut_edge_guids,delete_input=False)
+        assert self.cut_edge_lines, "cut_edge_linesis empty, make sure have drawn island first"
+        new_curves = rs.JoinCurves(self.cut_edge_lines,delete_input=False)
         assert len(new_curves)==1, "more than one curve created!"
         curve = new_curves[0]
         assert rs.IsCurveClosed(curve), "curve {} is not closed".format(curve)
@@ -289,10 +342,11 @@ class Island(object):
         of the island. BoundingBox returns a list of 8 points. This returns the first four (the
         base of the box)
         '''
-        full_box = rs.BoundingBox(self.line_edge_map.keys(),view_or_plane=island_plane)
+        full_box = rs.BoundingBox(self.get_perimeter_geometry(),view_or_plane=island_plane)
         return full_box[0:4]
     
     def is_overlapping(self,other_island):
+        #NOTE: will not work now because get_boundary_polyline broken
         this_perimeter = self.get_boundary_polyline()
         other_perimeter = other_island.get_boundary_polyline()
         assert rs.IsCurvePlanar(this_perimeter), "curve of this island not planar"
