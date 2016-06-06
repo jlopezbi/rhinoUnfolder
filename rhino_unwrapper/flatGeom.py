@@ -12,7 +12,7 @@ class FlatVert():
         self.fromFace = fromFace
         self.edgeIdx = None
         #self.toFace = None
-        self.geom = []
+        self.group_name = rs.AddGroup()
         self.color = {'magenta':(255,0,255)}
 
     @classmethod
@@ -20,15 +20,22 @@ class FlatVert():
         point = geom.Point3d(x,y,z)
         return cls(point)
 
-    def display(self,group_name):
-        point_guid = rs.AddPoint(self.point)
-        rs.AddObjectToGroup(point_guid,group_name)
+    def get_all_geom(self):
+        return rs.ObjectsByGroup(self.group_name)
 
-    def display_index(self,group_name,index):
+    def display(self,top_level_group_name):
+        self.display_point()
+        rs.AddObjectsToGroup(self.get_all_geom(),top_level_group_name)
+    
+    def display_point(self):
+        point_guid = rs.AddPoint(self.point)
+        rs.AddObjectToGroup(point_guid,self.group_name)
+
+    def display_index(self,index,top_group):
         dot_guid = rs.AddTextDot(str(index),self.point)
         rs.ObjectColor(dot_guid,self.color['magenta'])
-        rs.AddObjectToGroup(dot_guid,group_name)
-
+        rs.AddObjectToGroup(dot_guid,self.group_name)
+        rs.AddObjectToGroup(dot_guid,top_group)
 
     def same_coordinates(self,x,y,z):
         point = geom.Point3d(x,y,z)
