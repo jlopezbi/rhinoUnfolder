@@ -32,20 +32,23 @@ class Net():
         self.holeRadius = holeRadius
         self.angleThresh = math.radians(3.3)
         self.myMesh = myMesh
-        self.islands = {}
+        self.islands = []
+        self.group_island_dict = {}
         #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
 
     def get_island_list(self):
-        return self.islands.values()
+        return self.island
 
     def add_island(self,island):
-        self.islands[island.group_name] = island
+        self.islands.append(island)
+        index = len(self.islands) - 1
+        self.group_island_dict[island.group_name] = index
 
     def get_island(self,index):
-        return self.islands.values()[index]
+        return self.islands[index]
 
     def display(self):
-        for island in self.islands.values():
+        for island in self.islands:
             island.display()
 
     def get_island_for_line(self,line_guid):
@@ -53,9 +56,10 @@ class Net():
         note: currently assumes that there is only one group for the line!
         '''
         groups = rs.ObjectGroups(line_guid)
-        assert len(groups)==1, "line {} is in more than one group".format(line_guid)
-        group_name = groups[0]
-        return self.islands[group_name]
+        # group should be the second one
+        group_name = groups[1]
+        index = self.group_island_dict[group_name]
+        return self.islands[index]
 
 
     '''SEGMENTATION, seems like should be a seperate thing!'''
