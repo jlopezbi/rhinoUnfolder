@@ -54,16 +54,20 @@ class UnFolderTestCase(unittest.TestCase):
         self.assertRaises(AssertionError,self.unfolder.get_arbitrary_mesh_loc,getter)
 
     def test_unfolds_all_segments(self):
+        #NOTE: appears that the order of the islands (a rectangle and a T) is
+        # not consistent. This causes this test to fail sometimes
         cuts = [4,3,10,11,6,5,8,0]
         self.myMesh.set_cuts(cuts)
         self.displayer.display_edges(cuts)
-        self.unfolder.unfold()
+        net = self.unfolder.unfold()
         island0 = self.unfolder.net.get_island(0)
         island1 = self.unfolder.net.get_island(1)
         #NOTE: points below are dependent on the translate vectors!
         island0.translate(geom.Vector3d(10,0,0))
         island1.translate(geom.Vector3d(30,0,0))
-        self.unfolder.net.display()
+        net.display()
+        island0.show_vert_indices()
+        island1.show_vert_indices()
         points = [
             geom.Point3d(15,0,0), #0
             geom.Point3d(10,0,0), #1
