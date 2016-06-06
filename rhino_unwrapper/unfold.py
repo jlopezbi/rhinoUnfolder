@@ -50,16 +50,19 @@ class UnFolder(object):
         face_edges = self.myMesh.getFaceEdges(arbitrary_face)
         for edge in face_edges:
             if self.myMesh.is_cut_edge(edge):
-                return islandMaker.MeshLoc(arbitrary_face,edge)
+                loc = islandMaker.MeshLoc(arbitrary_face,edge)
+                return loc
         raise AssertionError, "face {} did not have any cut edges, check that mesh has correct cut_edges"
 
-    def unfold(self):
-        #to_frame = trans.make_origin_frame() 
+    def unfold(self,start_loc=None):
+        if start_loc == None:
+            start_loc = self.get_arbitrary_mesh_loc()
         all_faces = self.myMesh.get_set_of_face_idxs()
         i = 0
         max_iters = len(all_faces)+1
         while self.processed_faces != all_faces:
-            start_loc = self.get_arbitrary_mesh_loc()
+            if i != 0:
+                start_loc = self.get_arbitrary_mesh_loc()
             island,faces = self.islandMaker.make_island(start_loc)
             self.processed_faces.update(faces)
             self.net.add_island(island)
