@@ -18,14 +18,6 @@ def tearDownModule():
 def remove_objects():
     rs.DeleteObjects(rs.AllObjects())
 
-def make_five_by_five_square_island(island):
-    island.add_vert_from_points(0.0,0.0,0.0) #0
-    island.add_vert_from_points(5.0,0.0,0.0) #1
-    island.add_vert_from_points(0.0,5.0,0.0) #2
-    island.add_vert_from_points(5.0,5.0,0.0) #3
-    face = island.add_first_face_from_verts(0,1,3,2)
-    for edge in range(len(island.flatEdges)): island.change_to_cut_edge(edge)
-    return face
 
 class IslandTestCase(unittest.TestCase):
 
@@ -38,13 +30,17 @@ class IslandTestCase(unittest.TestCase):
     
     def tearDown(self):
         self.island.clear()
+ 
+    def test_make_triangulated_square_island(self):
+        island.make_triangulated_square_island(self.island)
+        self.island.draw_edges()
 
     def test_add_first_face_from_verts(self):
-        face = make_five_by_five_square_island(self.island)
+        island.make_five_by_five_square_island(self.island)
+        face = 0
         self.assertEqual(self.island.flatFaces[face].edges,[0,1,2,3])
         self.island.draw_edges()
         self.island.draw_faces()
-        return face
 
     def test_breadth_construction(self):
         self.island.add_dummy_elements()
@@ -74,7 +70,7 @@ class IslandTestCase(unittest.TestCase):
         self.assertEqual(self.island.flatEdges[0].toFace,1)
 
     def _test_add_face_from_edge_and_new_verts(self):
-        make_five_by_five_square_island()
+        island.make_five_by_five_square_island()
         new_vert =  self.island.add_vert_from_points(10.0,0.0,0.0)
         edge = self.island.flatEdges[1]
         self.island.add_face_from_edge_and_new_verts(edge,[new_vert])
@@ -88,7 +84,7 @@ class IslandTestCase(unittest.TestCase):
         self.island.draw_verts()
 
     def test_transform(self):
-        make_five_by_five_square_island(self.island)
+        island.make_five_by_five_square_island(self.island)
         self.island.draw_edges()
         self.island.clear()
         vec = geom.Vector3d(20.0,0.0,0.0) 
@@ -96,8 +92,8 @@ class IslandTestCase(unittest.TestCase):
         self.island.draw_edges()
 
     def test_get_frame_reverse_edge(self):
-        firstFace = make_five_by_five_square_island(self.island)
-        frame = self.island.get_frame_reverse_edge(edge=1,face=firstFace)
+        island.make_five_by_five_square_island(self.island)
+        frame = self.island.get_frame_reverse_edge(edge=1,face=0)
         frame.show()
         correct_frame = trans.Frame.create_frame_from_tuples((5,5,0),(0,-1,0),(1,0,0))
         self.assertTrue(correct_frame.is_equal(frame))
@@ -110,15 +106,17 @@ class IslandAvoidTestCase(unittest.TestCase):
     def make_overlapping_islands(self):
         islandA = self.island
         islandB = island.Island()
-        make_five_by_five_square_island(islandA)
-        make_five_by_five_square_island(islandB)
+        island.make_five_by_five_square_island(islandA)
+        island.make_five_by_five_square_island(islandB)
         islandB.translate(geom.Vector3d(2,0,0))
         islandA.draw_edges()
         islandB.draw_edges()
         return islandA,islandB
 
     def test_get_boundary_polyline(self):
-        make_five_by_five_square_island(self.island)
+        #deprivated, since now in general not drwaing lines 
+        #However, if needed can easily specifically draw cut lines
+        island.make_five_by_five_square_island(self.island)
         self.island.clear()
         self.island.draw_edges()
         boundary = self.island.get_boundary_polyline()
@@ -151,7 +149,7 @@ class IslandAvoidTestCase(unittest.TestCase):
         island_c.clear()
 
     def test_get_bounding_rectangle(self):
-        make_five_by_five_square_island(self.island)
+        island.make_five_by_five_square_island(self.island)
         self.island.draw_edges()
         rect = self.island.get_bounding_rectangle()
         self.island.clear()
@@ -173,7 +171,7 @@ class StubbedNet(object):
         self.islands = []
         for i in range(numIslands):
             new_island = island.Island()
-            make_five_by_five_square_island(new_island)
+            island.make_five_by_five_square_island(new_island)
             new_island.draw_edges()
             self.islands.append(new_island)
 
@@ -183,7 +181,7 @@ class StubbedNet(object):
 class DistributeTestCase(unittest.TestCase):
     '''
     I put the distribute test case in island since it already has the quite useful 
-    make_five_by_five_square_island function
+    island.make_five_by_five_square_island function
     '''
     def setUp(self):
         self.net = StubbedNet()
