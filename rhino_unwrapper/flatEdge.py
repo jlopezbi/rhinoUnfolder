@@ -6,7 +6,6 @@ import rhino_helpers
 import math 
 
 
-
 def create_cut_edge_from_base(flatEdge,otherEdgeIdx=None):
     newEdge = CutEdge(fromFace = flatEdge.fromFace,
                       indexInFace = flatEdge.indexInFace,
@@ -31,6 +30,7 @@ class FlatEdge(object):
         self.meshEdgeIdx = None
         self.color = (0,0,0,0)
         self.index_color = (0,103,118,198)
+        self.group_name = rs.AddGroup()
         self.line = None
         self.line_id = None
         self.geom = []
@@ -39,18 +39,32 @@ class FlatEdge(object):
     def post_initialize(self,kwargs):
         pass
 
+    def get_geom(self):
+        ''' note that show should be called before this function
+        '''
+        return rs.ObjectsByGroup(self.group_name)
+
     def show(self,island):
         '''
-        General Function for edges to show geometry
+        General Function for edges to show geometry, meant to be overwritten for each subclass
         '''
-        return self.show_line(island)
+        self.show_specialized(island)
+        rs.AddObjectsToGroup(self.get_geom(),island.group_name)
+
+    def show_specialized(self,island):
+        ''' template function to be overwritten by specialized flatEdge types'''
+        pass
+    
+    def clear(self):
+        ''' removes all geometry for this object'''
+        rs.DeleteObjects(self.get_geom())
 
     def show_index(self,index,island):
         '''for displaying this edge in the island '''
         center = self.getMidPoint(island)
         dot_guid = rs.AddTextDot(str(index),center)
         rs.ObjectColor(dot_guid,self.index_color)
-        rs.AddObjectToGroup(dot_guid,island.group_name)
+        rs.AddObjectToGroup(dot_guid,self.group_name)
 
     def show_line(self,island):
         points = self.get_coordinates(island)
@@ -59,7 +73,7 @@ class FlatEdge(object):
         line_id, line = vis.show_line_from_points(points, color=self.color, arrowType='end')
         self.line_id = line_id
         self.line = line
-        rs.AddObjectsToGroup(line_id,island.group_name)
+        rs.AddObjectToGroup(line_id,self.group_name)
         return line_id
 
     def type(self):
@@ -229,7 +243,6 @@ class FlatEdge(object):
             "some unforseen problem in FlatEdge.getFaceFromPoint"
             return None
 
-
     def testFacesIsLeft(self, net, face):
         '''find which side the face is on relative to this edge
         ouput: 1 for left, -1 for right, 0 for error
@@ -239,8 +252,6 @@ class FlatEdge(object):
         if not testPoint:
             return -1
         return self.testPointIsLeft(testPoint, net.flatVerts)
-
-    
 
     def testPointIsLeft(self, testPoint, flatVerts):
         '''
@@ -294,7 +305,6 @@ class FlatEdge(object):
             # coincident, still leads to bad condition for holes
             return False
 
-
     '''
     TRANSLATION STUFF
     '''
@@ -338,12 +348,28 @@ class FoldEdge(FlatEdge):
     def post_initialize(self,kwargs):
         self.color = edge_colors['green']
     
-    def show(self,island):
-        #self._show_crease(island)
-        return self.show_line(island)
+    def show_specialized(self,island):
+        self.show_line(island)
+        self._show_crease(island)
 
     def _show_crease(self,island):
-        pass
+        pntA,pntB = self.get_coordinates(island)
+        self.slot_crease(pntA,pntB)
+
+### DIFFERENT FOLD EDGE GEOM HERE
+    def slot_crease(self,pntA,pntB):
+        offset = .125
+        width = .025
+        vecA = rhino_helpers.getVectorForPoints(pntA,pntB)
+        vecA_unit = rs.VectorUnitize(vecA)
+        vecA_sized = rs.VectorScale(vecA_unit,offset)
+
+        vecB_sized = rs.VectorReverse(vecA_sized)
+        posA = rs.VectorAdd(pntA,vecA_sized)
+        posB = rs.VectorAdd(pntB,vecB_sized)
+        cA = rs.AddCircle(posA,width)
+        cB = rs.AddCircle(posB,width)
+        rs.AddObjectsToGroup([cA,cB],self.group_name)
 
     def type(self):
         # TODO: find better way
@@ -355,13 +381,11 @@ class CutEdge(FlatEdge):
         self.sibling = kwargs['sibling']
         self.color = edge_colors['red']
 
-    def show(self,island):
-        #self._show_joinery(island)
-        line_guid =  self.show_line(island)
-        island.cut_edge_guids.append(line_guid)
-        return line_guid
+    def show_specialized(self,island):
+        island.cut_edge_lines.append(self.show_line(island))
+        self._show_joinery(island)
     
-    def _show_joinery(self,flatVerts):
+    def _show_joinery(self,island):
         pass
 
     def type(self):
@@ -703,6 +727,9 @@ class NakedEdge(FlatEdge):
 
     def post_initialize(self,kwargs):
         self.color = edge_colors['blue']
+            
+    def show_specialized(self,island):
+        pass
 
 class _FlatEdge():
     """
@@ -746,18 +773,4 @@ class _FlatEdge():
 
     
     '''JOINERY'''
-
-    
-
-
-
-    
-
-    
-
-        
-
-    
-
-
 
