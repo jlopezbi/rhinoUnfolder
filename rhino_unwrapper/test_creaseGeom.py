@@ -11,7 +11,7 @@ class SlotCreaseTestCase(unittest.TestCase):
         pntJ = (edge_length,0.0,0.0)
         offset = 2.0
         width = 1.0
-        creaseGeom.slot_crease(pntI,pntJ,offset,width)
+        creaseGeom.pill_shape(pntI,pntJ,offset,width)
 
     def test_get_arc_cap_works(self):
         offset = 2
