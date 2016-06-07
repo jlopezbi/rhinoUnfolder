@@ -2,19 +2,26 @@ import rhinoscriptsyntax as rs
 import rhino_helpers
 reload(rhino_helpers)
 
-def slot_crease(pntA,pntB):
-    offset = .125
-    width = .025
-    vecA = rhino_helpers.getVectorForPoints(pntA,pntB)
-    vecA_unit = rs.VectorUnitize(vecA)
-    vecA_sized = rs.VectorScale(vecA_unit,offset)
-
-    vecB_sized = rs.VectorReverse(vecA_sized)
-    posA = rs.VectorAdd(pntA,vecA_sized)
-    posB = rs.VectorAdd(pntB,vecB_sized)
-    cA = rs.AddCircle(posA,width)
-    cB = rs.AddCircle(posB,width)
-    rs.AddObjectsToGroup([cA,cB],self.group_name)
+def slot_crease(pntI,pntJ,offset,width):
+    '''
+    creates a pill shape between the two points
+    returns the polycurve guid
+            C ---  D
+           /        \
+    I --- B -------- E ----> J
+           \        /
+             A -- F
+    '''
+    pntA,pntC,pntB = get_arc_cap(pntI,pntJ,offset,width)
+    pntD,pntF,pntE = get_arc_cap(pntJ,pntI,offset,width)
+    first_arc = rs.AddArc3Pt(pntA,pntC,pntB)
+    second_arc = rs.AddArc3Pt(pntD,pntF,pntE)    
+    first_line = rs.AddLine(pntC,pntD)
+    second_line = rs.AddLine(pntF,pntA)
+    geom = [first_arc,second_arc,first_line,second_line]    
+    curves = rs.JoinCurves(geom,delete_input=True)
+    curve = curves[0]
+    return curve
 
 def get_arc_cap(pntI,pntJ,offset,radius):
     '''
