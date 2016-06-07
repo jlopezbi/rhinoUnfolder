@@ -2,7 +2,7 @@ import rhinoscriptsyntax as rs
 import rhino_helpers
 reload(rhino_helpers)
 
-def slot_crease(pntI,pntJ,offset,width):
+def pill_shape(pntI,pntJ,offset,width):
     '''
     creates a pill shape between the two points
     returns the polycurve guid
