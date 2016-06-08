@@ -37,7 +37,7 @@ class Net():
         #self.groups,self.leaders = segmentIsland(self.flatFaces,[])
 
     def get_island_list(self):
-        return self.island
+        return self.islands
 
     def add_island(self,island):
         self.islands.append(island)
@@ -53,7 +53,8 @@ class Net():
 
     def get_island_for_line(self,line_guid):
         '''
-        note: currently assumes that there is only one group for the line!
+        CURRENTLY NOT FUNCTIONING: fix this when this becomes necessary. At the moment this function is not useful.
+        Assumes each element of the island has a group with geometry in it, and each geometry member has group0-> element level, group1 -> island level structure
         '''
         groups = rs.ObjectGroups(line_guid)
         # group should be the second one
