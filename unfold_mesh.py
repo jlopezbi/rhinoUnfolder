@@ -3,6 +3,11 @@ import rhino_unwrapper.meshUtils.mesh as mesh
 import rhino_unwrapper.unfold as unfold
 import rhino_unwrapper.distribute as distribute
 
+reload(meshLoad)
+reload(mesh)
+reload(unfold)
+reload(distribute)
+
 '''
 A script meant to be run on a mesh that already has 
 cuts assigned
@@ -17,7 +22,6 @@ net = unfolder.unfold()
 net.display()
 
 distribute.spread_out_islands_horizontally(net)
-
 
 
 

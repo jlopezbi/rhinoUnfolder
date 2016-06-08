@@ -62,7 +62,6 @@ def drawVector(vector, position, color=[0,0,0,0]):
     lineGuid = show_line_from_points([pntStart, pntEnd], color ,'end')
     return lineGuid
 
-
 def drawTextDot(point, message, color):
     attrCol = setAttrColor(color[0], color[1], color[2], color[3])
     textDot = Rhino.Geometry.TextDot(message, point)  # nust be point 3d

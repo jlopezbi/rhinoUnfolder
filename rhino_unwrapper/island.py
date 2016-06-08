@@ -253,7 +253,7 @@ class Island(object):
     def display(self):
         #Change to show whatever aspect of island you want
         self.draw_edges()
-        self.draw_verts()
+        #self.draw_verts()
     
     def get_perimeter_geometry(self):
         return self.cut_edge_lines

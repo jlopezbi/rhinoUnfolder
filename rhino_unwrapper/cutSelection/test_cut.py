@@ -10,6 +10,7 @@ import meshUtils.meshLoad as meshLoad
 import userCuts
 import autoCuts
 
+
 reload(userCuts)
 reload(autoCuts)
 reload(mesh)
@@ -36,6 +37,7 @@ def remove_objects():
 #    * saves cut/fold info to this mesh
 #    * displays cut/fold info dynamically as I make selection (feedback)
 #    * if mesh already has cut/fold info displays it before user modification
+
 
 class UserAssignCutsTestCase(unittest.TestCase):
     def setUp(self):

@@ -1,10 +1,14 @@
-import visualization as vis
 import scriptcontext
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
-import rhino_helpers
 import math 
+import rhino_helpers
+import visualization as vis
+import creaseGeom
 
+reload(vis)
+reload(creaseGeom)
+reload(rhino_helpers)
 
 def create_cut_edge_from_base(flatEdge,otherEdgeIdx=None):
     newEdge = CutEdge(fromFace = flatEdge.fromFace,
@@ -35,6 +39,9 @@ class FlatEdge(object):
         self.line_id = None
         self.geom = []
         self.post_initialize(kwargs)
+
+    def rgb_color(self):
+         return self.color[1:]
 
     def post_initialize(self,kwargs):
         pass
@@ -70,7 +77,7 @@ class FlatEdge(object):
         points = self.get_coordinates(island)
         if self.line_id is not None:
             scriptcontext.doc.Objects.Delete(self.line_id, True)
-        line_id, line = vis.show_line_from_points(points, color=self.color, arrowType='end')
+        line_id, line = vis.show_line_from_points(points, color=self.color, arrowType='none')
         self.line_id = line_id
         self.line = line
         rs.AddObjectToGroup(line_id,self.group_name)
@@ -349,28 +356,16 @@ class FoldEdge(FlatEdge):
         self.color = edge_colors['green']
     
     def show_specialized(self,island):
-        self.show_line(island)
+        #self.show_line(island)
         self._show_crease(island)
 
     def _show_crease(self,island):
         pntA,pntB = self.get_coordinates(island)
-        self.slot_crease(pntA,pntB)
-
-### DIFFERENT FOLD EDGE GEOM HERE
-    def slot_crease(self,pntA,pntB):
         offset = .125
-        width = .025
-        vecA = rhino_helpers.getVectorForPoints(pntA,pntB)
-        vecA_unit = rs.VectorUnitize(vecA)
-        vecA_sized = rs.VectorScale(vecA_unit,offset)
-
-        vecB_sized = rs.VectorReverse(vecA_sized)
-        posA = rs.VectorAdd(pntA,vecA_sized)
-        posB = rs.VectorAdd(pntB,vecB_sized)
-        cA = rs.AddCircle(posA,width)
-        cB = rs.AddCircle(posB,width)
-        rs.AddObjectsToGroup([cA,cB],self.group_name)
-
+        width = .1
+        curve = creaseGeom.pill_shape(pntA,pntB,offset,width,self.rgb_color())
+        rs.AddObjectToGroup(curve,self.group_name)
+        
     def type(self):
         # TODO: find better way
         return 'FoldEdge'
@@ -726,10 +721,11 @@ class CutEdge(FlatEdge):
 class NakedEdge(FlatEdge):
 
     def post_initialize(self,kwargs):
-        self.color = edge_colors['blue']
+        #self.color = edge_colors['blue']
+        self.color = edge_colors ['red']
             
     def show_specialized(self,island):
-        pass
+        self.show_line(island)
 
 class _FlatEdge():
     """

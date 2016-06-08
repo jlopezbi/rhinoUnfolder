@@ -7,6 +7,7 @@ import rhino_helpers as helpers
 import transformations as trans
 reload(vis)
 reload(helpers)
+reload(trans)
 
 import scriptcontext
 import rhinoscriptsyntax as rs
@@ -496,12 +497,20 @@ class Mesh(object):
         face_edges = self.getFaceEdges(faceIdx)
         return face_edges.remove(edgeIdx)
 
+    def face_normal(self,face):
+        '''
+        wrap the FaceNormals.Item method to provide usefull error message
+        '''
+        face_normal_command = "RebuildMeshNormals"
+        assert self.mesh.FaceNormals.Count > 0, "the FaceNormals have not been computed for this mesh. Try running {}".format(face_normal_command)
+        return self.mesh.FaceNormals.Item[face]
+
     def get_face_normal(self,face):
         '''
         rhinocommon returns Vector3f, but most other rhioncommon
         stuff uses vector3d, so returns vector3d
         '''
-        return geom.Vector3d(self.mesh.FaceNormals.Item[face])
+        return geom.Vector3d(self.face_normal(face))
 
 class MeshDisplayer(object):
 

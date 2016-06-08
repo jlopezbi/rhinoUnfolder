@@ -36,7 +36,6 @@ net.display()
 
 #DISTRIBUTE
 distribute.spread_out_islands_horizontally(net)
-print jMesh.get_cuts()
 
 
 

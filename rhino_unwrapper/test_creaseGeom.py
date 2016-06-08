@@ -11,7 +11,8 @@ class SlotCreaseTestCase(unittest.TestCase):
         pntJ = (edge_length,0.0,0.0)
         offset = 2.0
         width = 1.0
-        creaseGeom.pill_shape(pntI,pntJ,offset,width)
+        color = (255,0,255)
+        creaseGeom.pill_shape(pntI,pntJ,offset,width,color)
 
     def test_get_arc_cap_works(self):
         offset = 2
@@ -21,6 +22,7 @@ class SlotCreaseTestCase(unittest.TestCase):
         self.assertTrue(rs.PointCompare(pntA,(offset+radius,-radius,0.0)) )
         self.assertTrue(rs.PointCompare(pntC,(offset+radius,radius,0.0)) )
         rs.AddArc3Pt(pntA,pntC,pntB)
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
