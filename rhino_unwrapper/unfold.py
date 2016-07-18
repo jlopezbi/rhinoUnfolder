@@ -1,7 +1,5 @@
 #THIS_PROJECT STUFF
 import transformations as trans
-import flatEdge as fe
-import flatGeom
 import Net as nt
 import traversal as tr
 import Map
@@ -16,9 +14,7 @@ import Rhino
 #PYTHON STUFF
 import collections,inspect
 
-reload(flatGeom)
 reload(trans)
-reload(fe)
 reload(nt)
 reload(tr)
 reload(mesh)
@@ -49,10 +45,10 @@ class UnFolder(object):
         arbitrary_face = face_getter(canditate_faces)
         face_edges = self.myMesh.getFaceEdges(arbitrary_face)
         for edge in face_edges:
-            if self.myMesh.is_cut_edge(edge):
+            if self.myMesh.is_cut_edge(edge) or self.myMesh.is_naked_edge(edge):
                 loc = islandMaker.MeshLoc(arbitrary_face,edge)
                 return loc
-        raise AssertionError, "face {} did not have any cut edges, check that mesh has correct cut_edges"
+        raise AssertionError, "face {} did not have any cut edges, check that mesh has correct cut_edges".format(arbitrary_face)
 
     def unfold(self,start_loc=None):
         if start_loc == None:
