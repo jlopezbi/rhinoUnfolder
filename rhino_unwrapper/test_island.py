@@ -18,7 +18,6 @@ def tearDownModule():
 def remove_objects():
     rs.DeleteObjects(rs.AllObjects())
 
-
 class IslandTestCase(unittest.TestCase):
 
     @classmethod
@@ -161,6 +160,7 @@ class IslandAvoidTestCase(unittest.TestCase):
         self.assertFalse(islandA.is_overlapping(islandB))
 
     def _test_avoid_other_island(self):
+        '''depricated for now'''
         islandA,islandB = self.make_overlapping_islands()
         self.assertTrue(islandA.is_overlapping(islandB))
         islandA.avoid_other(islandB)
