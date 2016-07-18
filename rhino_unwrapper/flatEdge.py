@@ -13,25 +13,34 @@ reload(rhino_helpers)
 def create_cut_edge_from_base(flatEdge,otherEdgeIdx=None):
     newEdge = CutEdge(fromFace = flatEdge.fromFace,
                       indexInFace = flatEdge.indexInFace,
+                      meshEdgeIdx = flatEdge.meshEdgeIdx,
+                      angle = flatEdge.angle,
                       sibling = otherEdgeIdx)
     return newEdge
 
 def create_fold_edge_from_base(flatEdge):
-    return FoldEdge(fromFace = flatEdge.fromFace, indexInFace=flatEdge.indexInFace)
+    return FoldEdge(fromFace = flatEdge.fromFace, 
+                    indexInFace=flatEdge.indexInFace,
+                    meshEdgeIdx = flatEdge.meshEdgeIdx,
+                    angle = flatEdge.angle)
 
 def create_naked_edge_from_base(flatEdge):
-    return NakedEdge(fromFace=flatEdge.fromFace,indexInFace=flatEdge.indexInFace)
+    return NakedEdge(fromFace=flatEdge.fromFace,
+                     indexInFace=flatEdge.indexInFace,
+                     meshEdgeIdx = flatEdge.meshEdgeIdx,
+                     angle = flatEdge.angle)
 
 edge_colors = {'blue': (0,0,0,255),
                'red':(0,255,0,0),
                'green':(0,0,255,0)}
 
 class FlatEdge(object):
-    def __init__(self,fromFace,indexInFace,**kwargs):
+    def __init__(self,fromFace,indexInFace,meshEdgeIdx=None,angle=None,**kwargs):
         self.fromFace = fromFace  #fromFace is "homeFace"
         self.indexInFace = indexInFace # which edge of the from face
+        self.meshEdgeIdx = meshEdgeIdx #corresponding edge in mesh
+        self.angle = angle #dihedral angle of corresponding mesh edge
         self.toFace = None
-        self.meshEdgeIdx = None
         self.color = (0,0,0,0)
         self.index_color = (0,103,118,198)
         self.group_name = rs.AddGroup()
@@ -132,7 +141,7 @@ class FlatEdge(object):
     def getTVerts(self, mesh):
         return getTVertsForEdge(mesh, self.meshEdgeIdx)
 
-    def getMeshAngle(self, myMesh):
+    def get_angle_in_mesh(self, myMesh):
         '''get dihedral angle of the corresponding mesh edge'''
         if self.angle is None:
             self.angle = myMesh.getEdgeAngle(self.meshEdgeIdx)
@@ -354,15 +363,17 @@ class FoldEdge(FlatEdge):
     
     def post_initialize(self,kwargs):
         self.color = edge_colors['green']
+        self.angle_threshold = math.radians(0.1) 
     
     def show_specialized(self,island):
         #self.show_line(island)
-        self._show_crease(island)
+        if self.angle > self.angle_threshold:
+            self._show_crease(island)
 
     def _show_crease(self,island):
         pntA,pntB = self.get_coordinates(island)
-        offset = .125
-        width = .1
+        offset = .1
+        width = .084
         curve = creaseGeom.pill_shape(pntA,pntB,offset,width,self.rgb_color())
         rs.AddObjectToGroup(curve,self.group_name)
         
