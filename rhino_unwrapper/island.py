@@ -147,12 +147,12 @@ class Island(object):
 ################## ADD EDGE
 
 #LAYOUT
-    def layout_add_edge(self,index=None):
+    def layout_add_edge(self,index=None,meshEdge=None,edgeAngle=None):
         '''
         designed for layout: edge gets added before face gets added
         '''
         newFaceIdx = len(self.flatFaces)
-        newEdge = self.add_edge(flatEdge.FlatEdge(fromFace=newFaceIdx,indexInFace=index))
+        newEdge = self.add_edge(flatEdge.FlatEdge(fromFace=newFaceIdx,indexInFace=index,meshEdgeIdx=meshEdge,angle=edgeAngle))
         self.temp_edges.append(newEdge)
         return newEdge
 
@@ -161,7 +161,7 @@ class Island(object):
         edge_obj.toFace = toFace
 
     def add_edge_with_from_face(self,face=None,index=None):
-        edgeIdx =  self.add_edge(flatEdge.FlatEdge(fromFace=face,indexInFace=index))
+        edgeIdx =  self.add_edge(flatEdge.FlatEdge(face,index))
         return edgeIdx
 
     def add_edge(self, flatEdge):
@@ -321,9 +321,6 @@ class Island(object):
 ############ AVOIDING OTHER ISLANDS
     
     def get_boundary_polyline(self):
-        #NOTE: will not work anymore: moving to more general model where
-        #using cut_edge_linesisntead of lines
-
         '''
         NOTE: draw_edges must be called before running this function!
         find the polyline composed of all cut edges, which by definition form the 
@@ -346,7 +343,6 @@ class Island(object):
         return full_box[0:4]
     
     def is_overlapping(self,other_island):
-        #NOTE: will not work now because get_boundary_polyline broken
         this_perimeter = self.get_boundary_polyline()
         other_perimeter = other_island.get_boundary_polyline()
         assert rs.IsCurvePlanar(this_perimeter), "curve of this island not planar"
