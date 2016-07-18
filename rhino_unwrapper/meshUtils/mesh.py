@@ -336,15 +336,15 @@ class Mesh(object):
 
     def getEdgeAngle(self,edge):
         '''
-        get dihedral angle of a given edge in the mesh
+        get dihedral angle, in radians of a given edge in the mesh
         '''
         faceIdxs = self.getFacesForEdge(edge)
         if (len(faceIdxs)==2):
-            faceNormA = self.mesh.FaceNormals.Item[faceIdxs[0]]
-            faceNormB = self.mesh.FaceNormals.Item[faceIdxs[1]]
+            faceNormA = self.get_face_normal(faceIdxs[0])
+            faceNormB = self.get_face_normal(faceIdxs[1])
             return geom.Vector3d.VectorAngle(faceNormA,faceNormB)
         else:
-            pass
+            return None
 
     def getDistanceToEdge(self,edge, point):
         '''
