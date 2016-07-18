@@ -88,13 +88,9 @@ class IslandMaker(object):
             self.island.change_to_naked_edge(islandEdge)
             
     def breadth_first_layout(self,island,startMeshLoc,startIslandLoc):
+        ''' for layout to not accidently infinite loop the startMeshLoc must be on cut or naked edge
         '''
-        traverse all faces of mesh breadth first and create an island
-        checking if edges are cut or fold
-        need to figure out how to setup island so ready to do this function...
-        output: visited_faces that the island comprises
-        '''
-        assert (startMeshLoc.edge in self.myMesh.get_cuts()), "meshloc is not on a cut edge!"
+        assert (self.myMesh.is_cut_edge(startMeshLoc.edge) or self.myMesh.is_naked_edge(startMeshLoc.edge)),  "meshloc is not on a cut edge or a naked edge!"
         layoutPair = (startMeshLoc,startIslandLoc)
         queue = collections.deque([layoutPair])
         visited_faces = [startMeshLoc.face]
@@ -115,7 +111,8 @@ class IslandMaker(object):
                     tailPoint,headPoint = self.myMesh.get_aligned_points(orientedEdge) 
                     mapped_point = self.get_mapped_point(headPoint,meshLoc,islandLoc) 
                     island.layout_add_vert_point(mapped_point) 
-                newEdge = island.layout_add_edge(i+1)
+                angle = self.myMesh.getEdgeAngle(edge)
+                newEdge = island.layout_add_edge(i+1,edge,angle)
                 if self.myMesh.is_fold_edge(edge):
                     island.change_to_fold_edge(edge=newEdge)
                     visited_faces.append(face)
