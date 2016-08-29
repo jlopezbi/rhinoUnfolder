@@ -70,7 +70,6 @@ def make_cube_mesh():
     faceVertices.append((2,3,7,6)) #back face
     return get_myMesh(vertices,faceVertices)
 
-
 def get_myMesh(vertices,face_vertices):
     '''add a mesh to doc and get the Rhino.Geometry.Mesh object''' 
     mesh_GUID = rs.AddMesh( vertices, face_vertices )
@@ -511,6 +510,13 @@ class Mesh(object):
         stuff uses vector3d, so returns vector3d
         '''
         return geom.Vector3d(self.face_normal(face))
+
+    def get_face_next_to_a_cut(self): 
+        cuts = self.get_cuts()
+        arbitrary_cut_edge = cuts[0]
+        faces = self.getFacesForEdge(arbitrary_cut_edge)
+        arbitrary_face = faces[0]
+        return arbitrary_face
 
 class MeshDisplayer(object):
 
