@@ -20,7 +20,7 @@ do -RunPythonScript, reset engine, and then execute run_all_tests.py
 How To Run
 ----------
 
-1. [Install Rhino and RhinoPython](http://python.rhino3d.com/content/118-Getting-Started-1-quot-Hello-Rhino-quot)
+1. [Install Rhino5 and RhinoPython](http://python.rhino3d.com/content/118-Getting-Started-1-quot-Hello-Rhino-quot)
 2. Download this repository and save it to your Rhino 'Scripts' directory:
   `git clone https://github.com/jlopezbi/rhinoUnwrapper.git`
 3. type `RunPythonScript` in rhino
