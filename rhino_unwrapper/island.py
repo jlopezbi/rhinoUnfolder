@@ -2,13 +2,14 @@ import flatGeom
 import flatEdge
 import rhino_helpers 
 import transformations as trans
+import joineryGeom
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
 reload(flatGeom)
 reload(flatEdge)
 reload(rhino_helpers)
 reload(trans)
-
+reload(joineryGeom)
 
 island_plane = rs.WorldXYPlane()
 
@@ -74,6 +75,11 @@ class Island(object):
         self.temp_verts = []
         self.debug_visualize = False
         self.group_name = rs.AddGroup()
+        self.hole_offset = .2
+        self.rivet_diameter = .125
+        self.spacing = 1.6
+        self.tab_padding = .10
+        self.joinerySystem = joineryGeom.RivetSystem(self.hole_offset,self.rivet_diameter,self.spacing,self.tab_padding)
 
 ################## LAYOUT
     def add_dummy_elements(self): 
@@ -83,13 +89,16 @@ class Island(object):
         self.dummyFace = self.add_face(flatGeom.FlatFace([0,1],[0]))
         self.dummyEdge = self.add_edge_with_from_face(face=0,index=0)
 
+    def reverse_order_dummy_face(self):
+        self.flatFaces[0].vertices.reverse()
+
     def change_to_fold_edge(self,edge):
         baseEdge = self.flatEdges[edge]
         self.flatEdges[edge] = flatEdge.create_fold_edge_from_base(baseEdge)
 
-    def change_to_cut_edge(self,edge):
+    def change_to_cut_edge(self,edge,isLeader=True):
         baseEdge = self.flatEdges[edge]
-        self.flatEdges[edge] = flatEdge.create_cut_edge_from_base(baseEdge)
+        self.flatEdges[edge] = flatEdge.create_cut_edge_from_base(baseEdge,isLeader)
 
     def change_to_naked_edge(self,edge):
         baseEdge = self.flatEdges[edge]

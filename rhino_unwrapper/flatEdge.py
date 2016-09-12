@@ -5,16 +5,18 @@ import math
 import rhino_helpers
 import visualization as vis
 import creaseGeom
+import joineryGeom
 
 reload(vis)
 reload(creaseGeom)
 reload(rhino_helpers)
 
-def create_cut_edge_from_base(flatEdge,otherEdgeIdx=None):
+def create_cut_edge_from_base(flatEdge,is_leader,otherEdgeIdx=None):
     newEdge = CutEdge(fromFace = flatEdge.fromFace,
                       indexInFace = flatEdge.indexInFace,
                       meshEdgeIdx = flatEdge.meshEdgeIdx,
                       angle = flatEdge.angle,
+                      has_outer_joinery = is_leader,
                       sibling = otherEdgeIdx)
     return newEdge
 
@@ -363,12 +365,12 @@ class FoldEdge(FlatEdge):
     
     def post_initialize(self,kwargs):
         self.color = edge_colors['green']
-        self.angle_threshold = math.radians(0.1) 
+        self.angle_threshold = math.radians(3.5) 
     
     def show_specialized(self,island):
-        #self.show_line(island)
         if self.angle > self.angle_threshold:
-            self._show_crease(island)
+            self.show_line(island)
+            #self._show_crease(island)
 
     def _show_crease(self,island):
         pntA,pntB = self.get_coordinates(island)
@@ -384,15 +386,23 @@ class FoldEdge(FlatEdge):
 class CutEdge(FlatEdge):
 
     def post_initialize(self,kwargs):
-        self.sibling = kwargs['sibling']
+        self.has_outer_joinery = kwargs.get('has_outer_joinery',True)
+        self.sibling = kwargs['sibling'] #sibling not currently used
         self.color = edge_colors['red']
+        self.tabWidth = .5
+        self.tabOnLeft = False
+        self.tabAngles = [45,45]
 
     def show_specialized(self,island):
-        island.cut_edge_lines.append(self.show_line(island))
-        self._show_joinery(island)
-    
-    def _show_joinery(self,island):
-        pass
+        curve_id = self.show_line(island)
+        island.cut_edge_lines.append(curve_id)
+        if self.has_outer_joinery:
+            curves = island.joinerySystem.outer_joinery(curve_id,left_side=False)
+            rs.AddObjectsToGroup(curves,self.group_name)
+        else:
+            rs.ReverseCurve(curve_id) #necessary to reverse direction so edges match
+            curves = island.joinerySystem.inner_joinery(curve_id,left_side=False)
+            rs.AddObjectsToGroup(curves,self.group_name)
 
     def type(self):
         # TODO: find better way
@@ -412,8 +422,9 @@ class CutEdge(FlatEdge):
         else:
             return self.tabOnLeft
 
-    def drawTab(self, flatVerts):
+    def drawTab(self,island):
         '''outputs guid for polyline'''
+        flatVerts = island.flatVerts
         if len(self.geom) > 0:
             for guid in self.geom:
                 scriptcontext.doc.Objects.Delete(guid, True)
@@ -423,10 +434,10 @@ class CutEdge(FlatEdge):
             print "quadtab"
             return self.drawQuadTab(flatVerts)
 
-    def drawQuadTab(self, flatVerts):
+    def drawQuadTab(self,island):
         pntA, pntD = self.get_coordinates(island)
-        vecA = Rhino.Geometry.Vector3d(pntA)
-        vecD = Rhino.Geometry.Vector3d(pntD)
+        vecA = geom.Vector3d(pntA)
+        vecD = geom.Vector3d(pntD)
 
         alpha = self.tabAngles[0]
         beta = self.tabAngles[1]
@@ -448,8 +459,8 @@ class CutEdge(FlatEdge):
         vecB = vecA + vecI
         vecC = vecD + vecJ
 
-        pntB = Rhino.Geometry.Point3d(vecB)
-        pntC = Rhino.Geometry.Point3d(vecC)
+        pntB = geom.Point3d(vecB)
+        pntC = geom.Point3d(vecC)
 
         points = [pntA, pntB, pntC, pntD]
         polyGuid = rs.AddPolyline(points)
@@ -457,7 +468,8 @@ class CutEdge(FlatEdge):
         self.geom.append(polyGuid)
         return polyGuid
 
-    def drawTruncatedTab(self, flatVerts):
+    def drawTruncatedTab(self,island):
+        flatVerts = island.flatVerts
         tabLen = self.tabWidth
         I, J = self.get_coordinates(island)
         K = self.tabFaceCenter

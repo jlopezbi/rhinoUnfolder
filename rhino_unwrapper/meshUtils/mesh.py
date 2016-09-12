@@ -504,12 +504,22 @@ class Mesh(object):
         assert self.mesh.FaceNormals.Count > 0, "the FaceNormals have not been computed for this mesh. Try running {}".format(face_normal_command)
         return self.mesh.FaceNormals.Item[face]
 
+
     def get_face_normal(self,face):
         '''
         rhinocommon returns Vector3f, but most other rhioncommon
         stuff uses vector3d, so returns vector3d
         '''
         return geom.Vector3d(self.face_normal(face))
+
+    def get_naked_or_cut_edge_from_candidate_faces(self,canditate_faces):
+        assert self.get_cuts() , "Mesh has no cuts set. Make sure to assign cuts first"
+        for face in canditate_faces:
+            edges = self.getFaceEdges(face)
+            for edge in edges:
+                if self.is_cut_edge(edge) or self.is_naked_edge(edge):
+                    return edge,face
+        assert False, "unable to find valid face"
 
     def get_face_next_to_a_cut(self): 
         cuts = self.get_cuts()

@@ -24,7 +24,8 @@ def tearDownModule():
     remove_objects()
  
 def remove_objects():
-    rs.DeleteObjects(rs.AllObjects())
+    #rs.DeleteObjects(rs.AllObjects())
+    pass
 
 class StubbedIsland(object):
 
@@ -95,9 +96,9 @@ class IslandMakerTestCase(unittest.TestCase):
         self.assertTrue(self.islandMaker.island.flatVerts[0].hasSamePoint(pnt0_correct))
         self.assertTrue(self.islandMaker.island.flatVerts[1].hasSamePoint(pnt1_correct))
     
-    def test_meshLoc_must_be_on_a_cutEdge(self):
-        meshLoc = make.MeshLoc(face=0,edge=1)
-        cuts = [2]
+    def test_meshLoc_must_be_on_a_cutEdge_or_nakedEdge(self):
+        meshLoc = make.MeshLoc(face=0,edge=2)
+        cuts = [0]
         self.myMesh.set_cuts(cuts)
         self.assertRaises(AssertionError,self.islandMaker.make_island,meshLoc)
 
