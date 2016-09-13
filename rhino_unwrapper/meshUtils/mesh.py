@@ -1,10 +1,6 @@
-import sys
-#NOTE: this is a bit of a hacl to import modules above meshUtils. Maybe need to restructure?
-path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/"
-sys.path.append(path)
-import visualization as vis
-import rhino_helpers as helpers
-import transformations as trans
+from rhino_unwrapper import visualization as vis
+from rhino_unwrapper import rhino_helpers as helpers
+from rhino_unwrapper import transformations as trans
 reload(vis)
 reload(helpers)
 reload(trans)
