@@ -1,8 +1,6 @@
-import unittest,os,sys
+import unittest
 import Rhino.Geometry
 import rhinoscriptsyntax as rs
-#path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/"
-#sys.path.append(path)
 
 import meshLoad
 reload(meshLoad)

@@ -1,7 +1,5 @@
-import unittest,os,sys
-path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/"
-sys.path.append(path)
-import transformations as trans
+import unittest
+from rhino_unwrapper import transformations as trans
 import mesh
 import meshLoad
 reload(mesh)
