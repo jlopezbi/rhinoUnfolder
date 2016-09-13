@@ -1,12 +1,8 @@
-import unittest,sys,collections
-path = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/"
-path_meshUtils = "/Users/josh/Library/Application Support/McNeel/Rhinoceros/Scripts/rhinoUnfolder/rhino_unwrapper/meshUtils"
-sys.path.append(path)
-#sys.path.append(path_meshUtils)
+import unittest,collections
 import Rhino.Geometry as geom
 import rhinoscriptsyntax as rs
-import meshUtils.mesh as mesh
-import meshUtils.meshLoad as meshLoad
+from rhino_unwrapper.meshUtils import mesh
+from rhino_unwrapper.meshUtils import meshLoad
 import userCuts
 import autoCuts
 
