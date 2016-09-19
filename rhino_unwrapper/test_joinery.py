@@ -11,18 +11,23 @@ class RivetSystemTestCase(unittest.TestCase):
         spacing = 1.0
         rivet_diameter = .3
         tab_padding = .16
-        cls.joinery = joineryGeom.RivetSystem(offset,rivet_diameter,spacing,tab_padding)
+        edge_padding = 1.0
+        cls.joinery = joineryGeom.RivetSystem(offset,rivet_diameter,spacing,tab_padding,edge_padding)
 
     def setUp(self):
         self.curve_id = rs.AddLine([0,0,0],[5,7,0])
 
     def tearDown(self):
         rs.DeleteObjects(self.curve_id)
+
+    def test_small_outer_joinery(self):
+        line = rs.AddLine((0,0,0),(.1,0,0))
+        self.assertEqual(None,self.joinery.outer_joinery(line,True))
+
+    def test_small_inner_joinery(self):
+        line = rs.AddLine((0,0,0),(.1,0,0))
+        self.assertEqual(None,self.joinery.inner_joinery(line,True))
     
-    def test_small_edges(self):
-        length_thresh = self.joinery._get_length_threshold()
-        short_curve = rs.AddLine([0,0,0],[length_thresh,0,0])
-        self.assertEqual(None,self.joinery.outer_joinery(short_curve,True))
 
     def test_rivet_tabs(self):
         self.joinery.outer_joinery(self.curve_id,True)
