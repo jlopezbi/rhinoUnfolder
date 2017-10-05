@@ -396,7 +396,6 @@ class CutEdge(FlatEdge):
     def show_specialized(self,island):
         curve_id = self.show_line(island)
         island.cut_edge_lines.append(curve_id)
-        '''
         if self.has_outer_joinery:
             curves = island.joinerySystem.outer_joinery(curve_id,left_side=False)
             rs.AddObjectsToGroup(curves,self.group_name)
@@ -404,7 +403,6 @@ class CutEdge(FlatEdge):
             rs.ReverseCurve(curve_id) #necessary to reverse direction so edges match
             curves = island.joinerySystem.inner_joinery(curve_id,left_side=False)
             rs.AddObjectsToGroup(curves,self.group_name)
-        '''
 
     def type(self):
         # TODO: find better way

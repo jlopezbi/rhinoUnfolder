@@ -24,6 +24,20 @@ small edges bug > DONE
 
 '''
 
+class NullSystem(object):
+
+    def __init__(self):
+        '''
+        does not create any joinery geometry
+        '''
+        pass
+
+    def inner_joinery(self, curve_id, left_side):
+        return None
+
+    def outer_joinery(self, curve_id, left_side):
+        return None
+
 class RivetSystem(object):
 
     def __init__(self,hole_offset,rivet_diameter,spacing,tab_padding,edge_padding):

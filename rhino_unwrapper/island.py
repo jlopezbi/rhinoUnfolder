@@ -75,11 +75,13 @@ class Island(object):
         self.temp_verts = []
         self.debug_visualize = False
         self.group_name = rs.AddGroup()
-        self.hole_offset = .2
+        self.hole_offset = .21
         self.rivet_diameter = .125
-        self.spacing = 1.6
-        self.tab_padding = .10
-        self.joinerySystem = joineryGeom.RivetSystem(self.hole_offset,self.rivet_diameter,self.spacing,self.tab_padding)
+        self.spacing = .7
+        self.tab_padding = .11
+        self.edge_padding = .5
+        #self.joinerySystem = joineryGeom.RivetSystem(self.hole_offset,self.rivet_diameter,self.spacing,self.tab_padding,self.edge_padding)
+        self.joinerySystem = joineryGeom.NullSystem()
 
 ################## LAYOUT
     def add_dummy_elements(self): 
