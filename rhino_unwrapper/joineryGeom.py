@@ -96,6 +96,19 @@ class RivetSystem(object):
         else:
             return self.geom_temp 
 
+class TabSystem(object):
+
+    def __init__(self):
+        pass
+
+    def inner_joinery(self, curve_id, left_side):
+        return None
+
+    def outer_joinery(self, curve_id, left_side):
+        return None
+
+
+
 '''
 #Depricated function that used functional approahc
 def _offset_positions(self,curve_id,left_side,mid_geom_func,end_geom_func=None):

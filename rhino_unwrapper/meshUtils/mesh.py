@@ -254,6 +254,15 @@ class Mesh(object):
             points.reverse()
         return points
 
+    def edge_is_in_xy_plane(self, edge):
+        thresh = .000001
+        target_z = 0.0
+        pntA, pntB = self.getPointsForEdge(edge)
+        zA, zB = pntA.Z, pntB.Z
+        if abs(zA-target_z) <= thresh and abs(zB-target_z) <= thresh:
+            return True
+        return False
+
     ### STUFF FOR LAYOUT
 
     def set_cuts(self,cutList):

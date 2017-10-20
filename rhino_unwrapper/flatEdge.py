@@ -26,11 +26,12 @@ def create_fold_edge_from_base(flatEdge):
                     meshEdgeIdx = flatEdge.meshEdgeIdx,
                     angle = flatEdge.angle)
 
-def create_naked_edge_from_base(flatEdge):
+def create_naked_edge_from_base(flatEdge, in_xy):
     return NakedEdge(fromFace=flatEdge.fromFace,
                      indexInFace=flatEdge.indexInFace,
                      meshEdgeIdx = flatEdge.meshEdgeIdx,
-                     angle = flatEdge.angle)
+                     angle = flatEdge.angle,
+                     has_joinery = in_xy)
 
 edge_colors = {'blue': (0,0,0,255),
                'red':(0,255,0,0),
@@ -745,9 +746,13 @@ class NakedEdge(FlatEdge):
 
     def post_initialize(self,kwargs):
         #self.color = edge_colors['blue']
+        self.has_joinery = kwargs['has_joinery'] # speacial for cone project
         self.color = edge_colors ['red']
             
     def show_specialized(self,island):
+        # special solution for cone project
+        if self.has_joinery:
+            self.color = edge_colors['blue']
         self.show_line(island)
 
 class _FlatEdge():

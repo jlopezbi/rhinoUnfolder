@@ -102,9 +102,9 @@ class Island(object):
         baseEdge = self.flatEdges[edge]
         self.flatEdges[edge] = flatEdge.create_cut_edge_from_base(baseEdge,isLeader)
 
-    def change_to_naked_edge(self,edge):
+    def change_to_naked_edge(self,edge, in_xy_plane):
         baseEdge = self.flatEdges[edge]
-        self.flatEdges[edge] = flatEdge.create_naked_edge_from_base(baseEdge)
+        self.flatEdges[edge] = flatEdge.create_naked_edge_from_base(baseEdge, in_xy_plane)
 
 ############ QUIERY
     def get_point_for_vert(self,vert):
