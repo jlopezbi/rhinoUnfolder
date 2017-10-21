@@ -132,7 +132,6 @@ class IslandMaker(object):
                     island.change_to_cut_edge(edge=newEdge,isLeader=is_first)
                 elif self.myMesh.is_naked_edge(edge): 
                     at_z_zero = self.myMesh.edge_is_in_xy_plane(edge)
-                    print(at_z_zero)
                     island.change_to_naked_edge(edge=newEdge, in_xy_plane=at_z_zero) 
                 self.visited_edges.append(edge)
             island.layout_add_face(baseEdge=islandLoc.edge)
