@@ -1,4 +1,5 @@
 import rhinoscriptsyntax as rs
+import math
 import edgeGeom
 reload(edgeGeom)
 
@@ -98,14 +99,63 @@ class RivetSystem(object):
 
 class TabSystem(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, minimum_depth, width_to_length_ratio, tab_angle_deg):
+        self.geom_temp = []
+        self.minimum_depth = minimum_depth
+        self.width_to_length_ratio = width_to_length_ratio
+        self.tab_angle_deg = tab_angle_deg
+
+    def _clear_geom(self):
+        self.geom_temp = []
+
+    def scaled_quad_tab(self, pntA, pntD, left_side):
+        #vecA = rs.VectorCreate(pntA)
+        #vecD = rs.VectorCreate(
+        vecA = pntA
+        vecD = pntD
+        line_vec = vecA - vecD
+        length = rs.VectorLength(line_vec)
+        width = self.width_to_length_ratio * length
+
+        alpha = self.tab_angle_deg
+        beta = self.tab_angle_deg
+
+        lenI = width / math.sin(alpha * math.pi / 180.0)
+        lenJ = width / math.sin(beta * math.pi / 180.0)
+
+        if not left_side:
+            alpha = -1 * alpha
+            beta = -1 * beta
+
+        vec = vecD.Subtract(vecD, vecA)
+        vecUnit = rs.VectorUnitize(vec)
+        vecI = rs.VectorScale(vecUnit, lenI)
+        vecJ = rs.VectorScale(vecUnit, -lenJ)
+
+        vecI = rs.VectorRotate(vecI, alpha, [0, 0, 1])
+        vecJ = rs.VectorRotate(vecJ, -beta, [0, 0, 1])
+        vecB = vecA + vecI
+        vecC = vecD + vecJ
+
+        #pntB = geom.Point3d(vecB)
+        #pntC = geom.Point3d(vecC)
+        pntB = vecB
+        pntC = vecB
+
+        points = [pntA, pntB, pntC, pntD]
+        polyGuid = rs.AddPolyline(points)
+
+        return [polyGuid]
 
     def inner_joinery(self, curve_id, left_side):
+        self._clear_geom()
         return None
 
     def outer_joinery(self, curve_id, left_side):
-        return None
+        self._clear_geom()
+        start, end = edgeGeom.get_first_and_last_points(curve_id)
+        geom = self.scaled_quad_tab(start, end, left_side)
+        return geom
 
 
 
