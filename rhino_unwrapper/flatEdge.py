@@ -424,6 +424,7 @@ class CutEdge(FlatEdge):
             return self.tabOnLeft
 
     def drawTab(self,island):
+        #DEPRECATED!!
         '''outputs guid for polyline'''
         flatVerts = island.flatVerts
         if len(self.geom) > 0:
@@ -748,11 +749,50 @@ class NakedEdge(FlatEdge):
         #self.color = edge_colors['blue']
         self.has_joinery = kwargs['has_joinery'] # speacial for cone project
         self.color = edge_colors ['red']
+        self.tabAngles = [30, 30]
+        self.tabWidth = 1.0
             
+    def drawQuadTab(self, island, left_side):
+        pntA, pntD = self.get_coordinates(island)
+        vecA = geom.Vector3d(pntA)
+        vecD = geom.Vector3d(pntD)
+
+        alpha = self.tabAngles[0]
+        beta = self.tabAngles[1]
+
+        lenI = self.tabWidth / math.sin(alpha * math.pi / 180.0)
+        lenJ = self.tabWidth / math.sin(beta * math.pi / 180.0)
+
+        if not left_side:
+            alpha = -1 * alpha
+            beta = -1 * beta
+
+        vec = vecD.Subtract(vecD, vecA)
+        vecUnit = rs.VectorUnitize(vec)
+        vecI = rs.VectorScale(vecUnit, lenI)
+        vecJ = rs.VectorScale(vecUnit, -lenJ)
+
+        vecI = rs.VectorRotate(vecI, alpha, [0, 0, 1])
+        vecJ = rs.VectorRotate(vecJ, -beta, [0, 0, 1])
+        vecB = vecA + vecI
+        vecC = vecD + vecJ
+
+        pntB = geom.Point3d(vecB)
+        pntC = geom.Point3d(vecC)
+
+        points = [pntA, pntB, pntC, pntD]
+        polyGuid = rs.AddPolyline(points)
+
+        #self.geom.append(polyGuid)
+        return [polyGuid]
+
     def show_specialized(self,island):
         # special solution for cone project
         if self.has_joinery:
-            self.color = edge_colors['blue']
+            self.color = edge_colors['green']
+            curves = self.drawQuadTab(island,False)
+            rs.ObjectColor(curves, edge_colors['red'])
+            rs.AddObjectsToGroup(curves,self.group_name)
         self.show_line(island)
 
 class _FlatEdge():

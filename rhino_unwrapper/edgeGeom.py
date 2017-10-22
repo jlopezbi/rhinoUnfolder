@@ -209,3 +209,4 @@ def get_arc_cap(pntI,pntJ,offset,radius):
     vec_A = rs.VectorAdd(vec_base,vec_perp_a)
     pointA = rs.VectorAdd(pntI,vec_A)
     return pointA, pointB, pointC
+
