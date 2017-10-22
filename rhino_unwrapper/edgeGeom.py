@@ -1,4 +1,5 @@
 import rhinoscriptsyntax as rs
+import math
 
 #seems like should be a class, but a class just to run a bunch of related functions? Seems silly. 
 #In this case the inputs are relatively simple, but there can be
@@ -130,6 +131,37 @@ class CombOnLineCreator(object):
 
 
 
+def drawQuadTab(pntA, pntD, tab_angles_deg, width, left_side):
+    vecA = pntA
+    vecD = pntD
+
+    alpha = tab_angles_deg[0]
+    beta = tab_angles_deg[1]
+
+    lenI = width / math.sin(alpha * math.pi / 180.0)
+    lenJ = width / math.sin(beta * math.pi / 180.0)
+
+    if not left_side:
+        alpha = -1 * alpha
+        beta = -1 * beta
+
+    vec = rs.VectorSubtract(vecD, vecA)
+    vecUnit = rs.VectorUnitize(vec)
+    vecI = rs.VectorScale(vecUnit, lenI)
+    vecJ = rs.VectorScale(vecUnit, -lenJ)
+
+    vecI = rs.VectorRotate(vecI, alpha, [0, 0, 1])
+    vecJ = rs.VectorRotate(vecJ, -beta, [0, 0, 1])
+    vecB = vecA + vecI
+    vecC = vecD + vecJ
+
+    pntB = vecB
+    pntC = vecC
+
+    points = [pntA, pntB, pntC, pntD]
+    polyGuid = rs.AddPolyline(points)
+
+    return [polyGuid]
 
 #END CLASS
 def get_first_and_last_points(curve_id):

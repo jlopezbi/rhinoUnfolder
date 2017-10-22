@@ -6,9 +6,12 @@ import rhino_helpers
 import visualization as vis
 import creaseGeom
 import joineryGeom
+import edgeGeom
 
 reload(vis)
 reload(creaseGeom)
+reload(joineryGeom)
+reload(edgeGeom)
 reload(rhino_helpers)
 
 def create_cut_edge_from_base(flatEdge,is_leader,otherEdgeIdx=None):
@@ -125,6 +128,11 @@ class FlatEdge(object):
         vertA,vertB = self.get_verts(island)
         pointA,pointB = island.flatVerts[vertA].point, island.flatVerts[vertB].point
         return pointA,pointB
+
+    def get_edge_length(self,island):
+        a, b  = self.get_coordinates(island)
+        v = a-b
+        return rs.VectorLength(v)
 
     def get_verts(self,island):
         '''
@@ -749,10 +757,11 @@ class NakedEdge(FlatEdge):
         #self.color = edge_colors['blue']
         self.has_joinery = kwargs['has_joinery'] # speacial for cone project
         self.color = edge_colors ['red']
-        self.tabAngles = [30, 30]
-        self.tabWidth = 1.0
+        self.tabAngles = [60, 60]
+        self.min_width = 1.0
+        self.tab_width_to_length = .30
             
-    def drawQuadTab(self, island, left_side):
+    def drawQuadTab(self, island, width, left_side):
         pntA, pntD = self.get_coordinates(island)
         vecA = geom.Vector3d(pntA)
         vecD = geom.Vector3d(pntD)
@@ -760,8 +769,8 @@ class NakedEdge(FlatEdge):
         alpha = self.tabAngles[0]
         beta = self.tabAngles[1]
 
-        lenI = self.tabWidth / math.sin(alpha * math.pi / 180.0)
-        lenJ = self.tabWidth / math.sin(beta * math.pi / 180.0)
+        lenI = width / math.sin(alpha * math.pi / 180.0)
+        lenJ = width / math.sin(beta * math.pi / 180.0)
 
         if not left_side:
             alpha = -1 * alpha
@@ -790,7 +799,12 @@ class NakedEdge(FlatEdge):
         # special solution for cone project
         if self.has_joinery:
             self.color = edge_colors['green']
-            curves = self.drawQuadTab(island,False)
+            length_of_edge = self.get_edge_length(island)
+            width = self.tab_width_to_length * length_of_edge
+            if width <= self.min_width:
+                width = self.min_width
+            pntA, pntD = self.get_coordinates(island)
+            curves = edgeGeom.drawQuadTab(pntA, pntD, self.tabAngles, width, False)
             rs.ObjectColor(curves, edge_colors['red'])
             rs.AddObjectsToGroup(curves,self.group_name)
         self.show_line(island)
