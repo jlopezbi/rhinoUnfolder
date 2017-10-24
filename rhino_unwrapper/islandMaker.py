@@ -90,7 +90,8 @@ class IslandMaker(object):
         if self.myMesh.is_cut_edge(meshEdge):
             self.island.change_to_cut_edge(islandEdge)
         if self.myMesh.is_naked_edge(meshEdge):
-            self.island.change_to_naked_edge(islandEdge,in_xy_plane=False)
+            at_z_zero = self.myMesh.edge_is_in_xy_plane(edge=meshEdge, thresh=.0001)
+            self.island.change_to_naked_edge(islandEdge,in_xy_plane=at_z_zero)
             
     def breadth_first_layout(self,island,startMeshLoc,startIslandLoc):
         ''' for layout to not accidently infinite loop the startMeshLoc must be on cut or naked edge
@@ -131,7 +132,7 @@ class IslandMaker(object):
                         is_first = False
                     island.change_to_cut_edge(edge=newEdge,isLeader=is_first)
                 elif self.myMesh.is_naked_edge(edge): 
-                    at_z_zero = self.myMesh.edge_is_in_xy_plane(edge)
+                    at_z_zero = self.myMesh.edge_is_in_xy_plane(edge, thresh=.0001)
                     island.change_to_naked_edge(edge=newEdge, in_xy_plane=at_z_zero) 
                 self.visited_edges.append(edge)
             island.layout_add_face(baseEdge=islandLoc.edge)

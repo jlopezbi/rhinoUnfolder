@@ -254,8 +254,7 @@ class Mesh(object):
             points.reverse()
         return points
 
-    def edge_is_in_xy_plane(self, edge):
-        thresh = .000001
+    def edge_is_in_xy_plane(self, edge, thresh=.0001):
         target_z = 0.0
         pntA, pntB = self.getPointsForEdge(edge)
         zA, zB = pntA.Z, pntB.Z

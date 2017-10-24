@@ -27,7 +27,7 @@ displayer = mesh.MeshDisplayer(jMesh)
 # SET CUTS
 user_cuts = userCuts.get_user_cuts(jMesh,displayer)
 cuts = autoCuts.auto_fill_cuts(jMesh,user_cuts,weight_function)
-displayer.display_edges(cuts) #NOTE right now this will duplicate-draw user-cuts
+#displayer.display_edges(cuts) #NOTE right now this will duplicate-draw user-cuts
 
 # UNFOLD
 unfolder = unfold.UnFolder(jMesh)
