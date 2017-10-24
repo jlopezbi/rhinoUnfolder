@@ -408,6 +408,7 @@ class CutEdge(FlatEdge):
         if self.has_outer_joinery:
             curves = island.joinerySystem.outer_joinery(curve_id,left_side=False)
             rs.AddObjectsToGroup(curves,self.group_name)
+            rs.ObjectColor(curve_id, edge_colors['green'])
         else:
             rs.ReverseCurve(curve_id) #necessary to reverse direction so edges match
             curves = island.joinerySystem.inner_joinery(curve_id,left_side=False)
@@ -757,11 +758,11 @@ class NakedEdge(FlatEdge):
         #self.color = edge_colors['blue']
         self.has_joinery = kwargs['has_joinery'] # speacial for cone project
         self.color = edge_colors ['red']
-        self.tabAngles = [60, 60]
+        self.tabAngles = [70, 70]
         self.min_width = 1.0
-        self.tab_width_to_length = .30
+        self.tab_width_to_length = .45
             
-    def drawQuadTab(self, island, width, left_side):
+    def drawQuadTab_Deprecated(self, island, width, left_side):
         pntA, pntD = self.get_coordinates(island)
         vecA = geom.Vector3d(pntA)
         vecD = geom.Vector3d(pntD)

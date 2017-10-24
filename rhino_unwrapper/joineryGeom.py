@@ -113,7 +113,8 @@ class TabSystem(object):
         #vecD = rs.VectorCreate(
         vecA = pntA
         vecD = pntD
-        line_vec = vecA - vecD
+
+        line_vec = rs.VectorSubtract(vecA, vecD)
         length = rs.VectorLength(line_vec)
         width = self.width_to_length_ratio * length
 
@@ -127,7 +128,7 @@ class TabSystem(object):
             alpha = -1 * alpha
             beta = -1 * beta
 
-        vec = vecD.Subtract(vecD, vecA)
+        vec = rs.VectorSubtract(vecD, vecA)
         vecUnit = rs.VectorUnitize(vec)
         vecI = rs.VectorScale(vecUnit, lenI)
         vecJ = rs.VectorScale(vecUnit, -lenJ)
@@ -140,9 +141,10 @@ class TabSystem(object):
         #pntB = geom.Point3d(vecB)
         #pntC = geom.Point3d(vecC)
         pntB = vecB
-        pntC = vecB
+        pntC = vecC
 
         points = [pntA, pntB, pntC, pntD]
+        #points = [pntA, pntC, pntB, pntD]
         polyGuid = rs.AddPolyline(points)
 
         return [polyGuid]
@@ -155,6 +157,7 @@ class TabSystem(object):
         self._clear_geom()
         start, end = edgeGeom.get_first_and_last_points(curve_id)
         geom = self.scaled_quad_tab(start, end, left_side)
+        rs.ObjectColor(geom, (0, 255, 0, 0) ) #make red
         return geom
 
 

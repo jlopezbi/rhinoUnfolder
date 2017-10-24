@@ -81,8 +81,8 @@ class Island(object):
         self.tab_padding = .11
         self.edge_padding = .5
         #self.joinerySystem = joineryGeom.RivetSystem(self.hole_offset,self.rivet_diameter,self.spacing,self.tab_padding,self.edge_padding)
-        self.joinerySystem = joineryGeom.NullSystem()
-        #self.joinerySystem = joineryGeom.TabSystem(minimum_depth=1.0, width_to_length_ratio=.25, tab_angle_deg=30)
+        #self.joinerySystem = joineryGeom.NullSystem()
+        self.joinerySystem = joineryGeom.TabSystem(minimum_depth=.75, width_to_length_ratio=.06, tab_angle_deg=60)
 
 ################## LAYOUT
     def add_dummy_elements(self): 
