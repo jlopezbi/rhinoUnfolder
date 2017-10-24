@@ -117,6 +117,8 @@ class TabSystem(object):
         line_vec = rs.VectorSubtract(vecA, vecD)
         length = rs.VectorLength(line_vec)
         width = self.width_to_length_ratio * length
+        if width < self.minimum_depth:
+            width = self.minimum_depth
 
         alpha = self.tab_angle_deg
         beta = self.tab_angle_deg

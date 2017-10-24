@@ -4,5 +4,5 @@ def spread_out_islands_horizontally(net):
     islands = net.get_island_list()
     for i,island in enumerate(islands):
         if i!=0:
-            island.move_to_edge(islands[i-1])
+            island.move_to_edge(islands[i-1], padding=5.0)
 
